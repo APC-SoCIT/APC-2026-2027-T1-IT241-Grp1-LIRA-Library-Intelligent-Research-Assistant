@@ -1,0 +1,53 @@
+@startuml LIRA_Level0_DFD
+title Level 0 DFD — System Context Diagram\nLIRA (Library Intelligent Research Assistant)
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultTextAlignment center
+skinparam ArrowColor #333333
+skinparam ArrowFontSize 11
+skinparam ArrowFontColor #222222
+
+skinparam rectangle {
+    BackgroundColor<<process>> #FDE9D9
+    BorderColor<<process>> #C77C1F
+    BackgroundColor<<entity>> #DCE6F1
+    BorderColor<<entity>> #3B6EA5
+    FontSize 14
+}
+
+' ---------- Central Process ----------
+rectangle "0\nLIRA\nLibrary Intelligent Research\nAssistant Web Platform" as LIRA <<process>>
+
+' ---------- External Entities ----------
+rectangle "APC Student" as Student <<entity>>
+rectangle "Library Staff" as Staff <<entity>>
+rectangle "Koha ILS\n(Read-Only REST API)" as Koha <<entity>>
+rectangle "Microsoft 365\n(Azure Active Directory)" as MS365 <<entity>>
+rectangle "OpenRouter API" as OpenRouter <<entity>>
+
+' ---------- Data Flows: APC Student ----------
+Student -right-> LIRA : Search queries,\nchat/FAQ questions,\nsummary & citation requests
+LIRA -left-> Student : Search results, recommendations,\nchatbot replies, AI summaries & citations
+
+' ---------- Data Flows: Library Staff ----------
+Staff -right-> LIRA : FAQ / policy updates\n(content management)
+LIRA -left-> Staff : Update confirmation,\ncurrent KB content
+
+' ---------- Data Flows: Koha ILS ----------
+LIRA -right-> Koha : Catalog/data lookup requests
+Koha -left-> LIRA : Catalog metadata, availability,\nbibliographic records
+
+' ---------- Data Flows: Microsoft 365 ----------
+LIRA -right-> MS365 : Login / authentication requests
+MS365 -left-> LIRA : Authentication tokens\n(identity verification)
+
+' ---------- Data Flows: OpenRouter API ----------
+LIRA -right-> OpenRouter : System prompts + user queries
+OpenRouter -left-> LIRA : AI-generated inferences\n(summaries, citations, chat responses)
+
+' ---------- Layout hints ----------
+Student -[hidden]down- Staff
+Koha -[hidden]down- MS365
+MS365 -[hidden]down- OpenRouter
+
+@enduml
