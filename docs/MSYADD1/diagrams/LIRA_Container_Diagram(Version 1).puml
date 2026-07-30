@@ -1,0 +1,61 @@
+@startuml LIRA_C4_Container
+!include <C4/C4_Container>
+
+' ============================
+' MIDNIGHT / CYBERPUNK THEME
+' ============================
+skinparam backgroundColor #0A0A0F
+skinparam defaultFontColor #E0E0E0
+skinparam defaultFontName Consolas
+skinparam shadowing false
+skinparam ArrowColor #DC143C
+skinparam ArrowFontColor #FF6B81
+skinparam ArrowFontSize 12
+
+skinparam rectangle {
+    BorderColor #DC143C
+    FontColor #E0E0E0
+}
+
+skinparam databaseBackgroundColor #1A1A22
+skinparam databaseBorderColor #DC143C
+
+' Override C4 element colors for dark theme
+UpdateElementStyle("person", $bgColor="#1A1A22", $fontColor="#F5F5F5", $borderColor="#DC143C")
+UpdateElementStyle("system", $bgColor="#141419", $fontColor="#F5F5F5", $borderColor="#8B0000")
+UpdateElementStyle("container", $bgColor="#1A1A22", $fontColor="#F5F5F5", $borderColor="#DC143C")
+UpdateElementStyle("external_system", $bgColor="#101014", $fontColor="#B0B0B0", $borderColor="#5C5C66")
+UpdateElementStyle("boundary", $bgColor="#0A0A0F", $fontColor="#DC143C", $borderColor="#DC143C")
+
+LAYOUT_WITH_LEGEND()
+LAYOUT_TOP_DOWN()
+
+title <color:#DC143C>LIRA — C4 Container Diagram</color>\n<size:12><color:#B0B0B0>Library Intelligent Research Assistant</color></size>
+
+' ---------- Person Actors ----------
+Person(student, "APC Student", "Uses a web browser to search, chat, and request summaries/citations.")
+Person(staff, "Library Staff", "Uses the web app to manage FAQ and policy content.")
+
+' ---------- System Boundary ----------
+System_Boundary(lira_boundary, "LIRA Platform") {
+    Container(webapp, "Web Application", "Next.js", "Core student-facing UI and backend API router. Orchestrates all downstream calls.")
+    ContainerDb(vectordb, "Vector Database", "ChromaDB / Weaviate", "Stores semantic embeddings of catalog records and FAQ content for similarity search.")
+}
+
+' ---------- External Systems ----------
+System_Ext(koha, "Koha ILS", "REST API (read-only)\nCatalog metadata, availability, bibliographic records.")
+System_Ext(azuread, "Microsoft 365\n(Azure Active Directory)", "Manages student authentication, issues identity tokens.")
+System_Ext(openrouter, "OpenRouter API", "Unified AI routing layer\n(GPT, Claude, Gemini, DeepSeek).")
+
+' ---------- Relationships ----------
+Rel(student, webapp, "Searches, chats,\nrequests summaries/citations", "HTTPS")
+Rel(staff, webapp, "Manages FAQ &\npolicy content", "HTTPS")
+
+Rel(webapp, azuread, "Sends login request /\nreceives auth token", "HTTPS/OAuth2")
+Rel(webapp, vectordb, "Sends semantic queries /\nstores embeddings", "gRPC/HTTP")
+Rel(webapp, koha, "Retrieves catalog & bib data\n(read-only)", "REST/HTTPS")
+Rel(webapp, openrouter, "Sends prompts + context /\nreceives AI-generated text", "HTTPS/JSON")
+
+SHOW_LEGEND()
+
+@enduml
