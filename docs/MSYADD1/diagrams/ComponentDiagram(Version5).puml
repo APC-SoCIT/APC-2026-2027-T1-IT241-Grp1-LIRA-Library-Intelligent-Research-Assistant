@@ -1,0 +1,38 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_TOP_DOWN()
+
+title Component Diagram for Core API & AI Processing Services
+
+Container(web_app, "Web Application", "Next.js / React", "Frontend Interface")
+
+Container_Boundary(lira_backend, "LIRA Processing Layer") {
+    Component(auth_ctrl, "Auth Controller", "NextAuth / MSAL", "Validates Microsoft 365 JWT tokens.")
+    Component(search_engine, "Semantic Search Engine", "Python / Embeddings", "Processes intent-based queries using dense vector retrieval.")
+    Component(citation_gen, "Citation Generator Service", "TypeScript Component", "Formats bibliographic data natively into APA 7th and IEEE styles.")
+    Component(rag_chatbot, "RAG Chatbot Controller", "Python / LangChain", "Retrieves context from policy knowledge bases to ground responses.")
+    Component(rec_engine, "Recommendation Engine", "Python Component", "Executes item-based collaborative and content-based filtering.")
+    Component(koha_client, "Koha API Client", "REST Integration Module", "Communicates in read-only mode with Koha ILS endpoints.")
+}
+
+ContainerDb(db, "LIRA DB & Vector Store", "PostgreSQL & ChromaDB", "Stores embeddings & FAQs")
+System_Ext(koha, "Koha ILS", "External Library System")
+System_Ext(openrouter, "OpenRouter API", "Multi-LLM Gateway")
+
+Rel_Down(web_app, auth_ctrl, "Authenticates user session")
+Rel_Down(web_app, search_engine, "Submits natural language search")
+Rel_Down(web_app, citation_gen, "Requests APA / IEEE format")
+Rel_Down(web_app, rag_chatbot, "Sends conversational prompt")
+Rel_Down(web_app, rec_engine, "Requests personalized feed")
+
+Rel_Down(search_engine, db, "Fetches catalog vector embeddings")
+Rel_Down(rag_chatbot, db, "Queries verified policy FAQs")
+Rel_Down(rec_engine, db, "Queries borrowing history & subject tags")
+
+Rel_Down(rag_chatbot, openrouter, "Routes contextual prompt to selected LLM")
+Rel_Down(citation_gen, koha_client, "Fetches MARC bibliographic details")
+Rel_Down(search_engine, koha_client, "Cross-references matched catalog IDs")
+
+Rel_Down(koha_client, koha, "Fetches catalog records via REST API")
+@enduml

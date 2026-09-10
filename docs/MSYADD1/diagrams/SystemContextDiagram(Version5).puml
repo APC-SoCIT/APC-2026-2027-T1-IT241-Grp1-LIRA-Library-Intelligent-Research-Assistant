@@ -1,0 +1,17 @@
+C4Context
+    title System Context Diagram for LIRA (Library Intelligent Research Assistant)
+    
+    Person(student, "Student / Faculty", "APC user who searches the catalog, generates citations, and asks routine library questions.")
+    Person(librarian, "Librarian", "Manages library policies, knowledge base, and core physical systems.")
+    
+    System(lira, "LIRA Platform", "AI-assisted web platform providing semantic search, automated citations, AI summaries, and an FAQ chatbot.")
+    
+    System_Ext(koha, "Koha ILS", "Existing open-source Integrated Library System handling cataloging and circulation.")
+    System_Ext(m365, "Microsoft 365 (Azure AD)", "APC's institutional authentication and identity provider.")
+    System_Ext(openrouter, "OpenRouter API", "AI model routing platform granting access to various LLMs (GPT, Claude, Gemini).")
+    
+    Rel(student, lira, "Searches resources, asks questions, and generates citations via web browser")
+    Rel(librarian, lira, "Updates the FAQ knowledge base via a content management interface")
+    Rel(lira, koha, "Fetches bibliographic metadata and availability data (Read-Only via REST API)")
+    Rel(lira, m365, "Authenticates users via SSO")
+    Rel(lira, openrouter, "Sends semantic queries and receives AI-generated responses")
