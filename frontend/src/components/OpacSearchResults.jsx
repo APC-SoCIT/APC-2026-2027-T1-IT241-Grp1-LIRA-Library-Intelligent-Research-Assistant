@@ -1,17 +1,44 @@
-import { FiCheckSquare, FiSquare, FiList, FiShoppingCart, FiBookmark } from 'react-icons/fi';
+import { FiList, FiShoppingCart } from 'react-icons/fi';
+import { useEffect, useState } from 'react';
 import { mockBooks } from '../data/books';
 
-export default function OpacSearchResults({ query }) {
-  // Simple filter logic: if query has 'su:', match category exactly (case insensitive). 
-  // Otherwise, match title, author, or category containing the query.
+const getItemType = (book) => book.itemType || 'BOOKS';
+const getLocation = (book) => book.location || 'Asia Pacific College Library';
+
+const getFacetValues = (books, getValue) => [...new Set(books.map(getValue))];
+
+export default function OpacSearchResults({ query, onFilter }) {
+  const [showAllAuthors, setShowAllAuthors] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
   const filteredBooks = mockBooks.filter((book) => {
     if (!query) return true;
-    
+
     const lowerQuery = query.toLowerCase();
-    
+
     if (lowerQuery.startsWith('su:')) {
       const categorySearch = lowerQuery.replace('su:', '').trim();
       return book.category.toLowerCase() === categorySearch;
+    }
+
+    if (lowerQuery.startsWith('author:')) {
+      return book.author.toLowerCase() === lowerQuery.replace('author:', '').trim();
+    }
+
+    if (lowerQuery.startsWith('category:')) {
+      return book.category.toLowerCase() === lowerQuery.replace('category:', '').trim();
+    }
+
+    if (lowerQuery.startsWith('item:')) {
+      return getItemType(book).toLowerCase() === lowerQuery.replace('item:', '').trim();
+    }
+
+    if (lowerQuery.startsWith('location:')) {
+      return getLocation(book).toLowerCase() === lowerQuery.replace('location:', '').trim();
+    }
+
+    if (lowerQuery.startsWith('available:')) {
+      return book.availability.toLowerCase().includes('items available');
     }
 
     return (
@@ -20,6 +47,19 @@ export default function OpacSearchResults({ query }) {
       book.category.toLowerCase().includes(lowerQuery)
     );
   });
+
+  const pageSize = 5;
+  const totalPages = Math.max(1, Math.ceil(filteredBooks.length / pageSize));
+  const visiblePage = Math.min(currentPage, totalPages);
+  const paginatedBooks = filteredBooks.slice((visiblePage - 1) * pageSize, visiblePage * pageSize);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query]);
+
+  const authors = getFacetValues(mockBooks, (book) => book.author);
+  const itemTypes = getFacetValues(mockBooks, getItemType);
+  const locations = getFacetValues(mockBooks, getLocation);
 
   return (
     <div className="flex gap-6 mt-4">
@@ -32,35 +72,46 @@ export default function OpacSearchResults({ query }) {
           
           <div className="p-3">
             <h4 className="text-xs font-bold text-gray-700 mb-1">Availability</h4>
-            <a href="#" className="text-xs text-blue-600 hover:underline block mb-3">Limit to records with available items</a>
+            <button type="button" onClick={() => onFilter('available:')} className="text-xs text-blue-600 hover:underline block mb-3 text-left">
+              Limit to records with available items
+            </button>
 
             <h4 className="text-xs font-bold text-gray-700 mb-1">Authors</h4>
             <ul className="text-xs space-y-1 mb-1">
-              <li><a href="#" className="text-blue-600 hover:underline">James N. Butcher</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Alan Loy McGinnis</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Barry Neil Kaufman</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Dale Carnegie</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Irving B. Weiner</a></li>
+              {(showAllAuthors ? authors : authors.slice(0, 5)).map((author) => (
+                <li key={author}>
+                  <button type="button" onClick={() => onFilter(`author:${author}`)} className="text-blue-600 hover:underline text-left">
+                    {author}
+                  </button>
+                </li>
+              ))}
             </ul>
-            <a href="#" className="text-xs text-[#1b2a4a] font-semibold hover:underline block mb-3">Show more</a>
+            {authors.length > 5 && (
+              <button type="button" onClick={() => setShowAllAuthors((value) => !value)} className="text-xs text-[#1b2a4a] font-semibold hover:underline block mb-3">
+                {showAllAuthors ? 'Show less' : 'Show more'}
+              </button>
+            )}
 
             <h4 className="text-xs font-bold text-gray-700 mb-1">Item types</h4>
             <ul className="text-xs space-y-1 mb-1">
-              <li><a href="#" className="text-blue-600 hover:underline">BOOKS</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">CFP collection</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">EBOOKS</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">EJOURNALS</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Reference</a></li>
+              {itemTypes.map((itemType) => (
+                <li key={itemType}>
+                  <button type="button" onClick={() => onFilter(`item:${itemType}`)} className="text-blue-600 hover:underline text-left">
+                    {itemType}
+                  </button>
+                </li>
+              ))}
             </ul>
-            <a href="#" className="text-xs text-[#1b2a4a] font-semibold hover:underline block mb-3">Show more</a>
 
             <h4 className="text-xs font-bold text-gray-700 mb-1">Locations</h4>
             <ul className="text-xs space-y-1 mb-1">
-              <li><a href="#" className="text-blue-600 hover:underline">CFP Collection</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Circulation Section</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Filipiniana Section</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Reference Section</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Reserve Section</a></li>
+              {locations.map((location) => (
+                <li key={location}>
+                  <button type="button" onClick={() => onFilter(`location:${location}`)} className="text-blue-600 hover:underline text-left">
+                    {location}
+                  </button>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
@@ -79,18 +130,32 @@ export default function OpacSearchResults({ query }) {
         {/* Pagination & Sort */}
         <div className="flex justify-between items-center mb-2">
           <div className="flex text-sm text-blue-600 gap-2">
-            <span className="px-2 py-1 bg-gray-200 text-gray-700 rounded">1</span>
-            <a href="#" className="px-2 py-1 hover:underline">2</a>
-            <a href="#" className="px-2 py-1 hover:underline">3</a>
-            <a href="#" className="px-2 py-1 hover:underline">4</a>
-            <a href="#" className="px-2 py-1 hover:underline">5</a>
-            <a href="#" className="px-2 py-1 hover:underline">6</a>
-            <a href="#" className="px-2 py-1 hover:underline">7</a>
-            <a href="#" className="px-2 py-1 hover:underline">8</a>
-            <a href="#" className="px-2 py-1 hover:underline">9</a>
-            <a href="#" className="px-2 py-1 hover:underline">10</a>
-            <a href="#" className="px-2 py-1 hover:underline">Next &gt;</a>
-            <a href="#" className="px-2 py-1 hover:underline">Last &gt;&gt;</a>
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+              <button
+                key={page}
+                type="button"
+                onClick={() => setCurrentPage(page)}
+                className={`px-2 py-1 rounded ${page === visiblePage ? 'bg-gray-200 text-gray-700' : 'hover:underline'}`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setCurrentPage((page) => Math.min(page + 1, totalPages))}
+              disabled={visiblePage === totalPages}
+              className="px-2 py-1 hover:underline disabled:text-gray-400 disabled:no-underline"
+            >
+              Next &gt;
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={visiblePage === totalPages}
+              className="px-2 py-1 hover:underline disabled:text-gray-400 disabled:no-underline"
+            >
+              Last &gt;&gt;
+            </button>
           </div>
           <div>
             <select className="border border-gray-300 text-sm py-1 px-2 rounded outline-none w-48">
@@ -121,7 +186,7 @@ export default function OpacSearchResults({ query }) {
               No results found for "{query}".
             </div>
           )}
-          {filteredBooks.map((item, index) => (
+          {paginatedBooks.map((item) => (
             <div key={item.id} className="flex border-b border-gray-200 p-4 relative">
               <div className="flex-shrink-0 w-8">
                 <input type="checkbox" className="mt-1 cursor-pointer" />

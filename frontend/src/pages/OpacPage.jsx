@@ -5,7 +5,7 @@ import OpacSearchResults from '../components/OpacSearchResults';
 
 export default function OpacPage() {
   const [isSearching, setIsSearching] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('su:Psychology');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearch = (e) => {
     if (e) e.preventDefault();
@@ -99,7 +99,7 @@ export default function OpacPage() {
         </div>
 
         {isSearching ? (
-          <OpacSearchResults query={searchQuery} />
+          <OpacSearchResults query={searchQuery} onFilter={setSearchQuery} />
         ) : (
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-8 max-w-5xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
@@ -152,7 +152,7 @@ export default function OpacPage() {
               </div>
             </a>
 
-            <a href="#" className="flex items-center gap-4 p-3 rounded-lg border border-gray-100 hover:border-gray-300 hover:shadow-md transition-all group">
+            <a href="#" onClick={(e) => handleCategoryClick(e, 'Photography')} className="flex items-center gap-4 p-3 rounded-lg border border-gray-100 hover:border-gray-300 hover:shadow-md transition-all group cursor-pointer">
               <div className="w-10 h-10 rounded-lg bg-teal-500 flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-transform">
                 <FaCamera className="w-5 h-5" />
               </div>
@@ -192,7 +192,7 @@ export default function OpacPage() {
               </div>
             </a>
 
-            <a href="#" className="flex items-center gap-4 p-3 rounded-lg border border-gray-100 hover:border-gray-300 hover:shadow-md transition-all group">
+            <a href="#" onClick={(e) => handleCategoryClick(e, 'History')} className="flex items-center gap-4 p-3 rounded-lg border border-gray-100 hover:border-gray-300 hover:shadow-md transition-all group cursor-pointer">
               <div className="w-10 h-10 rounded-lg bg-amber-700 flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-transform">
                 <FaUserGraduate className="w-5 h-5" />
               </div>
