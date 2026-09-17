@@ -2,10 +2,12 @@ import { FiSearch, FiShoppingCart, FiList, FiUser, FiChevronDown } from 'react-i
 import { FaBrain, FaCog, FaCode, FaBook, FaCamera, FaCalculator, FaBuilding, FaChartBar, FaUserGraduate } from 'react-icons/fa';
 import { useState } from 'react';
 import OpacSearchResults from '../components/OpacSearchResults';
+import BookDetail from '../components/BookDetail';
 
 export default function OpacPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBook, setSelectedBook] = useState(null);
 
   const handleSearch = (e) => {
     if (e) e.preventDefault();
@@ -16,6 +18,7 @@ export default function OpacPage() {
     e.preventDefault();
     setSearchQuery(`su:${category}`);
     setIsSearching(true);
+    setSelectedBook(null);
   };
 
   return (
@@ -98,8 +101,10 @@ export default function OpacPage() {
           <a href="#" className="hover:underline">Library</a>
         </div>
 
-        {isSearching ? (
-          <OpacSearchResults query={searchQuery} onFilter={setSearchQuery} />
+        {selectedBook ? (
+          <BookDetail book={selectedBook} onBack={() => setSelectedBook(null)} />
+        ) : isSearching ? (
+          <OpacSearchResults query={searchQuery} onFilter={setSearchQuery} onSelectBook={setSelectedBook} />
         ) : (
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-8 max-w-5xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
