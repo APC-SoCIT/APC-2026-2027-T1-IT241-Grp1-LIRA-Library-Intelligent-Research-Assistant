@@ -7,7 +7,7 @@ const getLocation = (book) => book.location || 'Asia Pacific College Library';
 
 const getFacetValues = (books, getValue) => [...new Set(books.map(getValue))];
 
-export default function OpacSearchResults({ query, onFilter }) {
+export default function OpacSearchResults({ query, onFilter, onSelectBook }) {
   const [showAllAuthors, setShowAllAuthors] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -196,9 +196,9 @@ export default function OpacSearchResults({ query, onFilter }) {
               </div>
               
               <div className="flex-1 pr-4">
-                <h3 className="text-base font-semibold text-blue-700 hover:underline cursor-pointer mb-1">
+                <button type="button" onClick={() => onSelectBook(item)} className="text-left text-base font-semibold text-blue-700 hover:underline cursor-pointer mb-1">
                   {item.title}
-                </h3>
+                </button>
                 <div className="text-sm text-gray-700 mb-0.5">
                   by <a href="#" className="text-blue-600 hover:underline">{item.author}</a>
                 </div>
