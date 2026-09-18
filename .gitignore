@@ -25,3 +25,11 @@ Thumbs.db
 # Editor files
 .vscode/
 .idea/
+
+# Local pipeline data
+data/raw/*
+data/processed/*
+data/marc/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/marc/.gitkeep

@@ -17,7 +17,7 @@ flowchart TD
 	FrontendSrc --> Components["components/"]
 	Components --> FeatureComponents["Feature sections and shared UI"]
 	Components --> ComponentAreas["admin/ · auth/ · catalog/ · chatbot/ · loans/ · shared/"]
-	FrontendSrc --> Data["data/books.js"]
+	FrontendSrc --> Data["data/mockBooks.js"]
 	FrontendSrc --> Services["services/"]
 	FrontendSrc --> Store["store/"]
 	FrontendSrc --> Hooks["hooks/"]
@@ -32,20 +32,37 @@ flowchart TD
 	AI --> FAQ["faq/"]
 	AI --> Recommendations["recommendations/"]
 	AI --> Summaries["summaries/"]
+	AI --> RAG["rag/"]
+	RAG --> Ingestion["ingestion/"]
+	RAG --> Embeddings["embeddings/"]
+	RAG --> Retrieval["retrieval/"]
+	RAG --> Prompts["prompts/"]
 	Backend --> Analytics["analytics-service/"]
 	Backend --> ChatbotConfig["chatbot-config-service/"]
 	Backend --> BackendShared["shared/"]
 
 	Root --> Integrations["integrations/"]
 	Integrations --> Koha["koha-ils/"]
+	Koha --> KohaAPI["api/ · client/ · schemas/"]
+	Integrations --> Gutendex["gutendex/"]
+	Gutendex --> GutendexAreas["client/ · schemas/ · mapper/ · marc/ · scripts/"]
+
+	Root --> DataRoot["data/"]
+	DataRoot --> Raw["raw/"]
+	DataRoot --> Processed["processed/"]
+	DataRoot --> MARC["marc/"]
 
 	Root --> Infra["infra/"]
+	Infra --> InfraAreas["docker/ · koha/ · environment/"]
 	Root --> Docs["docs/"]
 	Docs --> Architecture["architecture/"]
+	Docs --> API["api/"]
+	Docs --> Setup["setup/"]
+	Docs --> DataPipeline["data-pipeline/"]
 	Docs --> Backlog["sprint-backlog/"]
 
 	Frontend -. "API requests" .-> Backend
 	Backend -. "library system data" .-> Koha
 ```
 
-The frontend is the user-facing application, backend folders represent independently owned service boundaries, and the integration layer makes external systems explicit. README files under each area provide the local ownership and implementation notes.
+The frontend is the user-facing application, backend folders represent independently owned service boundaries, and the integration layer makes external systems explicit. Koha remains the catalog source of truth and is accessed through its REST API. Gutendex is the external Gutenberg metadata source for the future Gutendex-to-MARC21-to-Koha pipeline. The AI/RAG layer will consume catalog information through the backend/API. `frontend/src/data/mockBooks.js` is temporary mock/test data, not the authoritative catalog.

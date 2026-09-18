@@ -1,6 +1,6 @@
 import { FiList, FiShoppingCart } from 'react-icons/fi';
 import { useEffect, useState } from 'react';
-import { mockBooks } from '../data/books';
+import { mockBooks } from '../data/mockBooks';
 
 const getItemType = (book) => book.itemType || 'BOOKS';
 const getLocation = (book) => book.location || 'Asia Pacific College Library';
