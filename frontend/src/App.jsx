@@ -1,13 +1,14 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import OpacPage from './pages/OpacPage'
+import CatalogAccessPage from './pages/CatalogAccessPage'
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/catalog" element={<OpacPage />} />
+        <Route path="/catalog" element={<CatalogAccessPage />} />
       </Routes>
     </Router>
   )
