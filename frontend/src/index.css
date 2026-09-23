@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 * {
   margin: 0;
@@ -18,6 +18,379 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.catalog-access-page {
+  min-height: 100vh;
+  color: #172b4d;
+  background: #f4f7fb;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.catalog-utility-bar {
+  min-height: 64px;
+  padding: 0 4.5%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+}
+
+.catalog-koha-mark,
+.catalog-utility-links,
+.catalog-utility-links button,
+.catalog-microsoft-login,
+.catalog-contact-list a,
+.catalog-back-to-top {
+  display: inline-flex;
+  align-items: center;
+}
+
+.catalog-koha-mark {
+  gap: 5px;
+  color: #15386e;
+  font-family: Georgia, serif;
+  font-size: 25px;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.catalog-koha-mark svg {
+  width: 21px;
+  height: 21px;
+}
+
+.catalog-utility-links {
+  gap: 34px;
+}
+
+.catalog-utility-links button,
+.catalog-forgot-link {
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  color: #0b3e81;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.catalog-utility-links button:last-child {
+  font-weight: 600;
+}
+
+.catalog-brand-banner {
+  min-height: 187px;
+  margin: 0 2.6%;
+  padding: 22px 7%;
+  display: flex;
+  align-items: center;
+  gap: 31px;
+  color: #fff;
+  background: linear-gradient(103deg, #092f69 0%, #0b3978 68%, #123f7b 100%);
+  border-bottom: 2px solid #e6a821;
+  overflow: hidden;
+}
+
+.catalog-brand-banner h1,
+.catalog-brand-banner p {
+  margin: 0;
+  color: #fff;
+}
+
+.catalog-brand-banner p {
+  margin-bottom: 3px;
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+
+.catalog-brand-banner h1 {
+  font-size: clamp(2.1rem, 4.5vw, 4rem);
+  line-height: 1.05;
+  letter-spacing: -1px;
+  font-weight: 700;
+}
+
+.catalog-brand-mark {
+  position: relative;
+  width: 86px;
+  height: 126px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 4px 2px rgba(0, 0, 0, .18));
+}
+
+.catalog-brand-mark-head {
+  position: absolute;
+  top: 3px;
+  left: 24px;
+  width: 38px;
+  height: 43px;
+  border-radius: 55% 45% 48% 52%;
+  background: #edb329;
+  transform: rotate(-19deg);
+}
+
+.catalog-brand-mark-head::before,
+.catalog-brand-mark-head::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  width: 25px;
+  height: 18px;
+  border-radius: 80% 15% 70% 20%;
+  background: #edb329;
+}
+
+.catalog-brand-mark-head::before {
+  left: -16px;
+  transform: rotate(-27deg);
+}
+
+.catalog-brand-mark-head::after {
+  right: -15px;
+  transform: scaleX(-1) rotate(-27deg);
+}
+
+.catalog-brand-mark-body {
+  position: absolute;
+  bottom: 3px;
+  left: 14px;
+  width: 58px;
+  height: 86px;
+  border-radius: 50% 50% 13% 13%;
+  background: #edb329;
+  clip-path: polygon(26% 0, 74% 0, 100% 100%, 0 100%);
+}
+
+.catalog-access-main {
+  max-width: 1252px;
+  margin: 0 auto;
+  padding: 32px 24px 82px;
+}
+
+.catalog-intro {
+  text-align: center;
+}
+
+.catalog-intro h2 {
+  margin: 0 0 5px;
+  color: #0d4d92;
+  font-size: 31px;
+  font-weight: 700;
+}
+
+.catalog-intro p {
+  color: #7792b2;
+  font-size: 17px;
+}
+
+.catalog-login-panel {
+  max-width: 920px;
+  min-height: 530px;
+  margin: 34px auto 0;
+  padding: 21px 30px 42px;
+  text-align: center;
+  background: #fff;
+}
+
+.catalog-gold-rule {
+  width: 66%;
+  height: 1px;
+  margin: 0 auto 41px;
+  background: #e5ac35;
+}
+
+.catalog-login-panel > h2 {
+  margin: 0 0 20px;
+  color: #182c4d;
+  font-size: 23px;
+  line-height: 1.14;
+  font-weight: 700;
+}
+
+.catalog-microsoft-login {
+  width: min(578px, 100%);
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  margin: 0 auto 31px;
+  border: 0;
+  color: #3159a0;
+  background: #f5f6f8;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.catalog-microsoft-login:hover,
+.catalog-microsoft-login:focus-visible {
+  background: #e9eef7;
+  outline: 2px solid #6d8fbd;
+  outline-offset: 2px;
+}
+
+.catalog-external-card {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 28px 29px 31px;
+  text-align: left;
+  border: 1px solid #dce3ec;
+  border-radius: 21px;
+  box-shadow: 0 18px 35px rgba(37, 61, 91, .1);
+}
+
+.catalog-external-card h3 {
+  margin: 0 0 12px;
+  color: #172d4e;
+  font-size: 22px;
+}
+
+.catalog-external-card p {
+  max-width: 430px;
+  margin: 0;
+  color: #607b9e;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.catalog-contact-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #dce3ec;
+}
+
+.catalog-contact-list a {
+  gap: 5px;
+  color: #2563d7;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.catalog-contact-list a:hover {
+  text-decoration: underline;
+}
+
+.catalog-forgot-link {
+  display: block;
+  margin: 0 auto;
+  color: #1687c5;
+  font-weight: 400;
+}
+
+.catalog-forgot-link:hover {
+  text-decoration: underline;
+}
+
+.catalog-access-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 17px 4.5%;
+  color: #7890ad;
+  background: #fff;
+  font-size: 12px;
+}
+
+.catalog-back-to-top {
+  position: fixed;
+  right: 3.4%;
+  bottom: 26px;
+  justify-content: center;
+  width: 37px;
+  height: 37px;
+  border: 0;
+  border-radius: 4px;
+  color: #fff;
+  background: #073572;
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .catalog-utility-bar {
+    padding: 0 20px;
+  }
+
+  .catalog-utility-links {
+    gap: 12px;
+  }
+
+  .catalog-utility-links button:first-child {
+    font-size: 0;
+  }
+
+  .catalog-utility-links button:first-child svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .catalog-brand-banner {
+    min-height: 145px;
+    margin: 0;
+    padding: 20px 24px;
+    gap: 15px;
+  }
+
+  .catalog-brand-mark {
+    width: 48px;
+    height: 75px;
+    transform: scale(.65);
+    transform-origin: left center;
+    margin-right: -17px;
+  }
+
+  .catalog-brand-banner p {
+    font-size: 11px;
+    letter-spacing: .5px;
+  }
+
+  .catalog-brand-banner h1 {
+    font-size: 2rem;
+    letter-spacing: -.5px;
+  }
+
+  .catalog-access-main {
+    padding: 28px 14px 70px;
+  }
+
+  .catalog-intro h2 {
+    font-size: 28px;
+  }
+
+  .catalog-intro p {
+    font-size: 15px;
+  }
+
+  .catalog-login-panel {
+    min-height: 0;
+    margin-top: 25px;
+    padding: 20px 14px 34px;
+  }
+
+  .catalog-gold-rule {
+    width: 80%;
+    margin-bottom: 32px;
+  }
+
+  .catalog-login-panel > h2 {
+    font-size: 20px;
+  }
+
+  .catalog-login-panel > h2 br {
+    display: none;
+  }
+
+  .catalog-external-card {
+    padding: 23px 20px 25px;
+    border-radius: 16px;
+  }
+
+  .catalog-access-footer {
+    gap: 10px;
+    padding: 15px 20px;
+    flex-direction: column;
+  }
 }
 
 /* Custom scrollbar */
