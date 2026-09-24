@@ -11,13 +11,55 @@ import {
   FiShoppingCart,
   FiStar,
 } from 'react-icons/fi';
+import { useState } from 'react';
 
 const getCallNumber = (book) => {
   const match = book.availability.match(/call number: ([^\]]+)/i);
   return match ? match[1] : 'Available at the library';
 };
 
+function MarcView({ book, callNumber }) {
+  const fields = [
+    ['000', '00000nam a2200000 i 4500'],
+    ['001', String(book.id)],
+    ['100', `1_\\a ${book.author}.`],
+    ['245', `10\\a ${book.title} / \\c ${book.author}.`],
+    ['264', `_1\\a ${book.publisher}, \\c ${book.year}.`],
+    ['300', '  \\a 1 volume ; \\c illustrations.'],
+    ['650', ` _0\\a ${book.category}.`],
+    ['852', `  \\a Asia Pacific College Library \\h ${callNumber}`],
+  ];
+
+  return (
+    <div className="border border-[#d8dde2] bg-[#f8f9fa] text-xs">
+      <div className="border-b border-[#d8dde2] bg-[#e7ecef] px-3 py-2 font-semibold text-[#334e68]">MARC record</div>
+      <div className="divide-y divide-[#d8dde2]">
+        {fields.map(([tag, value]) => (
+          <div key={tag} className="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-3 px-3 py-2">
+            <span className="font-semibold text-[#1672ae]">{tag}</span>
+            <code className="whitespace-pre-wrap break-words text-[#3d4b57]">{value}</code>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function IsbdView({ book, callNumber }) {
+  return (
+    <div className="border border-[#d8dde2] bg-white px-4 py-4 text-sm leading-7 text-[#3d4b57]">
+      <h2 className="mb-3 border-b border-[#d8dde2] pb-2 text-sm font-semibold text-[#334e68]">ISBD view</h2>
+      <p>
+        <strong>{book.title}</strong> / {book.author}. - {book.publisher}, {book.year}. - 1 volume ; illustrations. - ({book.category})
+      </p>
+      <p className="mt-3"><strong>Location:</strong> Asia Pacific College Library. <strong>Call number:</strong> {callNumber}.</p>
+      <p className="mt-3"><strong>Online resource:</strong> {book.online}</p>
+    </div>
+  );
+}
+
 export default function BookDetail({ book, onBack }) {
+  const [viewMode, setViewMode] = useState('normal');
   const callNumber = getCallNumber(book);
   const copyCount = book.availability.match(/Library \((\d+)\)/)?.[1] || '1';
 
@@ -33,11 +75,16 @@ export default function BookDetail({ book, onBack }) {
       <div className="grid gap-5 p-3 lg:grid-cols-[minmax(0,1fr)_285px]">
         <div>
           <div className="mb-3 flex items-center gap-2 border-b border-[#d8dde2] pb-2 text-xs text-[#35658e]">
-            <button type="button" className="flex items-center gap-1 bg-[#edf3f7] px-2 py-1"><FiList /> Normal view</button>
-            <button type="button" className="flex items-center gap-1 px-2 py-1 hover:bg-[#edf3f7]"><FiGrid /> MARC view</button>
-            <button type="button" className="flex items-center gap-1 px-2 py-1 hover:bg-[#edf3f7]"><FiGrid /> ISBD view</button>
+            <button type="button" onClick={() => setViewMode('normal')} className={`flex items-center gap-1 px-2 py-1 ${viewMode === 'normal' ? 'bg-[#edf3f7] font-semibold' : 'hover:bg-[#edf3f7]'}`}><FiList /> Normal view</button>
+            <button type="button" onClick={() => setViewMode('marc')} className={`flex items-center gap-1 px-2 py-1 ${viewMode === 'marc' ? 'bg-[#edf3f7] font-semibold' : 'hover:bg-[#edf3f7]'}`}><FiGrid /> MARC view</button>
+            <button type="button" onClick={() => setViewMode('isbd')} className={`flex items-center gap-1 px-2 py-1 ${viewMode === 'isbd' ? 'bg-[#edf3f7] font-semibold' : 'hover:bg-[#edf3f7]'}`}><FiGrid /> ISBD view</button>
           </div>
 
+          {viewMode === 'marc' ? (
+            <MarcView book={book} callNumber={callNumber} />
+          ) : viewMode === 'isbd' ? (
+            <IsbdView book={book} callNumber={callNumber} />
+          ) : (
           <div className="flex flex-col gap-4 sm:flex-row">
             <div className="w-36 shrink-0 border border-[#cbdde4] p-2 text-center text-xs text-[#72808c]">
               <img src={book.cover} alt={`${book.title} cover`} className="mx-auto h-44 w-28 object-cover" />
@@ -55,6 +102,7 @@ export default function BookDetail({ book, onBack }) {
               <p className="mt-2 text-xs"><strong>Online Resources:</strong> <a href="#" className="text-[#1672ae] hover:underline">{book.online}</a></p>
             </div>
           </div>
+          )}
 
           <div className="mt-4 text-xs">
             <a href="#contents" className="text-[#1672ae] hover:underline">• Click to access the Table of Contents</a>

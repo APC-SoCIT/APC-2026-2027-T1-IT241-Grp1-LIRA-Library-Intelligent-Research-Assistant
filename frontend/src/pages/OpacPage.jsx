@@ -40,7 +40,7 @@ export default function OpacPage() {
         </div>
         <div className="flex items-center gap-4">
           <button className="flex items-center gap-1 font-semibold hover:text-blue-600 transition-colors">
-            <FiUser className="w-4 h-4" /> Welcome, Lance Art Fortaleza Fortaleza <FiChevronDown className="w-3 h-3" />
+            <FiUser className="w-4 h-4" /> Welcome, Library User <FiChevronDown className="w-3 h-3" />
           </button>
           <button className="flex items-center gap-1 hover:text-blue-600 transition-colors">
             Languages <FiChevronDown className="w-3 h-3" />
