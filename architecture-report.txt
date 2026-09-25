@@ -1,0 +1,697 @@
+﻿LIRA PROJECT ARCHITECTURE REPORT
+Generated: 2026-09-24 23:34:55
+Repository root: C:\Users\bokis\Documents\Coding\APC-2026-2027-T1-IT241-Grp1-LIRA-Library-Intelligent-Research-Assistant
+
+=== DIRECTORY AND FILE TREE ===
+
+|-- backend
+|   |-- ai-service
+|   |   |-- citations
+|   |   |   \-- README.md
+|   |   |-- faq
+|   |   |   \-- README.md
+|   |   |-- recommendations
+|   |   |   \-- README.md
+|   |   |-- summaries
+|   |   |   \-- README.md
+|   |   \-- README.md
+|   |-- analytics-service
+|   |   \-- README.md
+|   |-- auth-service
+|   |   \-- README.md
+|   |-- catalog-service
+|   |   |-- src
+|   |   |   |-- catalog
+|   |   |   |   |-- dto
+|   |   |   |   |   |-- pagination.dto.ts
+|   |   |   |   |   \-- search-catalog.dto.ts
+|   |   |   |   |-- book.types.ts
+|   |   |   |   |-- catalog.controller.ts
+|   |   |   |   |-- catalog.module.ts
+|   |   |   |   \-- catalog.service.ts
+|   |   |   |-- config
+|   |   |   |   \-- configuration.ts
+|   |   |   |-- health
+|   |   |   |   |-- health.controller.ts
+|   |   |   |   |-- health.module.ts
+|   |   |   |   \-- health.service.ts
+|   |   |   |-- koha
+|   |   |   |   |-- koha.client.ts
+|   |   |   |   |-- koha.exceptions.ts
+|   |   |   |   |-- koha.module.ts
+|   |   |   |   \-- koha.types.ts
+|   |   |   |-- shared
+|   |   |   |   \-- request-logging.interceptor.ts
+|   |   |   |-- app.module.ts
+|   |   |   \-- main.ts
+|   |   |-- test
+|   |   |   |-- catalog.controller.spec.ts
+|   |   |   |-- catalog.service.spec.ts
+|   |   |   \-- health.controller.spec.ts
+|   |   |-- .eslintrc.js
+|   |   |-- .gitignore
+|   |   |-- eslint.config.mjs
+|   |   |-- jest.config.js
+|   |   |-- nest-cli.json
+|   |   |-- package.json
+|   |   |-- package-lock.json
+|   |   |-- README.md
+|   |   |-- tsconfig.build.json
+|   |   \-- tsconfig.json
+|   |-- chatbot-config-service
+|   |   \-- README.md
+|   |-- loans-service
+|   |   \-- README.md
+|   |-- shared
+|   |   \-- README.md
+|   \-- README.md
+|-- docs
+|   |-- architecture
+|   |   \-- README.md
+|   |-- CSPROJ
+|   |   \-- readme.md
+|   |-- INTSDEV
+|   |   \-- readme.md
+|   |-- MSYADD1
+|   |   |-- ClientMeeting
+|   |   |   \-- CacheFlow_Client Update & Meeting.docx
+|   |   |-- diagrams
+|   |   |   |-- ComponentDiagram(Version2).puml
+|   |   |   |-- ComponentDiagram(Version3).puml
+|   |   |   |-- ComponentDiagram(Version4).puml
+|   |   |   |-- ComponentDiagram(Version5).puml
+|   |   |   |-- ContainerDiagram(Version2).puml
+|   |   |   |-- ContainerDiagram(Version3).puml
+|   |   |   |-- ContainerDiagram(Version4).puml
+|   |   |   |-- ContainerDiagram(Version5).puml
+|   |   |   |-- ContextDiagram(Version2).puml
+|   |   |   |-- ContextDiagram(Version3).puml
+|   |   |   |-- ContextDiagram(Version4).puml
+|   |   |   |-- Lira_Component_Diagram(Version1).puml
+|   |   |   |-- LIRA_Container_Diagram(Version 1).puml
+|   |   |   |-- LIRA_System_Context_Diagram(Version1).puml
+|   |   |   \-- SystemContextDiagram(Version5).puml
+|   |   |-- TestCases
+|   |   |   |-- LIRA_Test_Cases.xlsx
+|   |   |   \-- t
+|   |   |-- UseCaseFullDesc
+|   |   |   \-- ucfd.txt
+|   |   |-- UserStories&AcceptanceCriteria
+|   |   |   |-- LIRA_User_Stories_(Version3).xlsx
+|   |   |   |-- Lira_User_Stories_and_Acceptance_CriteriaVersion2).xlsx
+|   |   |   \-- User_Stories_and_Acceptance_Criteria.xlsx
+|   |   |-- WeeklyStatusReport
+|   |   |   |-- Consultaion.docx
+|   |   |   |-- Weekly Status Report_1.docx
+|   |   |   |-- Weekly Status Report_3.docx
+|   |   |   |-- Weekly Status Report_4.docx
+|   |   |   |-- Weekly Status Report_5.docx
+|   |   |   |-- Weekly Status Report_6.docx
+|   |   |   |-- Weekly-Status-Report_2.docx
+|   |   |   \-- wsr.txt
+|   |   |-- New Text Document.txt
+|   |   \-- readme.md
+|   |-- PROJMAN
+|   |   \-- readme.md
+|   |-- sprint-backlog
+|   |   \-- README.md
+|   \-- README.md
+|-- frontend
+|   |-- public
+|   |   |-- favicon.svg
+|   |   |-- icons.svg
+|   |   \-- README.md
+|   |-- src
+|   |   |-- assets
+|   |   |   |-- typescript.svg
+|   |   |   \-- vite.svg
+|   |   |-- components
+|   |   |   |-- admin
+|   |   |   |   \-- README.md
+|   |   |   |-- auth
+|   |   |   |   \-- README.md
+|   |   |   |-- catalog
+|   |   |   |   \-- README.md
+|   |   |   |-- chatbot
+|   |   |   |   \-- README.md
+|   |   |   |-- loans
+|   |   |   |   \-- README.md
+|   |   |   |-- shared
+|   |   |   |   \-- README.md
+|   |   |   |-- AnnouncementsSection.jsx
+|   |   |   |-- BookDetail.jsx
+|   |   |   |-- FeaturedBooksSection.jsx
+|   |   |   |-- Footer.jsx
+|   |   |   |-- HeroSection.jsx
+|   |   |   |-- LibraryCatalogueSection.jsx
+|   |   |   |-- Navbar.jsx
+|   |   |   |-- NewArrivalsSection.jsx
+|   |   |   |-- OnlineFormsSection.jsx
+|   |   |   |-- OnlineResourcesSection.jsx
+|   |   |   |-- OpacSearchResults.jsx
+|   |   |   |-- OthersSection.jsx
+|   |   |   |-- README.md
+|   |   |   \-- UtilizationSection.jsx
+|   |   |-- data
+|   |   |   \-- books.js
+|   |   |-- hooks
+|   |   |   \-- README.md
+|   |   |-- pages
+|   |   |   |-- CatalogAccessPage.jsx
+|   |   |   |-- HomePage.jsx
+|   |   |   |-- OpacPage.jsx
+|   |   |   \-- README.md
+|   |   |-- services
+|   |   |   \-- README.md
+|   |   |-- store
+|   |   |   \-- README.md
+|   |   |-- App.jsx
+|   |   |-- counter.ts
+|   |   |-- index.css
+|   |   |-- main.jsx
+|   |   |-- main.ts
+|   |   |-- README.md
+|   |   \-- style.css
+|   |-- index.html
+|   |-- package.json
+|   |-- package-lock.json
+|   |-- postcss.config.js
+|   |-- README.md
+|   |-- tailwind.config.js
+|   \-- tsconfig.json
+|-- infra
+|   \-- README.md
+|-- integrations
+|   |-- koha-ils
+|   |   \-- README.md
+|   \-- README.md
+|-- .gitignore
+|-- AboutUs.md
+|-- package-lock.json
+\-- README.md
+
+=== SELECTED DOCUMENTATION AND CONFIGURATION FILES ===
+
+--- backend\ai-service\citations\README.md ---
+Citation formatting for APA and MLA styles. This module transforms trusted bibliographic metadata into consistently formatted citations and identifies missing fields rather than silently inventing them.
+
+Formatting rules should be covered with representative title, author, edition, publication, and URL cases. Lira-10
+
+
+--- backend\ai-service\faq\README.md ---
+General FAQ chatbot logic. This module answers common library questions using approved knowledge sources and returns concise, user-oriented responses with appropriate escalation or fallback behavior when the answer is uncertain.
+
+Knowledge-source selection, prompt constraints, and response metadata should remain testable independently from the transport layer. Lira-08
+
+
+--- backend\ai-service\README.md ---
+AI service boundary for recommendations, FAQs, summaries, and citations. The service groups assistant capabilities while keeping each capability's prompts, validation, provider calls, and response shaping in its own subfolder.
+
+Responses should carry enough context for the frontend to distinguish generated text, citations, summaries, and recommendations. Provider failures, rate limits, unsafe or incomplete outputs, and prompt configuration should be handled consistently at this boundary.
+
+
+--- backend\ai-service\recommendations\README.md ---
+Personalized book recommendation logic. This module combines permitted user context with catalog metadata to produce relevant book suggestions and an understandable reason for each recommendation.
+
+Recommendations should degrade gracefully when a user has little history, and should avoid exposing private profile information in generated explanations. Lira-07
+
+
+--- backend\ai-service\summaries\README.md ---
+E-book summary generation. This module accepts eligible ebook content or references, applies length and output-format constraints, and returns a summary that can be displayed with its source context.
+
+Large inputs should be bounded or processed in a controlled way, and failures should communicate whether the content is unavailable, unsupported, or temporarily unprocessable. Lira-09
+
+
+--- backend\analytics-service\README.md ---
+Reports, metrics, and PDF/CSV export. This service aggregates approved operational data into staff-facing usage, catalog, loan, and chatbot metrics without becoming the system of record for those domains.
+
+Report queries should define their time range, filters, timezone, and access scope explicitly. Export jobs need predictable filenames, appropriate content types, and bounded resource usage for large result sets. Lira-05
+
+
+--- backend\auth-service\README.md ---
+Microsoft SSO and OAuth handling. This service coordinates sign-in redirects, callback validation, identity claims, session creation, and sign-out behavior for the LIRA platform.
+
+It is responsible for validating provider responses and exposing only the user and authorization information required by other services. Token handling, callback errors, account provisioning, and session expiry should be logged without recording credentials or raw tokens. Lira-01, Lira-06
+
+
+--- backend\catalog-service\nest-cli.json ---
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "deleteOutDir": true
+  }
+}
+
+
+--- backend\catalog-service\package.json ---
+{
+  "name": "@lira/catalog-service",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/main.js",
+    "lint": "eslint \"{src,test}/**/*.ts\"",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage"
+  },
+  "dependencies": {
+    "@nestjs/axios": "^4.0.0",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@nestjs/testing": "^11.0.0",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.2",
+    "@types/supertest": "^7.2.1",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}
+
+
+--- backend\catalog-service\README.md ---
+# LIRA Catalog Service
+
+The Catalog Service is a read-only REST gateway between the LIRA frontend and Koha. Koha is the authoritative source of catalog data. The service communicates with Koha exclusively through the Koha REST API and must not access Koha's MariaDB database directly.
+
+## Scope
+
+Implemented:
+
+- Service health and Koha connectivity health checks
+- Read-only list, detail, and keyword search endpoints
+- Pagination with a maximum page size of 100
+- Normalization from Koha bibliographic records to the public LIRA `Book` model
+- Timeout-controlled Basic Authentication requests to Koha
+- Input validation, safe integration errors, configurable CORS, and request logging
+
+This service does not create, update, or delete records, manage patrons or loans, import Gutenberg/MARC21 data, or perform AI, RAG, recommendation, or availability logic.
+
+## Prerequisites
+
+- Node.js 20 or later
+- npm
+- Network access to the Koha REST API
+- A Koha API account with permission to read bibliographic records
+
+## Installation
+
+```powershell
+cd backend/catalog-service
+npm install
+Copy-Item .env.example .env
+```
+
+Edit `.env` with the actual password. `.env` is ignored by git and credentials must never be committed.
+
+## Configuration
+
+Required:
+
+- `KOHA_BASE_URL`: Koha host, for example `http://192.168.100.63:8081`
+- `KOHA_API_USER`: Koha API username
+- `KOHA_API_PASSWORD`: Koha API password
+
+Optional:
+
+- `PORT`: local HTTP port, default `3001`
+- `CORS_ORIGINS`: comma-separated allowed origins, default `http://localhost:3000`
+- `KOHA_TIMEOUT_MS`: request timeout from 100 to 60000 ms, default `5000`
+- `NODE_ENV`: runtime environment label
+
+The development VM uses `http://192.168.100.63:8081`. Do not use `localhost` for Koha from the Windows backend.
+
+## Running
+
+```powershell
+npm run start:dev
+```
+
+Production build and start:
+
+```powershell
+npm run build
+npm run start:prod
+```
+
+## API
+
+- `GET /health` returns `{ "status": "ok" }` for service health.
+- `GET /health/koha` performs an authenticated request to Koha. It returns HTTP 200 with `{ "status": "ok", "koha": "reachable" }`, or HTTP 503 with `{ "status": "error", "koha": "unreachable" }`.
+- `GET /api/catalog/books?page=1&limit=20` lists normalized books.
+- `GET /api/catalog/books/:id` returns one normalized book. Invalid IDs return HTTP 400; missing records return HTTP 404.
+- `GET /api/catalog/search?q=programming&page=1&limit=20` searches Koha by general title/author/ISBN query.
+
+Missing Koha fields remain `null`. The service does not guess or generate metadata.
+
+## Testing
+
+Unit tests mock Koha and do not require credentials or a live server:
+
+```powershell
+npm test
+npm run build
+npm run lint
+```
+
+For development verification against the VM, configure `.env`, start the service, then call:
+
+```powershell
+Invoke-RestMethod http://localhost:3001/health
+Invoke-RestMethod http://localhost:3001/health/koha
+Invoke-RestMethod 'http://localhost:3001/api/catalog/books?page=1&limit=20'
+Invoke-RestMethod 'http://localhost:3001/api/catalog/books/1'
+Invoke-RestMethod 'http://localhost:3001/api/catalog/search?q=programming'
+```
+
+Record `biblio_id=1` is a useful development check only; it is not hard-coded into the application. Live verification requires the configured Koha account and network access to `192.168.100.63`.
+
+## Security and architecture
+
+Koha credentials stay on the backend. The service never returns credentials or the Authorization header and does not log passwords, tokens, or full Koha responses. Requests use a finite timeout and CORS is configured from `CORS_ORIGINS`, rather than allowing every origin.
+
+Koha remains responsible for bibliographic records, items, MARC data, and library-management data. This service is only the integration boundary used by LIRA clients.
+
+
+--- backend\catalog-service\tsconfig.json ---
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2021",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "incremental": true,
+    "types": ["node", "jest"],
+    "skipLibCheck": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  }
+}
+
+
+--- backend\chatbot-config-service\README.md ---
+Admin configuration of chatbot tone, rules, and knowledge sources. This service stores and serves the managed configuration used by AI capabilities, including versioning or audit information needed to explain a response's active settings.
+
+Only authorized staff should modify configuration. Updates should be validated before activation and should support safe defaults or rollback when a configuration is incomplete or invalid. Lira-04
+
+
+--- backend\loans-service\README.md ---
+Book checkout/return workflows and overdue alerts. This service coordinates circulation actions, checks borrowing eligibility and availability, records loan state, and exposes current due dates to authenticated users.
+
+It should make operations idempotent where retries are possible and keep overdue detection separate from notification delivery. Koha-specific calls belong behind the shared Koha integration boundary. Lira-03
+
+
+--- backend\README.md ---
+# backend
+
+Node/Express backend services that provide LIRA's library, AI, administration, and analytics capabilities. Each service owns a focused domain and communicates through explicit APIs or shared integration adapters.
+
+## Service Boundaries
+
+- `auth-service/` owns identity and session-related interactions.
+- `catalog-service/` and `loans-service/` own library inventory and circulation workflows.
+- `ai-service/` groups the assistant's user-facing capabilities.
+- Configuration and reporting are isolated in `chatbot-config-service/` and `analytics-service/`.
+
+Cross-cutting middleware, guards, and logging belong in `shared/`. Services should keep secrets and environment-specific settings outside source control.
+
+
+--- backend\shared\README.md ---
+Common middleware, authentication guards, and logging for backend services. This area provides cross-cutting behavior such as request correlation, authorization checks, error normalization, validation helpers, and consistent service logging.
+
+Shared utilities should remain lightweight and stable. Domain-specific rules belong in the owning service so that this folder does not become an implicit shared application layer.
+
+
+--- docs\architecture\README.md ---
+System architecture diagrams and supporting notes. Documents here should explain service boundaries, request and data flows, external dependencies, authentication paths, deployment relationships, and important tradeoffs.
+
+Diagrams should be kept consistent with the repository structure and updated when a service contract or integration boundary changes. Architecture notes should include the date and status of significant decisions where useful.
+
+
+--- docs\CSPROJ\readme.md ---
+CSPROJ Documentation
+
+
+--- docs\INTSDEV\readme.md ---
+Documentation folder for INTSDEV
+
+
+--- docs\MSYADD1\readme.md ---
+Documentation folder for MSYADD1
+
+
+--- docs\PROJMAN\readme.md ---
+PROJMAN Docs
+
+
+--- docs\README.md ---
+Project documentation, including sprint backlog and architecture notes. This directory captures decisions and product context that should remain discoverable alongside the implementation without embedding planning assumptions in service code.
+
+Keep backlog requirements in `sprint-backlog/` and system-level design decisions in `architecture/`. Link documents to the relevant services or sprint IDs when that context helps future contributors.
+
+
+--- docs\sprint-backlog\README.md ---
+Sprint backlog documentation, user stories, and acceptance criteria. This area is the reference for the Lira-XX work items that guide implementation across frontend, backend, AI, and operational capabilities.
+
+Each story should state its user outcome, acceptance criteria, dependencies, and any service or UI areas it affects. Keep completed decisions and scope changes visible so implementation remains traceable to the product requirement.
+
+
+--- frontend\package.json ---
+{
+  "name": "lira",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.6.0",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.19",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0"
+  },
+  "dependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-icons": "^5.7.0",
+    "react-router-dom": "^7.18.3",
+    "swiper": "^14.2.0"
+  }
+}
+
+
+--- frontend\public\README.md ---
+# Public Assets
+
+Static assets served by the React frontend. This folder is intended for files referenced by stable public paths, such as icons, manifest metadata, public branding, and assets that do not need to pass through the application bundler.
+
+Keep private configuration and generated build output out of this directory. Asset names and paths should remain stable when referenced by deployment configuration or external clients.
+
+
+--- frontend\README.md ---
+# frontend
+
+React frontend application for the LIRA library system. This area owns the browser experience for library members, administrators, and other authenticated users.
+
+The source tree separates route-level pages, reusable components, API-facing services, hooks, and client state. Static files that do not require compilation belong in `public/`.
+
+## Responsibilities
+
+- Present catalog search, availability, loans, chatbot, administration, and reporting workflows.
+- Manage navigation, session-aware UI, loading states, validation, and user-facing errors.
+- Call backend APIs through the wrappers in `src/services/` rather than embedding request logic in visual components.
+
+
+--- frontend\src\components\admin\README.md ---
+# Administration Components
+
+Catalog CRUD, chatbot configuration, and reports/analytics UI. These components support staff workflows for maintaining records, controlling assistant behavior, and reviewing library activity.
+
+Administrative actions should use explicit confirmation, permission-aware states, validation feedback, and clear success or failure messaging. Lira-02, Lira-04, Lira-05
+
+
+--- frontend\src\components\auth\README.md ---
+# Authentication Components
+
+Login UI and Microsoft SSO redirect handling. These components present sign-in states, initiate the Microsoft identity flow, and handle the browser return path after authentication.
+
+They should make authentication failures and expired sessions understandable to users without exposing tokens or provider-specific implementation details. Lira-01, Lira-06
+
+
+--- frontend\src\components\catalog\README.md ---
+# Catalog Components
+
+Search, book detail, and availability display. These components help users discover titles, inspect bibliographic information, and understand whether a book can currently be borrowed.
+
+The presentation should accommodate query, filter, pagination, missing-cover, no-result, and unavailable-item states. Lira-02, Lira-11
+
+
+--- frontend\src\components\chatbot\README.md ---
+# Chatbot Components
+
+Chat window, message list, and citation/summary modals. The UI should support conversational prompts, streaming or loading states, follow-up questions, and clear separation between generated responses and supporting material.
+
+Citation and summary views should preserve the context of the selected answer and provide useful empty, error, and retry states. Lira-07, Lira-08, Lira-09, Lira-10
+
+
+--- frontend\src\components\loans\README.md ---
+# Loan Components
+
+My borrowed books dashboard and due dates. The workflow should make current loans, due dates, overdue status, and available actions easy to scan on both desktop and mobile layouts.
+
+Loan data should clearly distinguish loading, empty, failed, and successfully returned states. Lira-03, Lira-11
+
+
+--- frontend\src\components\README.md ---
+# components
+
+Organized React UI components for LIRA feature areas and shared interface elements. Components should be composable, accessible, and small enough to test around a single visual or interaction responsibility.
+
+Feature folders group domain-specific UI, while `shared/` contains elements used by multiple workflows. Components may receive data and callbacks from pages or hooks, but should avoid owning backend integration details.
+
+
+--- frontend\src\components\shared\README.md ---
+# Shared Components
+
+Reusable UI components, including buttons, layout, and navigation. This folder is for stable presentation primitives and cross-feature patterns that need consistent behavior throughout the application.
+
+Shared components should remain domain-neutral where possible and expose accessible labels, keyboard behavior, and predictable visual states to their consumers.
+
+
+--- frontend\src\hooks\README.md ---
+# Hooks
+
+Custom React hooks used across the frontend. Hooks encapsulate reusable client behavior such as session access, data loading, debounced catalog search, chatbot interaction, and responsive UI state.
+
+Hooks should expose a small, predictable interface and handle cleanup for subscriptions or in-flight work where necessary. They should not duplicate API contract logic that belongs in `services/`.
+
+
+--- frontend\src\pages\README.md ---
+# Pages
+
+Route-level views for Dashboard, Login, AdminPanel, and Reports. Pages compose feature components into complete navigable experiences and coordinate route-specific loading, permissions, and error boundaries.
+
+Keep business operations in services or hooks when they are reusable. A page should primarily establish the view model for its route and pass the necessary data and actions into components.
+
+
+--- frontend\src\README.md ---
+# src
+
+Frontend source code for LIRA components, pages, services, hooks, and state management. This is the main implementation boundary for the React application.
+
+Feature UI belongs in `components/`, full route views belong in `pages/`, and cross-cutting client behavior belongs in `hooks/` or `store/`. Network access should remain behind `services/` so components stay focused on rendering and interaction.
+
+
+--- frontend\src\services\README.md ---
+# Client Services
+
+API client wrappers for authentication, chatbot, catalog, and loans. These modules define the frontend-facing request and response boundary for backend services, including serialization, error normalization, and authentication headers.
+
+Components and pages should call these wrappers instead of constructing fetch requests directly. Service contracts should stay aligned with the corresponding backend service and integration documentation.
+
+
+--- frontend\src\store\README.md ---
+# Store
+
+State management for the user session and chat history. This area holds client state that must survive component changes or be shared by multiple routes, such as the authenticated user, permissions, conversation messages, and selected context.
+
+The store should distinguish durable client state from transient request state and should never persist sensitive access tokens in an unsafe browser location.
+
+
+--- frontend\tsconfig.json ---
+{
+  "compilerOptions": {
+    "target": "es2023",
+    "module": "esnext",
+    "lib": ["ES2023", "DOM"],
+    "types": ["vite/client"],
+    "allowArbitraryExtensions": true,
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
+}
+
+
+--- infra\README.md ---
+Deployment configurations, CI/CD workflows, and environment setup. This area describes how the frontend, backend services, integrations, and supporting resources are built, configured, tested, and promoted across environments.
+
+Environment-specific values should be injected securely at deployment time. Infrastructure changes should document required secrets, service dependencies, health checks, rollback expectations, and any local development prerequisites.
+
+
+--- integrations\koha-ils\README.md ---
+Koha ILS API wrapper shared by the catalog and loans services. This adapter translates LIRA's internal catalog and circulation needs into Koha requests and maps vendor responses into stable service-facing models.
+
+Connection settings and credentials must come from the runtime environment. The wrapper should centralize timeouts, retries, authentication, pagination, error mapping, and observability so catalog and loans services do not implement separate Koha clients.
+
+
+--- integrations\README.md ---
+Shared external-system integrations used by LIRA services. Adapters in this area isolate vendor APIs, credentials, transport details, retries, and response mapping from the domain services that consume them.
+
+Integration contracts should document required configuration, supported operations, failure behavior, and any rate or consistency limitations imposed by the external system.
+
+
+--- README.md ---
+# LIRA
+
+LIRA is an AI-powered library system built with a React frontend, Node/Express backend, and microservice-style architecture. It brings authentication, catalog discovery, borrowing workflows, conversational assistance, and operational reporting into one platform for library users and staff.
+
+The repository is organized by deployable or independently owned areas. Each service folder can evolve behind a clear API boundary, while shared code and external integrations remain explicit rather than being duplicated across services.
+
+## Project Areas
+
+- [frontend](frontend/): React user interface and client-side application structure.
+- [backend](backend/): Node/Express backend services for authentication, catalog, loans, AI, configuration, and analytics.
+- [integrations](integrations/): External system integrations, including Koha ILS.
+- [infra](infra/): Deployment, CI/CD, and environment configuration.
+- [docs](docs/): Sprint backlog and architecture documentation.
+
+## Development Scope
+
+This repository currently contains a structure-only scaffold. Application code, service manifests, deployment files, and tests can be added within the documented ownership areas as the sprint work is implemented.
+

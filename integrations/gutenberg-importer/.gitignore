@@ -1,0 +1,7 @@
+node_modules/
+dist/
+output/*.marcxml
+output/*.json
+.env
+.env.*
+!.env.example
