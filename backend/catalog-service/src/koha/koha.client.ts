@@ -41,10 +41,23 @@ export class KohaClient {
   }
 
   async searchBiblios(query: string, page: number, limit: number): Promise<KohaBiblio[]> {
-    const response = await this.request<KohaBiblioResponse>('/api/v1/biblios', {
-      params: { q: JSON.stringify({ 'title|author|isbn': query }), _page: page, _per_page: limit },
-    });
-    return this.extractBiblios(response.data);
+  const searchTerm = `%${query}%`;
+
+  const response = await this.request<KohaBiblioResponse>('/api/v1/biblios', {
+    params: {
+      q: JSON.stringify({
+        '-or': [
+          { title: { '-like': searchTerm } },
+          { author: { '-like': searchTerm } },
+          { isbn: { '-like': searchTerm } },
+        ],
+      }),
+      _page: page,
+      _per_page: limit,
+    },
+  });
+
+  return this.extractBiblios(response.data);
   }
 
   async checkConnectivity(): Promise<void> {
