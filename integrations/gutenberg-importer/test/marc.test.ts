@@ -1,3 +1,5 @@
+/// <reference types="node" />
+
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { normalizeBook } from '../src/gutendex/normalize-book.js';
@@ -23,6 +25,26 @@ test('maps MARC indicators, matching identifier, repeated fields, and escaped Un
   assert.equal(record.fields.find((field) => field.tag === '245')?.ind1, '1');
   assert.equal(record.fields.find((field) => field.tag === '245')?.ind2, '4');
   assert.deepEqual(record.fields.find((field) => field.tag === '041')?.subfields, [{ code: 'a', value: 'eng' }]);
+  assert.deepEqual(
+    record.fields.find((field) => field.tag === '100')?.subfields,
+    [{ code: 'a', value: 'Austen, Jane' }],
+  );
+  assert.deepEqual(
+    record.fields.find((field) => field.tag === '700')?.subfields,
+    [{ code: 'a', value: 'Contributor' }],
+  );
+  assert.deepEqual(
+    record.fields.find((field) => field.tag === '520')?.subfields,
+    [{ code: 'a', value: 'A <summary>' }],
+  );
+  assert.deepEqual(
+    record.fields.find((field) => field.tag === '650')?.subfields,
+    [{ code: 'a', value: 'Love & society' }],
+  );
+  assert.equal(
+    record.fields.find((field) => field.tag === '650')?.ind2,
+    '0',
+  );
   assert.match(xml, /The Pride &amp; Prejudice/);
   assert.match(xml, /https:\/\/example\.test\/a&amp;b/);
   validateMarcXml(xml, 1);
