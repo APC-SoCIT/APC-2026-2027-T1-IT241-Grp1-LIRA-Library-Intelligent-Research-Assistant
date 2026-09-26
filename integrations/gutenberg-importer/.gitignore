@@ -1,7 +1,10 @@
 node_modules/
 dist/
-output/*.marcxml
-output/*.json
+
+# Ignore all generated importer outputs
+output/
+
+# Environment files and secrets
 .env
 .env.*
 !.env.example
