@@ -22,7 +22,10 @@ No credentials or `.env` file are required. Optional settings can be provided th
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `GUTENDEX_BASE_URL` | `https://gutendex.com` | Gutendex API base URL |
-| `GUTENDEX_TIMEOUT_MS` | `10000` | Request timeout |
+| `GUTENDEX_TIMEOUT_MS` | `30000` | Per-attempt request timeout |
+| `GUTENDEX_MAX_ATTEMPTS` | `3` | Maximum attempts including the initial request |
+| `GUTENDEX_RETRY_INITIAL_DELAY_MS` | `250` | Initial retry backoff |
+| `GUTENDEX_RETRY_MAX_DELAY_MS` | `2000` | Maximum retry delay |
 | `GUTENBERG_OUTPUT_DIR` | `./output` | Output directory |
 | `GUTENBERG_BATCH_SIZE` | `10` | Concurrent requests per batch |
 
@@ -40,6 +43,8 @@ The command writes:
 - `gutenberg-84-1342-11.report.json`: source metadata, duplicate IDs, and per-ID errors
 
 The command returns a non-zero exit code when one or more requested IDs fail, while still writing valid records from the successful IDs. Invalid records are reported rather than silently skipped.
+
+For small or unreliable test imports, use `--batch-size 2` or `--batch-size 3` to limit concurrent Gutendex requests. The default remains 10 for compatibility.
 
 ## Mapping
 

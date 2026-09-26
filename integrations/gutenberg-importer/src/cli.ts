@@ -18,7 +18,13 @@ async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
   const config = readConfig();
   const outputDir = resolve(options.outputDir ?? config.outputDir);
-  const importer = new GutenbergImporter(new GutendexClient({ baseUrl: config.baseUrl, timeoutMs: config.timeoutMs }));
+  const importer = new GutenbergImporter(new GutendexClient({
+    baseUrl: config.baseUrl,
+    timeoutMs: config.timeoutMs,
+    maxAttempts: config.maxAttempts,
+    retryInitialDelayMs: config.retryInitialDelayMs,
+    retryMaxDelayMs: config.retryMaxDelayMs,
+  }));
   const result = await importer.import(options.ids, options.batchSize ?? config.batchSize);
   const xml = recordsToMarcXml(result.records);
   validateMarcXml(xml, result.records.length);

@@ -4,6 +4,7 @@ export class GutendexError extends Error {
     readonly id: number,
     readonly kind: 'http' | 'timeout' | 'network' | 'malformed' | 'invalid',
     readonly status?: number,
+    readonly retryAfterMs?: number,
   ) {
     super(message);
     this.name = 'GutendexError';
