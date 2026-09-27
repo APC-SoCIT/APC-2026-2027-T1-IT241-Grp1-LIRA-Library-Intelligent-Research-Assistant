@@ -1,13 +1,83 @@
 import { FiSearch, FiShoppingCart, FiList, FiUser, FiChevronDown } from 'react-icons/fi';
 import { FaBrain, FaCog, FaCode, FaBook, FaCamera, FaCalculator, FaBuilding, FaChartBar, FaUserGraduate } from 'react-icons/fa';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import OpacSearchResults from '../components/OpacSearchResults';
 import BookDetail from '../components/BookDetail';
+import { listBookmarks, removeBookmark, reserveBook, saveBookmark } from '../services/studentLibraryService';
+import { listCatalogBooks } from '../services/catalogService';
+import { adaptCatalogBook } from '../utils/catalogCategories';
 
-export default function OpacPage() {
+export default function OpacPage({ user, bookId }) {
+  const [books, setBooks] = useState([]);
+  const [catalogError, setCatalogError] = useState('');
+  const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBook, setSelectedBook] = useState(null);
+  const [showBookmarks, setShowBookmarks] = useState(false);
+  const [bookmarks, setBookmarks] = useState([]);
+  const [bookmarkMessage, setBookmarkMessage] = useState('');
+  const navigate = useNavigate();
+
+  const firstName = user?.user_metadata?.first_name || user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Student';
+
+  useEffect(() => {
+    let isCurrent = true;
+    listCatalogBooks()
+      .then((items) => { if (isCurrent) setBooks(items.map(adaptCatalogBook)); })
+      .catch((error) => { if (isCurrent) setCatalogError(error.message || 'Could not load the library catalog.'); })
+      .finally(() => { if (isCurrent) setIsLoadingCatalog(false); });
+    return () => { isCurrent = false; };
+  }, []);
+
+  useEffect(() => {
+    if (bookId) setSelectedBook(books.find((book) => String(book.id) === String(bookId)) || null);
+  }, [bookId, books]);
+
+  useEffect(() => {
+    listBookmarks()
+      .then((items) => setBookmarks(items))
+      .catch(() => setBookmarks([]));
+  }, []);
+
+  const handleShowBookmarks = async () => {
+    setShowBookmarks((visible) => !visible);
+    if (!showBookmarks) {
+      try {
+        setBookmarks(await listBookmarks());
+        setBookmarkMessage('');
+      } catch (error) {
+        setBookmarkMessage(error.message || 'Could not load your list.');
+      }
+    }
+  };
+
+  const handleSaveBookmark = async (book) => {
+    try {
+      const alreadySaved = bookmarks.some((item) => item.book_id === book.id);
+      if (alreadySaved) {
+        await removeBookmark(book.id);
+        setBookmarks((current) => current.filter((item) => item.book_id !== book.id));
+        setBookmarkMessage(`Removed “${book.title}” from your list.`);
+      } else {
+        const bookmark = await saveBookmark(book);
+        setBookmarks((current) => [bookmark, ...current.filter((item) => item.book_id !== bookmark.book_id)]);
+        setBookmarkMessage(`Saved “${book.title}” to your list.`);
+      }
+    } catch (error) {
+      setBookmarkMessage(error.message || 'Could not save this book.');
+    }
+  };
+
+  const handleReserveBook = async (book) => {
+    try {
+      await reserveBook(book);
+      setBookmarkMessage(`Reserved “${book.title}”.`);
+    } catch (error) {
+      setBookmarkMessage(error.message || 'Could not reserve this book.');
+    }
+  };
 
   const handleSearch = (e) => {
     if (e) e.preventDefault();
@@ -30,23 +100,37 @@ export default function OpacPage() {
              koha
           </div>
           <div className="flex items-center gap-4">
-            <button className="flex items-center gap-1 hover:text-blue-600 transition-colors">
+            <button type="button" className="flex items-center gap-1 hover:text-blue-600 transition-colors">
               <FiShoppingCart className="w-4 h-4" /> Cart
             </button>
-            <button className="flex items-center gap-1 hover:text-blue-600 transition-colors">
+            <button type="button" onClick={handleShowBookmarks} className="flex items-center gap-1 hover:text-blue-600 transition-colors">
               <FiList className="w-4 h-4" /> Lists <FiChevronDown className="w-3 h-3" />
             </button>
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button className="flex items-center gap-1 font-semibold hover:text-blue-600 transition-colors">
-            <FiUser className="w-4 h-4" /> Welcome, Library User <FiChevronDown className="w-3 h-3" />
+          <button type="button" className="flex items-center gap-1 font-semibold hover:text-blue-600 transition-colors">
+            <FiUser className="w-4 h-4" /> Welcome, {firstName} <FiChevronDown className="w-3 h-3" />
           </button>
           <button className="flex items-center gap-1 hover:text-blue-600 transition-colors">
             Languages <FiChevronDown className="w-3 h-3" />
           </button>
         </div>
       </nav>
+
+      {showBookmarks && (
+        <aside className="catalog-bookmarks-dropdown fixed left-20 top-14 z-50 w-80 max-w-[calc(100%-2rem)] border border-gray-200 bg-white p-4 shadow-xl">
+          <div className="mb-3 flex items-center justify-between border-b border-gray-200 pb-2">
+            <h2 className="text-sm font-bold text-[#1b2a4a]">My list</h2>
+            <span className="text-xs text-gray-500">{bookmarks.length} saved</span>
+          </div>
+          {bookmarks.length === 0 ? <p className="text-sm text-gray-500">No saved books yet.</p> : <ul className="space-y-3">
+            {bookmarks.slice(0, 5).map((bookmark) => <li key={bookmark.book_id} className="text-sm"><button type="button" onClick={() => navigate(`/catalog?book=${bookmark.book_id}`)} className="text-left hover:underline"><strong className="block text-[#1b2a4a]">{bookmark.title}</strong><span className="text-xs text-gray-500">{bookmark.author || 'Unknown author'}</span></button></li>)}
+          </ul>}
+          <button type="button" onClick={() => navigate('/catalog/lists')} className="mt-4 w-full border-t border-gray-200 pt-3 text-left text-sm font-semibold text-blue-700 hover:underline">View all {bookmarks.length} saved books</button>
+        </aside>
+      )}
+      {bookmarkMessage && <div className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 bg-[#1b2a4a] px-4 py-2 text-sm text-white shadow-lg">{bookmarkMessage}</div>}
 
       {/* Hero Banner */}
       <div className="bg-[#1b2a4a] text-white py-12 px-8 relative overflow-hidden flex items-center justify-center">
@@ -101,10 +185,14 @@ export default function OpacPage() {
           <a href="#" className="hover:underline">Library</a>
         </div>
 
-        {selectedBook ? (
-          <BookDetail book={selectedBook} onBack={() => setSelectedBook(null)} />
+        {catalogError ? (
+          <div className="bg-red-50 border border-red-200 p-6 text-center text-sm text-red-700">{catalogError}</div>
+        ) : isLoadingCatalog ? (
+          <div className="bg-white border border-gray-200 p-8 text-center text-sm text-gray-500">Loading the Koha catalog...</div>
+        ) : selectedBook ? (
+          <BookDetail book={selectedBook} onBack={() => setSelectedBook(null)} onSaveBookmark={handleSaveBookmark} onReserveBook={handleReserveBook} isBookmarked={bookmarks.some((item) => item.book_id === selectedBook.id)} />
         ) : isSearching ? (
-          <OpacSearchResults query={searchQuery} onFilter={setSearchQuery} onSelectBook={setSelectedBook} />
+          <OpacSearchResults books={books} query={searchQuery} onFilter={setSearchQuery} onSelectBook={setSelectedBook} onSaveBookmark={handleSaveBookmark} onReserveBook={handleReserveBook} isBookmarked={(book) => bookmarks.some((item) => item.book_id === book.id)} />
         ) : (
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-8 max-w-5xl mx-auto">
             <div className="flex items-center gap-3 mb-6">

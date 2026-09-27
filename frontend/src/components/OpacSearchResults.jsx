@@ -1,17 +1,16 @@
 import { FiList, FiShoppingCart } from 'react-icons/fi';
 import { useEffect, useState } from 'react';
-import { mockBooks } from '../data/books';
 
 const getItemType = (book) => book.itemType || 'BOOKS';
 const getLocation = (book) => book.location || 'Asia Pacific College Library';
 
 const getFacetValues = (books, getValue) => [...new Set(books.map(getValue))];
 
-export default function OpacSearchResults({ query, onFilter, onSelectBook }) {
+export default function OpacSearchResults({ books, query, onFilter, onSelectBook, onSaveBookmark, onReserveBook, isBookmarked }) {
   const [showAllAuthors, setShowAllAuthors] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filteredBooks = mockBooks.filter((book) => {
+  const filteredBooks = books.filter((book) => {
     if (!query) return true;
 
     const lowerQuery = query.toLowerCase();
@@ -57,9 +56,9 @@ export default function OpacSearchResults({ query, onFilter, onSelectBook }) {
     setCurrentPage(1);
   }, [query]);
 
-  const authors = getFacetValues(mockBooks, (book) => book.author);
-  const itemTypes = getFacetValues(mockBooks, getItemType);
-  const locations = getFacetValues(mockBooks, getLocation);
+  const authors = getFacetValues(books, (book) => book.author);
+  const itemTypes = getFacetValues(books, getItemType);
+  const locations = getFacetValues(books, getLocation);
 
   return (
     <div className="flex gap-6 mt-4">
@@ -227,8 +226,8 @@ export default function OpacSearchResults({ query, onFilter, onSelectBook }) {
                 {/* Item Actions */}
                 <div className="flex items-center gap-4 text-xs font-semibold text-blue-600">
                   <a href="#" className="hover:underline">Reserve Item</a>
-                  <a href="#" className="hover:underline flex items-center gap-1"><FiList /> Save to lists</a>
-                  <a href="#" className="hover:underline flex items-center gap-1"><FiShoppingCart /> Add to cart</a>
+                  <button type="button" onClick={() => onSaveBookmark(item)} className="hover:underline flex items-center gap-1"><FiList /> {isBookmarked(item) ? 'Remove from lists' : 'Add to lists'}</button>
+                  <button type="button" onClick={() => onReserveBook(item)} className="hover:underline flex items-center gap-1"><FiShoppingCart /> Add to cart</button>
                 </div>
               </div>
 

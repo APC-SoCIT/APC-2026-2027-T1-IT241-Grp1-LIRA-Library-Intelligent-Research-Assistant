@@ -1,12 +1,21 @@
-import { useState } from 'react'
-import { FiArrowUp, FiAtSign, FiBookOpen, FiChevronDown, FiFacebook, FiLogIn, FiUser } from 'react-icons/fi'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { FiArrowUp, FiAtSign, FiBookOpen, FiChevronDown, FiFacebook, FiUser } from 'react-icons/fi'
 import OpacPage from './OpacPage'
+import AuthPanel from '../components/auth/AuthPanel'
+import { useAuth } from '../hooks/useAuth'
 
 export default function CatalogAccessPage() {
-  const [hasDemoAccess, setHasDemoAccess] = useState(false)
+  const [hasCatalogAccess, setHasCatalogAccess] = useState(false)
+  const { session, configured } = useAuth()
+  const [searchParams] = useSearchParams()
 
-  if (hasDemoAccess) {
-    return <OpacPage />
+  useEffect(() => {
+    if (session) setHasCatalogAccess(true)
+  }, [session])
+
+  if (hasCatalogAccess) {
+    return <OpacPage user={session?.user} bookId={searchParams.get('book')} />
   }
 
   return (
@@ -17,7 +26,7 @@ export default function CatalogAccessPage() {
           <span>koha</span>
         </div>
         <nav className="catalog-utility-links" aria-label="Catalog utility navigation">
-          <button type="button" onClick={() => setHasDemoAccess(true)}>
+          <button type="button" onClick={() => document.querySelector('.catalog-auth-panel, .catalog-authenticated')?.scrollIntoView({ behavior: 'smooth' })}>
             <FiUser aria-hidden="true" />
             Log in to your account
           </button>
@@ -47,15 +56,8 @@ export default function CatalogAccessPage() {
 
         <section className="catalog-login-panel">
           <div className="catalog-gold-rule" />
-          <h2>Access the library resources using your<br />APC Microsoft Account</h2>
-          <button
-            type="button"
-            className="catalog-microsoft-login"
-            onClick={() => setHasDemoAccess(true)}
-          >
-            <FiLogIn aria-hidden="true" />
-            Log in with Microsoft Account
-          </button>
+          <h2>Access the library resources with your LIRA account</h2>
+          <AuthPanel session={session} configured={configured} onAccessCatalog={() => setHasCatalogAccess(true)} />
 
           <div className="catalog-external-card">
             <h3>For External Researchers</h3>

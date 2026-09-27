@@ -58,7 +58,7 @@ function IsbdView({ book, callNumber }) {
   );
 }
 
-export default function BookDetail({ book, onBack }) {
+export default function BookDetail({ book, onBack, onSaveBookmark, onReserveBook, isBookmarked }) {
   const [viewMode, setViewMode] = useState('normal');
   const callNumber = getCallNumber(book);
   const copyCount = book.availability.match(/Library \((\d+)\)/)?.[1] || '1';
@@ -145,8 +145,8 @@ export default function BookDetail({ book, onBack }) {
           <div className="space-y-3 px-4 py-4 text-xs font-semibold text-[#1672ae]">
             <h2 className="text-sm text-[#334e68]">Reserve Item</h2>
             <button type="button" className="flex items-center gap-2 hover:underline"><FiPrinter /> Print</button>
-            <button type="button" className="flex items-center gap-2 hover:underline"><FiBookmark /> Save to your lists</button>
-            <button type="button" className="flex items-center gap-2 hover:underline"><FiShoppingCart /> Add to your cart</button>
+            <button type="button" onClick={() => onSaveBookmark(book)} className="flex items-center gap-2 hover:underline"><FiBookmark /> {isBookmarked ? 'Remove from lists' : 'Add to lists'}</button>
+            <button type="button" onClick={() => onReserveBook(book)} className="flex items-center gap-2 hover:underline"><FiShoppingCart /> Add to your cart</button>
             <button type="button" className="flex items-center gap-2 hover:underline"><FiMail /> Suggest for purchase</button>
             <button type="button" className="flex items-center gap-2 hover:underline"><FiChevronRight /> Unhighlight</button>
             <button type="button" className="flex items-center gap-2 hover:underline"><FiDownload /> Send to device</button>
