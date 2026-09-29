@@ -1,244 +1,336 @@
-import { FiList, FiShoppingCart } from 'react-icons/fi';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react'
+import { FiBookOpen, FiExternalLink, FiList, FiShoppingCart, FiX } from 'react-icons/fi'
+import BookCover from './BookCover'
+import { translate } from '../i18n/catalogTranslations'
 
-const getItemType = (book) => book.itemType || 'BOOKS';
-const getLocation = (book) => book.location || 'Asia Pacific College Library';
+const pageSize = 8
 
-const getFacetValues = (books, getValue) => [...new Set(books.map(getValue))];
+const facets = [
+  { key: 'itemType', labelKey: 'itemTypes' },
+  { key: 'genres', labelKey: 'genres' },
+  { key: 'subjects', labelKey: 'topicsSubjects' },
+  { key: 'author', labelKey: 'authors' },
+  { key: 'series', labelKey: 'series' },
+  { key: 'publicationPlace', labelKey: 'places' },
+  { key: 'publisher', labelKey: 'publishers' },
+  { key: 'publicationYear', labelKey: 'publicationYears' },
+  { key: 'language', labelKey: 'languages' },
+  { key: 'isbnAvailability', labelKey: 'isbn' },
+  { key: 'resourceAvailability', labelKey: 'onlineResources' },
+]
 
-export default function OpacSearchResults({ books, query, onFilter, onSelectBook, onSaveBookmark, onReserveBook, isBookmarked }) {
-  const [showAllAuthors, setShowAllAuthors] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+function hasGutenbergResource(book) {
+  return book.url?.toLowerCase().includes('gutenberg.org') ?? false
+}
 
-  const filteredBooks = books.filter((book) => {
-    if (!query) return true;
+function getFacetValues(book, key) {
+  if (key === 'isbnAvailability') return [book.isbn ? 'Has ISBN' : 'No ISBN listed']
+  if (key === 'resourceAvailability') return [book.url ? 'Has online resource' : 'No online resource listed']
+  const value = book[key]
+  if (Array.isArray(value)) return value.filter((entry) => typeof entry === 'string' && entry.trim())
+  if (typeof value === 'string' || typeof value === 'number') {
+    return String(value).split('|').map((entry) => entry.trim()).filter(Boolean)
+  }
+  return []
+}
 
-    const lowerQuery = query.toLowerCase();
+function getFacetLabel(key, value, t) {
+  if (key === 'itemType') {
+    const normalized = value.toUpperCase()
+    const itemTypeKey = `itemType${normalized === 'MAP' || normalized === 'MP' ? 'VM' : normalized}`
+    const translated = t(itemTypeKey)
+    return translated === itemTypeKey ? value : translated
+  }
+  if (key === 'isbnAvailability') return t(value === 'Has ISBN' ? 'hasISBN' : 'noISBN')
+  if (key === 'resourceAvailability') return t(value === 'Has online resource' ? 'hasOnlineResource' : 'noOnlineResource')
+  return value
+}
 
-    if (lowerQuery.startsWith('su:')) {
-      const categorySearch = lowerQuery.replace('su:', '').trim();
-      return book.category.toLowerCase() === categorySearch;
-    }
+function getOnlineResources(book) {
+  return (book.url || '')
+    .split('|')
+    .map((value) => value.trim())
+    .filter((value) => {
+      try {
+        return ['http:', 'https:'].includes(new URL(value).protocol)
+      } catch {
+        return false
+      }
+    })
+}
 
-    if (lowerQuery.startsWith('author:')) {
-      return book.author.toLowerCase() === lowerQuery.replace('author:', '').trim();
-    }
+function matchesFacets(book, selectedFacets, exceptKey) {
+  return facets.every(({ key }) => {
+    if (key === exceptKey || !selectedFacets[key]?.length) return true
+    const values = getFacetValues(book, key)
+    return selectedFacets[key].some((selected) => values.includes(selected))
+  })
+}
 
-    if (lowerQuery.startsWith('category:')) {
-      return book.category.toLowerCase() === lowerQuery.replace('category:', '').trim();
-    }
+function FacetSection({ facetKey, label, options, selected, onToggle, emptyMessage, t }) {
+  return (
+    <details open className="border-b border-[#eee5d7] py-3 last:border-b-0">
+      <summary className="cursor-pointer list-none text-sm font-semibold text-[#463b2e] marker:hidden">
+        <span className="flex items-center justify-between">
+          {label}
+          <span className="rounded-full bg-[#f4ead9] px-2 py-0.5 text-[0.68rem] font-medium text-[#806747]">{options.length}</span>
+        </span>
+      </summary>
+      {options.length ? (
+        <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto pr-1">
+          {options.map(({ value, count }) => (
+            <li key={value}>
+              <label className="flex cursor-pointer items-start gap-2 rounded-md px-1 py-1 text-xs text-[#675b4a] hover:bg-[#faf5eb]">
+                <input
+                  type="checkbox"
+                  checked={selected.includes(value)}
+                  onChange={() => onToggle(value)}
+                  className="mt-0.5 accent-[#73532f]"
+                />
+                <span className="min-w-0 flex-1 break-words">{getFacetLabel(facetKey, value, t)}</span>
+                <span className="text-[#a3947e]">{count}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-2 text-xs leading-5 text-[#978873]">{emptyMessage}</p>
+      )}
+    </details>
+  )
+}
 
-    if (lowerQuery.startsWith('item:')) {
-      return getItemType(book).toLowerCase() === lowerQuery.replace('item:', '').trim();
-    }
+export default function OpacSearchResults({
+  books,
+  query,
+  sourceFilter,
+  language,
+  onSourceFilterChange,
+  onSelectBook,
+  onSaveBookmark,
+  onReserveBook,
+  isBookmarked,
+}) {
+  const t = (key) => translate(language, key)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [selectedFacets, setSelectedFacets] = useState({})
+  const gutenbergCount = books.filter(hasGutenbergResource).length
+  const sourceBooks = books.filter((book) => sourceFilter !== 'gutenberg' || hasGutenbergResource(book))
 
-    if (lowerQuery.startsWith('location:')) {
-      return getLocation(book).toLowerCase() === lowerQuery.replace('location:', '').trim();
-    }
+  const filteredBooks = useMemo(
+    () => sourceBooks.filter((book) => matchesFacets(book, selectedFacets)),
+    [sourceBooks, selectedFacets],
+  )
 
-    if (lowerQuery.startsWith('available:')) {
-      return book.availability.toLowerCase().includes('items available');
-    }
+  const facetOptions = useMemo(() => Object.fromEntries(facets.map(({ key }) => {
+    const counts = new Map()
+    sourceBooks.filter((book) => matchesFacets(book, selectedFacets, key)).forEach((book) => {
+      getFacetValues(book, key).forEach((value) => counts.set(value, (counts.get(value) || 0) + 1))
+    })
+    return [key, [...counts].sort(([left], [right]) => left.localeCompare(right, undefined, { sensitivity: 'base' }))
+      .map(([value, count]) => ({ value, count }))]
+  })), [sourceBooks, selectedFacets])
 
-    return (
-      book.title.toLowerCase().includes(lowerQuery) ||
-      book.author.toLowerCase().includes(lowerQuery) ||
-      book.category.toLowerCase().includes(lowerQuery)
-    );
-  });
-
-  const pageSize = 5;
-  const totalPages = Math.max(1, Math.ceil(filteredBooks.length / pageSize));
-  const visiblePage = Math.min(currentPage, totalPages);
-  const paginatedBooks = filteredBooks.slice((visiblePage - 1) * pageSize, visiblePage * pageSize);
+  const totalPages = Math.max(1, Math.ceil(filteredBooks.length / pageSize))
+  const visiblePage = Math.min(currentPage, totalPages)
+  const pageBooks = filteredBooks.slice((visiblePage - 1) * pageSize, visiblePage * pageSize)
+  const selectedFacetCount = Object.values(selectedFacets).reduce((count, values) => count + values.length, 0)
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [query]);
+    setCurrentPage(1)
+  }, [query, sourceFilter, selectedFacets])
 
-  const authors = getFacetValues(books, (book) => book.author);
-  const itemTypes = getFacetValues(books, getItemType);
-  const locations = getFacetValues(books, getLocation);
+  const toggleFacet = (key, value) => {
+    setSelectedFacets((current) => {
+      const values = current[key] || []
+      const nextValues = values.includes(value) ? values.filter((entry) => entry !== value) : [...values, value]
+      return { ...current, [key]: nextValues }
+    })
+  }
+
+  const pageNumbers = Array.from(
+    { length: Math.min(5, totalPages) },
+    (_, index) => Math.max(1, Math.min(visiblePage - 2, totalPages - 4)) + index,
+  )
 
   return (
-    <div className="flex gap-6 mt-4">
-      {/* Sidebar: Refine your search */}
-      <div className="w-64 flex-shrink-0">
-        <div className="bg-[#f8f9fa] border border-gray-200">
-          <div className="bg-gray-100 p-2 border-b border-gray-200 text-sm font-semibold text-gray-700 text-center">
-            Refine your search
+    <section className="mt-6 grid gap-5 lg:grid-cols-[250px_minmax(0,1fr)]">
+      <aside className="h-fit rounded-2xl border border-[#e8dcc8] bg-[#fffdf8] p-4 shadow-sm">
+        <div className="flex items-center justify-between border-b border-[#eee5d7] pb-3">
+          <div>
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.15em] text-[#9a784a]">{t('refineSearch')}</p>
+            <h2 className="mt-1 font-semibold text-[#342c24]">{t('refineSearch')}</h2>
           </div>
-          
-          <div className="p-3">
-            <h4 className="text-xs font-bold text-gray-700 mb-1">Availability</h4>
-            <button type="button" onClick={() => onFilter('available:')} className="text-xs text-blue-600 hover:underline block mb-3 text-left">
-              Limit to records with available items
+          {selectedFacetCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelectedFacets({})}
+              className="text-xs font-semibold text-[#79572f] hover:underline"
+            >
+              {t('clear')}
             </button>
+          )}
+        </div>
 
-            <h4 className="text-xs font-bold text-gray-700 mb-1">Authors</h4>
-            <ul className="text-xs space-y-1 mb-1">
-              {(showAllAuthors ? authors : authors.slice(0, 5)).map((author) => (
-                <li key={author}>
-                  <button type="button" onClick={() => onFilter(`author:${author}`)} className="text-blue-600 hover:underline text-left">
-                    {author}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            {authors.length > 5 && (
-              <button type="button" onClick={() => setShowAllAuthors((value) => !value)} className="text-xs text-[#1b2a4a] font-semibold hover:underline block mb-3">
-                {showAllAuthors ? 'Show less' : 'Show more'}
-              </button>
-            )}
+        <label className="mt-4 block text-xs font-semibold text-[#675b4a]">
+          {t('onlineResource')}
+          <select
+            value={sourceFilter}
+            onChange={(event) => onSourceFilterChange(event.target.value)}
+            className="mt-1 w-full rounded-lg border border-[#ddd1bf] bg-white px-3 py-2 text-sm font-normal text-[#463b2e]"
+          >
+            <option value="all">{t('allRecords')} ({books.length})</option>
+            <option value="gutenberg">{t('gutenbergOnly')} ({gutenbergCount})</option>
+          </select>
+        </label>
 
-            <h4 className="text-xs font-bold text-gray-700 mb-1">Item types</h4>
-            <ul className="text-xs space-y-1 mb-1">
-              {itemTypes.map((itemType) => (
-                <li key={itemType}>
-                  <button type="button" onClick={() => onFilter(`item:${itemType}`)} className="text-blue-600 hover:underline text-left">
-                    {itemType}
-                  </button>
-                </li>
-              ))}
-            </ul>
+        <div className="mt-3">
+          {facets.map(({ key, labelKey }) => (
+            <FacetSection
+              key={key}
+              facetKey={key}
+              label={t(labelKey)}
+              emptyMessage={t('kohaHasNotSupplied')}
+              options={facetOptions[key]}
+              selected={selectedFacets[key] || []}
+              onToggle={(value) => toggleFacet(key, value)}
+              t={t}
+            />
+          ))}
+        </div>
 
-            <h4 className="text-xs font-bold text-gray-700 mb-1">Locations</h4>
-            <ul className="text-xs space-y-1 mb-1">
-              {locations.map((location) => (
-                <li key={location}>
-                  <button type="button" onClick={() => onFilter(`location:${location}`)} className="text-blue-600 hover:underline text-left">
-                    {location}
-                  </button>
-                </li>
-              ))}
-            </ul>
+        <p className="mt-3 border-t border-[#eee5d7] pt-3 text-[0.68rem] leading-5 text-[#978873]">
+          {t('availabilityNotProvided')}
+        </p>
+      </aside>
+
+      <div className="min-w-0">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold text-[#342c24]">
+              {query.trim() ? t('searchResults') : t('libraryCatalog')}
+            </h2>
+            <p className="mt-1 text-sm text-[#81725f]">
+              {t('showing')} {filteredBooks.length} {filteredBooks.length === 1 ? t('record') : t('records')}
+              {sourceFilter === 'gutenberg' ? ` ${t('withGutenberg')}` : ` ${t('fromKohaSuffix')}`}
+            </p>
           </div>
+          {selectedFacetCount > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(selectedFacets).flatMap(([key, values]) => values.map((value) => (
+                <button
+                  key={`${key}:${value}`}
+                  type="button"
+                  onClick={() => toggleFacet(key, value)}
+                  className="inline-flex items-center gap-1 rounded-full bg-[#f4ead9] px-3 py-1 text-xs font-medium text-[#674a29]"
+                >
+                  {getFacetLabel(key, value, t)}<FiX aria-hidden="true" />
+                </button>
+              )))}
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* Main Results Area */}
-      <div className="flex-1">
-        <h2 className="text-xl font-normal text-gray-800 mb-3">
-          Your search returned <span className="font-bold">{filteredBooks.length}</span> results. <span className="text-orange-500 text-sm">RSS</span>
-        </h2>
+        {filteredBooks.length === 0 ? (
+          <div className="rounded-2xl border border-[#e8dcc8] bg-[#fffdf8] px-6 py-12 text-center">
+            <FiBookOpen className="mx-auto mb-3 h-8 w-8 text-[#a38b66]" aria-hidden="true" />
+            <h3 className="font-semibold text-[#342c24]">{t('noMatchingRecords')}</h3>
+            <p className="mt-1 text-sm text-[#81725f]">
+              {t('tryRemovingFilter')}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {pageBooks.map((book) => {
+              const resources = getOnlineResources(book)
+              return (
+                <article key={book.id} className="flex gap-4 rounded-2xl border border-[#e8dcc8] bg-[#fffdf8] p-4 shadow-sm transition-shadow hover:shadow-md sm:gap-5 sm:p-5">
+                  <button
+                    type="button"
+                    onClick={() => onSelectBook(book)}
+                    className="h-28 w-[4.5rem] shrink-0 overflow-hidden rounded-md shadow-md transition-transform hover:-translate-y-0.5 sm:h-36 sm:w-24"
+                    aria-label={`${t('viewBook')} ${book.title}`}
+                  >
+                    <BookCover book={book} className="h-full w-full" />
+                  </button>
 
-        <div className="bg-yellow-50 border border-yellow-200 p-3 text-sm text-gray-700 mb-4">
-          Not what you expected? Check for <a href="#" className="text-blue-600 hover:underline">suggestions</a>
-        </div>
+                  <div className="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      onClick={() => onSelectBook(book)}
+                      className="text-left text-lg font-semibold leading-snug text-[#49351f] hover:text-[#79572f] hover:underline"
+                    >
+                      {book.title}
+                    </button>
+                    <p className="mt-1 text-sm text-[#675b4a]">{book.author || t('authorNotListed')}</p>
 
-        {/* Pagination & Sort */}
-        <div className="flex justify-between items-center mb-2">
-          <div className="flex text-sm text-blue-600 gap-2">
-            {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                    <dl className="mt-3 grid gap-x-5 gap-y-1 text-xs text-[#81725f] sm:grid-cols-2">
+                      {book.publisher && <div><dt className="inline font-semibold">{t('publisher')}: </dt><dd className="inline">{book.publisher}</dd></div>}
+                      {book.publicationYear && <div><dt className="inline font-semibold">{t('year')}: </dt><dd className="inline">{book.publicationYear}</dd></div>}
+                      {book.isbn && <div><dt className="inline font-semibold">{t('isbn')}: </dt><dd className="inline">{book.isbn}</dd></div>}
+                      {book.itemType && <div><dt className="inline font-semibold">{t('type')}: </dt><dd className="inline">{getFacetLabel('itemType', book.itemType, t)}</dd></div>}
+                      {book.genres?.length > 0 && <div className="sm:col-span-2"><dt className="inline font-semibold">{t('genre')}: </dt><dd className="inline">{book.genres.join(', ')}</dd></div>}
+                    </dl>
+
+                    {resources.length > 0 && (
+                      <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                        {resources.map((resource) => (
+                          <li key={resource}>
+                            <a href={resource} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#79572f] hover:underline">
+                              <FiExternalLink aria-hidden="true" /> {t('onlineResource')}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-[#79572f]">
+                      <button type="button" onClick={() => onSaveBookmark(book)} className="inline-flex items-center gap-1 hover:underline">
+                        <FiList aria-hidden="true" /> {isBookmarked(book) ? t('removeFromLists') : t('addToLists')}
+                      </button>
+                      <button type="button" onClick={() => onReserveBook(book)} className="inline-flex items-center gap-1 hover:underline">
+                        <FiShoppingCart aria-hidden="true" /> {t('addToReservationCart')}
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <nav className="mt-5 flex flex-wrap items-center justify-center gap-2" aria-label={t('catalogResultPages')}>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              disabled={visiblePage === 1}
+              className="rounded-lg border border-[#ddd1bf] bg-[#fffdf8] px-3 py-2 text-sm text-[#674a29] disabled:opacity-40"
+            >
+              {t('previous')}
+            </button>
+            {pageNumbers.map((page) => (
               <button
                 key={page}
                 type="button"
+                aria-current={page === visiblePage ? 'page' : undefined}
                 onClick={() => setCurrentPage(page)}
-                className={`px-2 py-1 rounded ${page === visiblePage ? 'bg-gray-200 text-gray-700' : 'hover:underline'}`}
+                className={`rounded-lg border px-3 py-2 text-sm ${page === visiblePage ? 'border-[#73532f] bg-[#73532f] text-white' : 'border-[#ddd1bf] bg-[#fffdf8] text-[#674a29]'}`}
               >
                 {page}
               </button>
             ))}
             <button
               type="button"
-              onClick={() => setCurrentPage((page) => Math.min(page + 1, totalPages))}
+              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
               disabled={visiblePage === totalPages}
-              className="px-2 py-1 hover:underline disabled:text-gray-400 disabled:no-underline"
+              className="rounded-lg border border-[#ddd1bf] bg-[#fffdf8] px-3 py-2 text-sm text-[#674a29] disabled:opacity-40"
             >
-              Next &gt;
+              {t('next')}
             </button>
-            <button
-              type="button"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={visiblePage === totalPages}
-              className="px-2 py-1 hover:underline disabled:text-gray-400 disabled:no-underline"
-            >
-              Last &gt;&gt;
-            </button>
-          </div>
-          <div>
-            <select className="border border-gray-300 text-sm py-1 px-2 rounded outline-none w-48">
-              <option>Relevance</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Action Toolbar */}
-        <div className="bg-gray-100 border border-gray-300 flex items-center p-2 text-xs gap-3">
-          <button className="text-blue-600 hover:underline flex items-center gap-1">Unhighlight</button> <span className="text-gray-400">|</span>
-          <button className="text-blue-600 hover:underline flex items-center gap-1">Select all</button>
-          <button className="text-blue-600 hover:underline flex items-center gap-1">Clear all</button> <span className="text-gray-400">|</span>
-          <div className="flex items-center gap-1">
-            <span className="text-gray-600">Select titles to:</span>
-            <select className="border border-gray-300 rounded px-1 py-0.5 outline-none bg-white">
-              <option>Add to...</option>
-            </select>
-            <button className="bg-[#5A7198] hover:bg-[#1B2A4A] text-white px-3 py-1 rounded">Save</button>
-          </div>
-          <button className="text-gray-400 flex items-center gap-1 cursor-not-allowed">Place hold</button>
-        </div>
-
-        {/* Results List */}
-        <div className="border-x border-b border-gray-300 bg-white">
-          {filteredBooks.length === 0 && (
-            <div className="p-8 text-center text-gray-500">
-              No results found for "{query}".
-            </div>
-          )}
-          {paginatedBooks.map((item) => (
-            <div key={item.id} className="flex border-b border-gray-200 p-4 relative">
-              <div className="flex-shrink-0 w-8">
-                <input type="checkbox" className="mt-1 cursor-pointer" />
-              </div>
-              <div className="flex-shrink-0 w-8 text-sm text-gray-500 font-semibold">
-                {item.id}.
-              </div>
-              
-              <div className="flex-1 pr-4">
-                <button type="button" onClick={() => onSelectBook(item)} className="text-left text-base font-semibold text-blue-700 hover:underline cursor-pointer mb-1">
-                  {item.title}
-                </button>
-                <div className="text-sm text-gray-700 mb-0.5">
-                  by <a href="#" className="text-blue-600 hover:underline">{item.author}</a>
-                </div>
-                <div className="text-xs text-gray-600 mb-0.5">
-                  Publisher: {item.publisher}
-                </div>
-                <div className="text-xs text-gray-600 mb-0.5">
-                  Copyright date: {item.year}
-                </div>
-                <div className="text-xs text-gray-600 mb-1">
-                  Online resources: <a href="#" className="text-blue-600 hover:underline">{item.online}</a>
-                </div>
-                <div className="text-xs text-gray-600 mb-2">
-                  Availability: <span className="font-semibold text-gray-800">{item.availability}</span>
-                </div>
-                
-                {/* Rating Stars (Mock) */}
-                <div className="flex gap-1 mb-3">
-                  {[1,2,3,4,5].map(star => (
-                    <svg key={star} className="w-3.5 h-3.5 text-gray-300 fill-current" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-
-                {/* Item Actions */}
-                <div className="flex items-center gap-4 text-xs font-semibold text-blue-600">
-                  <a href="#" className="hover:underline">Reserve Item</a>
-                  <button type="button" onClick={() => onSaveBookmark(item)} className="hover:underline flex items-center gap-1"><FiList /> {isBookmarked(item) ? 'Remove from lists' : 'Add to lists'}</button>
-                  <button type="button" onClick={() => onReserveBook(item)} className="hover:underline flex items-center gap-1"><FiShoppingCart /> Add to cart</button>
-                </div>
-              </div>
-
-              {/* Cover Image */}
-              <div className="flex-shrink-0 w-24">
-                <img src={item.cover} alt="Book cover" className="w-full border border-gray-200 shadow-sm" />
-              </div>
-            </div>
-          ))}
-        </div>
+          </nav>
+        )}
       </div>
-    </div>
-  );
+    </section>
+  )
 }

@@ -27,6 +27,32 @@ export class CatalogService {
     }
   }
 
+  async getBookContent(id: number): Promise<{ content: string; sourceUrl: string; resolvedUrl: string }> {
+    const book = await this.getBook(id);
+    const sourceUrl = book.url?.split('|')[0]?.trim();
+    if (!sourceUrl) throw new NotFoundException('Book has no online reading resource');
+
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(sourceUrl);
+    } catch {
+      throw new BadRequestException('Book has an invalid online reading resource');
+    }
+
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      throw new BadRequestException('Online reading resource is not supported');
+    }
+
+    try {
+      const response = await fetch(parsedUrl);
+      if (!response.ok) throw new Error(`Reading resource returned HTTP ${response.status}`);
+      return { content: await response.text(), sourceUrl, resolvedUrl: response.url };
+    } catch (error: unknown) {
+      this.logger.warn(`Could not fetch reading resource for book ${id}`);
+      throw new ServiceUnavailableException('Online reading resource is unavailable');
+    }
+  }
+
   async searchBooks(query: string, page: number, limit: number): Promise<BookListResponse> {
     try {
       const records = await this.koha.searchBiblios(query.trim(), page, limit);
@@ -56,6 +82,9 @@ export class CatalogService {
       language: this.stringOrNull(record.language),
       description: this.stringOrNull(record.description),
       itemType: this.stringOrNull(record.item_type),
+      genres: this.stringList(record.genres ?? record.genre ?? record.genre_forms ?? record.genre_form),
+      subjects: this.stringList(record.subjects ?? record.subject ?? record.subject_headings ?? record.subject_heading),
+      series: this.stringOrNull(record.series_title ?? record.collection_title),
       url: this.stringOrNull(record.url),
     };
   }
@@ -78,6 +107,18 @@ export class CatalogService {
 
   private stringOrNull(value: unknown): string | null {
     return typeof value === 'string' && value.length > 0 ? value : null;
+  }
+
+  private stringList(value: unknown): string[] {
+    if (typeof value === 'string') return value.split('|').map((entry) => entry.trim()).filter(Boolean);
+    if (!Array.isArray(value)) return [];
+    return value.flatMap((entry) => {
+      if (typeof entry === 'string') return entry.split('|').map((item) => item.trim()).filter(Boolean);
+      if (typeof entry === 'object' && entry !== null && 'name' in entry && typeof entry.name === 'string') {
+        return [entry.name];
+      }
+      return [];
+    });
   }
 
   private numberOrNull(value: unknown): number | null {

@@ -20,8 +20,22 @@ describe('CatalogService', () => {
     koha.getBiblios = jest.fn().mockResolvedValue([{ biblio_id: 1, title: 'Title', author: null, publication_year: '2024', item_type: 'BK' }]);
 
     await expect(service.listBooks(1, 20)).resolves.toEqual({
-      items: [{ id: 1, title: 'Title', subtitle: null, author: null, isbn: null, issn: null, publisher: null, publicationYear: 2024, publicationPlace: null, edition: null, language: null, description: null, itemType: 'BK', url: null }],
+      items: [{ id: 1, title: 'Title', subtitle: null, author: null, isbn: null, issn: null, publisher: null, publicationYear: 2024, publicationPlace: null, edition: null, language: null, description: null, itemType: 'BK', genres: [], subjects: [], series: null, url: null }],
       pagination: { page: 1, limit: 20 },
+    });
+  });
+
+  it('normalizes Koha genre, subject, and series metadata for catalog filters', async () => {
+    koha.getBiblios = jest.fn().mockResolvedValue([{
+      biblio_id: 2,
+      title: 'Record',
+      genre_form: ['Fiction', 'Historical fiction'],
+      subject: [{ name: 'Women authors' }],
+      collection_title: 'Library classics',
+    }]);
+
+    await expect(service.listBooks(1, 20)).resolves.toMatchObject({
+      items: [{ genres: ['Fiction', 'Historical fiction'], subjects: ['Women authors'], series: 'Library classics' }],
     });
   });
 

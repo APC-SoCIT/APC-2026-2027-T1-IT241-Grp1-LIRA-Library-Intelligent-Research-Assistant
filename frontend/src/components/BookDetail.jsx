@@ -1,160 +1,154 @@
 import {
   FiArrowLeft,
+  FiBookOpen,
   FiBookmark,
-  FiChevronRight,
-  FiDownload,
-  FiGrid,
-  FiList,
-  FiMail,
+  FiExternalLink,
   FiPrinter,
-  FiSearch,
   FiShoppingCart,
-  FiStar,
-} from 'react-icons/fi';
-import { useState } from 'react';
+} from 'react-icons/fi'
+import { useNavigate } from 'react-router-dom'
+import BookCover from './BookCover'
+import { translate } from '../i18n/catalogTranslations'
 
-const getCallNumber = (book) => {
-  const match = book.availability.match(/call number: ([^\]]+)/i);
-  return match ? match[1] : 'Available at the library';
-};
-
-function MarcView({ book, callNumber }) {
-  const fields = [
-    ['000', '00000nam a2200000 i 4500'],
-    ['001', String(book.id)],
-    ['100', `1_\\a ${book.author}.`],
-    ['245', `10\\a ${book.title} / \\c ${book.author}.`],
-    ['264', `_1\\a ${book.publisher}, \\c ${book.year}.`],
-    ['300', '  \\a 1 volume ; \\c illustrations.'],
-    ['650', ` _0\\a ${book.category}.`],
-    ['852', `  \\a Asia Pacific College Library \\h ${callNumber}`],
-  ];
-
-  return (
-    <div className="border border-[#d8dde2] bg-[#f8f9fa] text-xs">
-      <div className="border-b border-[#d8dde2] bg-[#e7ecef] px-3 py-2 font-semibold text-[#334e68]">MARC record</div>
-      <div className="divide-y divide-[#d8dde2]">
-        {fields.map(([tag, value]) => (
-          <div key={tag} className="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-3 px-3 py-2">
-            <span className="font-semibold text-[#1672ae]">{tag}</span>
-            <code className="whitespace-pre-wrap break-words text-[#3d4b57]">{value}</code>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+function getOnlineResources(book) {
+  return (book.url || book.online || '')
+    .split('|')
+    .map((value) => value.trim())
+    .filter((value) => {
+      try {
+        return ['http:', 'https:'].includes(new URL(value).protocol)
+      } catch {
+        return false
+      }
+    })
 }
 
-function IsbdView({ book, callNumber }) {
+function Metadata({ label, value, emptyValue }) {
   return (
-    <div className="border border-[#d8dde2] bg-white px-4 py-4 text-sm leading-7 text-[#3d4b57]">
-      <h2 className="mb-3 border-b border-[#d8dde2] pb-2 text-sm font-semibold text-[#334e68]">ISBD view</h2>
-      <p>
-        <strong>{book.title}</strong> / {book.author}. - {book.publisher}, {book.year}. - 1 volume ; illustrations. - ({book.category})
-      </p>
-      <p className="mt-3"><strong>Location:</strong> Asia Pacific College Library. <strong>Call number:</strong> {callNumber}.</p>
-      <p className="mt-3"><strong>Online resource:</strong> {book.online}</p>
+    <div className="grid gap-1 border-b border-[#eee5d7] px-4 py-3 last:border-b-0 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
+      <dt className="text-xs font-semibold uppercase tracking-wide text-[#89775f]">{label}</dt>
+      <dd className={`break-words text-sm ${value ? 'text-[#342c24]' : 'italic text-[#a79a87]'}`}>
+        {value || emptyValue}
+      </dd>
     </div>
-  );
+  )
 }
 
-export default function BookDetail({ book, onBack, onSaveBookmark, onReserveBook, isBookmarked }) {
-  const [viewMode, setViewMode] = useState('normal');
-  const callNumber = getCallNumber(book);
-  const copyCount = book.availability.match(/Library \((\d+)\)/)?.[1] || '1';
+export default function BookDetail({ book, language, onBack, onSaveBookmark, onReserveBook, isBookmarked }) {
+  const navigate = useNavigate()
+  const t = (key) => translate(language, key)
+  const resources = getOnlineResources(book)
+  const hasGutenbergResource = resources.some((resource) => resource.includes('gutenberg.org'))
+  const metadata = [
+    ['recordId', book.id],
+    ['subtitle', book.subtitle],
+    ['author', book.author],
+    ['publisher', book.publisher],
+    ['publicationPlace', book.publicationPlace],
+    ['publicationYear', book.publicationYear],
+    ['edition', book.edition],
+    ['isbn', book.isbn],
+    ['issn', book.issn],
+    ['itemTypeLabel', book.itemType],
+    ['language', book.language],
+    ['description', book.description],
+    ['genres', book.genres?.join(', ')],
+    ['topicsSubjects', book.subjects?.join(', ')],
+    ['series', book.series],
+  ]
 
   return (
-    <section className="mt-4 border border-[#d8dde2] bg-white text-[#3d4b57] text-sm">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-[#d8dde2] bg-[#f7f8f9] px-3 py-2 text-xs text-[#35658e]">
-        <button type="button" onClick={onBack} className="flex items-center gap-1 hover:underline"><FiArrowLeft /> Back to results</button>
-        <span>|</span><button type="button" className="hover:underline">Advanced search</button>
-        <span>|</span><button type="button" className="hover:underline">Course reserves</button>
-        <span>|</span><button type="button" className="hover:underline">Authority search</button>
+    <section className="mt-6 overflow-hidden rounded-3xl border border-[#e8dcc8] bg-[#fffdf8] text-[#342c24] shadow-[0_20px_60px_rgba(91,67,36,0.12)]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eee5d7] bg-[#faf5eb] px-5 py-4 sm:px-8">
+        <button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-sm font-semibold text-[#79572f] transition-colors hover:text-[#47321c]">
+          <FiArrowLeft aria-hidden="true" /> {t('backToResults')}
+        </button>
+        <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 text-sm text-[#796b58] transition-colors hover:text-[#47321c]">
+          <FiPrinter aria-hidden="true" /> {t('printRecord')}
+        </button>
       </div>
 
-      <div className="grid gap-5 p-3 lg:grid-cols-[minmax(0,1fr)_285px]">
-        <div>
-          <div className="mb-3 flex items-center gap-2 border-b border-[#d8dde2] pb-2 text-xs text-[#35658e]">
-            <button type="button" onClick={() => setViewMode('normal')} className={`flex items-center gap-1 px-2 py-1 ${viewMode === 'normal' ? 'bg-[#edf3f7] font-semibold' : 'hover:bg-[#edf3f7]'}`}><FiList /> Normal view</button>
-            <button type="button" onClick={() => setViewMode('marc')} className={`flex items-center gap-1 px-2 py-1 ${viewMode === 'marc' ? 'bg-[#edf3f7] font-semibold' : 'hover:bg-[#edf3f7]'}`}><FiGrid /> MARC view</button>
-            <button type="button" onClick={() => setViewMode('isbd')} className={`flex items-center gap-1 px-2 py-1 ${viewMode === 'isbd' ? 'bg-[#edf3f7] font-semibold' : 'hover:bg-[#edf3f7]'}`}><FiGrid /> ISBD view</button>
+      <div className="grid gap-7 p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <div className="min-w-0">
+          <div className="relative overflow-hidden rounded-2xl border border-[#e8dcc8] bg-gradient-to-br from-[#fbf3e4] via-[#fffaf0] to-[#f1e5d0] p-5 sm:p-7">
+            <div className="absolute -right-7 -top-10 h-36 w-36 rounded-full bg-[#dfc49a]/20" aria-hidden="true" />
+            <div className="relative flex items-start gap-4 sm:gap-5">
+              <div className="h-32 w-[5.25rem] shrink-0 overflow-hidden rounded-lg shadow-lg ring-1 ring-[#d6c19d] sm:h-40 sm:w-28">
+                <BookCover book={book} className="h-full w-full" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#9a784a]">{t('fromLibraryShelves')}</p>
+                <h1 className="mt-2 text-2xl font-bold leading-tight text-[#342c24] sm:text-3xl">{book.title}</h1>
+                {book.subtitle && <p className="mt-2 text-base leading-relaxed text-[#766650]">{book.subtitle}</p>}
+                {book.author && <p className="mt-4 text-sm font-medium text-[#66543d]">{t('by')} {book.author}</p>}
+              </div>
+            </div>
           </div>
 
-          {viewMode === 'marc' ? (
-            <MarcView book={book} callNumber={callNumber} />
-          ) : viewMode === 'isbd' ? (
-            <IsbdView book={book} callNumber={callNumber} />
-          ) : (
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <div className="w-36 shrink-0 border border-[#cbdde4] p-2 text-center text-xs text-[#72808c]">
-              <img src={book.cover} alt={`${book.title} cover`} className="mx-auto h-44 w-28 object-cover" />
-              <div className="pt-2">Local cover image</div>
+          <section className="mt-7 overflow-hidden rounded-2xl border border-[#e8dcc8] bg-white/80">
+            <div className="border-b border-[#eee5d7] bg-[#faf5eb] px-4 py-4 sm:px-5">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#9a784a]">{t('bibliographicInformation')}</p>
+              <h2 className="mt-1 text-lg font-semibold text-[#342c24]">{t('aboutThisBook')}</h2>
             </div>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-xl font-bold leading-tight text-[#5d6973]">{book.title}</h1>
-              <p className="mt-2 text-xs"><strong>By:</strong> <a href="#" className="text-[#1672ae] hover:underline">{book.author}</a> <FiSearch className="inline text-[#1672ae]" /></p>
-              <p className="mt-3 text-xs"><strong>Publisher:</strong> {book.publisher}</p>
-              <p className="mt-2 text-xs"><strong>Copyright date:</strong> {book.year}</p>
-              <p className="mt-2 text-xs"><strong>Content type:</strong> text &nbsp; <strong>Media type:</strong> unmediated &nbsp; <strong>Carrier type:</strong> volume</p>
-              <p className="mt-2 text-xs"><strong>ISBN:</strong> 978-{book.id}000000</p>
-              <p className="mt-2 text-xs"><strong>Subject(s):</strong> <a href="#" className="text-[#1672ae] hover:underline">{book.category}</a> <FiSearch className="inline text-[#1672ae]" /></p>
-              <p className="mt-2 text-xs"><strong>LOC classification:</strong> {callNumber}</p>
-              <p className="mt-2 text-xs"><strong>Online Resources:</strong> <a href="#" className="text-[#1672ae] hover:underline">{book.online}</a></p>
-            </div>
-          </div>
+            <dl>
+              {metadata.map(([labelKey, value]) => (
+                <Metadata key={labelKey} label={t(labelKey)} value={value} emptyValue={t('notProvidedByKoha')} />
+              ))}
+            </dl>
+          </section>
+
+          {resources.length > 0 && (
+            <section className="mt-7 rounded-2xl border border-[#e8dcc8] bg-[#faf5eb] p-5">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#9a784a]">{t('exploreFurther')}</p>
+              <h2 className="mt-1 text-lg font-semibold text-[#342c24]">{t('onlineResources')}</h2>
+              <ul className="mt-4 space-y-3">
+                {resources.map((resource) => (
+                  <li key={resource}>
+                    <a href={resource} target="_blank" rel="noreferrer" className="group inline-flex max-w-full items-start gap-2 break-all text-sm text-[#79572f] hover:text-[#47321c] hover:underline">
+                      <FiExternalLink className="mt-0.5 shrink-0" aria-hidden="true" /> {resource}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
-
-          <div className="mt-4 text-xs">
-            <a href="#contents" className="text-[#1672ae] hover:underline">• Click to access the Table of Contents</a>
-            <div className="mt-1 flex items-center gap-1 text-[#c7cdd1]" aria-label="No ratings yet">
-              {[1, 2, 3, 4, 5].map((star) => <FiStar key={star} className="h-4 w-4 fill-current" />)}
-              <span className="ml-3 text-[#59656f]">Average rating: 0.0 (0 votes)</span>
-            </div>
-          </div>
-
-          <div className="mt-4 flex border-b border-[#d8dde2] text-xs">
-            <button type="button" className="border border-b-0 border-[#d8dde2] bg-white px-3 py-2 font-semibold">Holdings ( {copyCount} )</button>
-            <button type="button" className="border-b border-[#d8dde2] px-3 py-2 text-[#1672ae]">Comments ( 0 )</button>
-            <button type="button" className="border-b border-[#d8dde2] px-3 py-2 text-[#1672ae]">Images</button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="mt-3 min-w-[720px] w-full border-collapse text-xs">
-              <thead className="bg-[#e7ecef] text-left text-[#3d4b57]"><tr>{['Item type', 'Current library', 'Call number', 'Copy number', 'Status', 'Date due', 'Barcode', 'Item holds'].map((heading) => <th key={heading} className="border border-[#d8dde2] px-2 py-2 font-semibold">{heading}</th>)}</tr></thead>
-              <tbody><tr>
-                <td className="border border-[#d8dde2] px-2 py-3">BOOKS</td>
-                <td className="border border-[#d8dde2] px-2 py-3">Asia Pacific College Library<br /><em>Filipiniana Section</em></td>
-                <td className="border border-[#d8dde2] px-2 py-3 text-[#1672ae]">{callNumber}<br />(Browse shelf)</td>
-                <td className="border border-[#d8dde2] px-2 py-3">c1</td>
-                <td className="border border-[#d8dde2] px-2 py-3 text-[#5e70ae]">Available</td>
-                <td className="border border-[#d8dde2] px-2 py-3"></td>
-                <td className="border border-[#d8dde2] px-2 py-3">00000{book.id}305</td>
-                <td className="border border-[#d8dde2] px-2 py-3"></td>
-              </tr></tbody>
-            </table>
-          </div>
-          <p className="mt-3 text-xs text-red-500">Total holds: 0</p>
         </div>
 
-        <aside className="h-fit border border-[#d8dde2] bg-[#f5f5f5]">
-          <div className="border-b border-[#d8dde2] bg-[#e4e4e4] px-4 py-3 font-semibold text-[#1672ae]">☰ Browse results</div>
-          <div className="grid grid-cols-3 border-b border-[#d8dde2] text-center text-xs text-[#1672ae]">
-            <button type="button" className="border-r border-[#d8dde2] px-2 py-2">« Previous</button>
-            <button type="button" onClick={onBack} className="border-r border-[#d8dde2] px-2 py-2">Back to results</button>
-            <button type="button" className="px-2 py-2">Next »</button>
+        <aside className="h-fit rounded-2xl border border-[#e8dcc8] bg-[#faf5eb] p-5 sm:p-6">
+          <div className="mb-4 border-b border-[#e8dcc8] pb-4">
+            <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#9a784a]">{t('makeYourselfAtHome')}</p>
+            <h2 className="mt-1 text-lg font-semibold text-[#342c24]">{t('bookActions')}</h2>
           </div>
-          <div className="space-y-3 px-4 py-4 text-xs font-semibold text-[#1672ae]">
-            <h2 className="text-sm text-[#334e68]">Reserve Item</h2>
-            <button type="button" className="flex items-center gap-2 hover:underline"><FiPrinter /> Print</button>
-            <button type="button" onClick={() => onSaveBookmark(book)} className="flex items-center gap-2 hover:underline"><FiBookmark /> {isBookmarked ? 'Remove from lists' : 'Add to lists'}</button>
-            <button type="button" onClick={() => onReserveBook(book)} className="flex items-center gap-2 hover:underline"><FiShoppingCart /> Add to your cart</button>
-            <button type="button" className="flex items-center gap-2 hover:underline"><FiMail /> Suggest for purchase</button>
-            <button type="button" className="flex items-center gap-2 hover:underline"><FiChevronRight /> Unhighlight</button>
-            <button type="button" className="flex items-center gap-2 hover:underline"><FiDownload /> Send to device</button>
-            <button type="button" className="flex items-center gap-2 hover:underline"><FiDownload /> Save record</button>
-            <button type="button" className="flex items-center gap-2 hover:underline"><FiSearch /> More searches</button>
+          <div className="mt-4 grid gap-2">
+            <button
+              type="button"
+              onClick={() => onReserveBook(book)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#73532f] px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#5b4126]"
+            >
+              <FiShoppingCart aria-hidden="true" /> {t('addToReservationCart')}
+            </button>
+            {hasGutenbergResource && (
+              <button
+                type="button"
+                onClick={() => navigate(`/catalog/read/${book.id}`)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#c7a878] bg-[#fffdf8] px-4 py-3 text-sm font-semibold text-[#674a29] transition-colors hover:bg-[#f4ead9]"
+              >
+                <FiBookOpen aria-hidden="true" /> {t('readOnline')}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => onSaveBookmark(book)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#ddd1bf] bg-white px-4 py-3 text-sm font-semibold text-[#5f5548] transition-colors hover:bg-[#f7f2e9]"
+            >
+              <FiBookmark aria-hidden="true" /> {isBookmarked ? t('removeFromLists') : t('addToLists')}
+            </button>
           </div>
+          <p className="mt-5 border-t border-[#e8dcc8] pt-4 text-xs leading-5 text-[#81725f]">
+            {t('availabilityNotIncluded')}
+          </p>
         </aside>
       </div>
     </section>
-  );
+  )
 }

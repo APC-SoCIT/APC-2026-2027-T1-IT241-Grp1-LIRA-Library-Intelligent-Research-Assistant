@@ -12,6 +12,9 @@ export interface Book {
   language: string | null;
   description: string | null;
   itemType: string | null;
+  genres: string[];
+  subjects: string[];
+  series: string | null;
   url: string | null;
 }
 

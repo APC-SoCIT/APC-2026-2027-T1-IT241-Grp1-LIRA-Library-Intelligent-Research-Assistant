@@ -18,6 +18,12 @@ export class CatalogController {
     return this.catalog.getBook(id);
   }
 
+  @Get('books/:id/content')
+  getBookContent(@Param('id', new ParseIntPipe({ errorHttpStatusCode: 400 })) id: number) {
+    if (id < 1) throw new BadRequestException('Book ID must be a positive integer');
+    return this.catalog.getBookContent(id);
+  }
+
   @Get('search')
   search(@Query() query: SearchCatalogDto) {
     return this.catalog.searchBooks(query.q, query.page, query.limit);
