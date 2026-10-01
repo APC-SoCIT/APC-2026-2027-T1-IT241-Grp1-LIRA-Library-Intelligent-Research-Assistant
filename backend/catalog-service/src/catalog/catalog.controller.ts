@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Headers, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
 import { CatalogService } from './catalog.service';
 import { PaginationDto } from './dto/pagination.dto';
 import { SearchCatalogDto } from './dto/search-catalog.dto';
@@ -26,6 +26,11 @@ export class CatalogController {
 
   @Get('search')
   search(@Query() query: SearchCatalogDto) {
-    return this.catalog.searchBooks(query.q, query.page, query.limit);
+    return this.catalog.searchBooks(query.q, query.page, query.limit, query.mode);
+  }
+
+  @Post('semantic/reindex')
+  reindexSemanticCatalog(@Headers('x-semantic-index-key') indexKey?: string) {
+    return this.catalog.reindexSemanticCatalog(indexKey);
   }
 }

@@ -16,6 +16,7 @@ export default function OpacPage({ user, bookId }) {
   const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchMode, setSearchMode] = useState('keyword');
   const [sourceFilter, setSourceFilter] = useState('all');
   const [selectedBook, setSelectedBook] = useState(null);
   const [showBookmarks, setShowBookmarks] = useState(false);
@@ -156,7 +157,7 @@ export default function OpacPage({ user, bookId }) {
         }
       }
       const results = query
-        ? await searchCatalogBooks(query)
+        ? await searchCatalogBooks(query, searchMode)
         : await listCatalogBooks();
       setBooks(results.map(adaptCatalogBook));
     } catch (error) {
@@ -240,6 +241,18 @@ export default function OpacPage({ user, bookId }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+          <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600">
+            <span>{t('searchModeLabel')}</span>
+            <select
+              value={searchMode}
+              onChange={(event) => setSearchMode(event.target.value)}
+              className="max-w-36 bg-transparent text-sm text-slate-800 outline-none"
+            >
+              <option value="keyword">{t('keywordSearch')}</option>
+              <option value="semantic">{t('semanticSearch')}</option>
+              <option value="hybrid">{t('hybridSearch')}</option>
+            </select>
+          </label>
           <button type="button" onClick={() => setShowRecommendations((visible) => !visible)} aria-pressed={showRecommendations} className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-semibold transition-colors ${showRecommendations ? 'border-[#73532f] bg-[#faf5eb] text-[#5b4126]' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
             <FiBookOpen className="h-4 w-4" aria-hidden="true" /> {t('recommendations')}
           </button>

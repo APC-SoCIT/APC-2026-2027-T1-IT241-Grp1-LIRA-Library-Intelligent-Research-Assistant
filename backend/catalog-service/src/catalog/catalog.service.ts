@@ -3,12 +3,17 @@ import { Book, BookListResponse } from './book.types';
 import { KohaIntegrationError } from '../koha/koha.exceptions';
 import { KohaClient } from '../koha/koha.client';
 import { KohaBiblio } from '../koha/koha.types';
+import { SemanticSearchService } from './semantic-search.service';
 
 @Injectable()
 export class CatalogService {
   private readonly logger = new Logger(CatalogService.name);
+  private readonly hybridCache = new Map<string, { expiresAt: number; books: Book[] }>();
 
-  constructor(private readonly koha: KohaClient) {}
+  constructor(
+    private readonly koha: KohaClient,
+    private readonly semantic: SemanticSearchService,
+  ) {}
 
   async listBooks(page: number, limit: number): Promise<BookListResponse> {
     try {
@@ -47,19 +52,103 @@ export class CatalogService {
       const response = await fetch(parsedUrl);
       if (!response.ok) throw new Error(`Reading resource returned HTTP ${response.status}`);
       return { content: await response.text(), sourceUrl, resolvedUrl: response.url };
-    } catch (error: unknown) {
+    } catch {
       this.logger.warn(`Could not fetch reading resource for book ${id}`);
       throw new ServiceUnavailableException('Online reading resource is unavailable');
     }
   }
 
-  async searchBooks(query: string, page: number, limit: number): Promise<BookListResponse> {
+  async searchBooks(
+    query: string,
+    page: number,
+    limit: number,
+    mode: 'keyword' | 'semantic' | 'hybrid' = 'keyword',
+  ): Promise<BookListResponse> {
+    if (mode === 'semantic') {
+      const matches = await this.semantic.search(query.trim(), this.semantic.matchLimit);
+      const start = (page - 1) * limit;
+      return { items: matches.slice(start, start + limit), pagination: { page, limit } };
+    }
+
+    if (mode === 'hybrid') {
+      return this.searchHybrid(query.trim(), page, limit);
+    }
+
     try {
       const records = await this.koha.searchBiblios(query.trim(), page, limit);
       return { items: records.map((record) => this.normalize(record)), pagination: { page, limit } };
     } catch (error: unknown) {
       throw this.mapKohaError(error);
     }
+  }
+
+  async reindexSemanticCatalog(indexKey: string | undefined): Promise<{ indexed: number }> {
+    this.semantic.authorizeIndexRequest(indexKey);
+    const records: KohaBiblio[] = [];
+    const pageSize = 100;
+
+    try {
+      for (let page = 1; ; page++) {
+        const batch = await this.koha.getBiblios(page, pageSize);
+        records.push(...batch);
+        if (batch.length < pageSize) break;
+      }
+    } catch (error: unknown) {
+      throw this.mapKohaError(error);
+    }
+
+    const indexed = await this.semantic.indexBooks(records.map((record) => this.normalize(record)));
+    this.hybridCache.clear();
+    return { indexed };
+  }
+
+  private async searchHybrid(query: string, page: number, limit: number): Promise<BookListResponse> {
+    const cached = this.hybridCache.get(query);
+    let results = cached && cached.expiresAt > Date.now() ? cached.books : undefined;
+    if (!results) {
+      const [keywordBooks, semanticBooks] = await Promise.all([
+        this.getAllKeywordMatches(query),
+        this.semantic.search(query, this.semantic.matchLimit),
+      ]);
+      const ranked = new Map<number, { book: Book; score: number }>();
+
+      for (const books of [keywordBooks, semanticBooks]) {
+        books.forEach((book, index) => {
+          const existing = ranked.get(book.id);
+          const score = 1 / (60 + index + 1);
+          ranked.set(book.id, { book, score: (existing?.score ?? 0) + score });
+        });
+      }
+
+      results = [...ranked.values()]
+        .sort((left, right) => right.score - left.score || (left.book.title ?? '').localeCompare(right.book.title ?? ''))
+        .map(({ book }) => book);
+      if (this.hybridCache.size >= 100) {
+        const oldestKey = this.hybridCache.keys().next().value;
+        if (oldestKey) this.hybridCache.delete(oldestKey);
+      }
+      this.hybridCache.set(query, { expiresAt: Date.now() + 30000, books: results });
+    }
+
+    const start = (page - 1) * limit;
+    return { items: results.slice(start, start + limit), pagination: { page, limit } };
+  }
+
+  private async getAllKeywordMatches(query: string): Promise<Book[]> {
+    const records: KohaBiblio[] = [];
+    const pageSize = 100;
+
+    try {
+      for (let page = 1; ; page++) {
+        const batch = await this.koha.searchBiblios(query, page, pageSize);
+        records.push(...batch);
+        if (batch.length < pageSize) break;
+      }
+    } catch (error: unknown) {
+      throw this.mapKohaError(error);
+    }
+
+    return records.map((record) => this.normalize(record));
   }
 
   private normalize(record: KohaBiblio): Book {

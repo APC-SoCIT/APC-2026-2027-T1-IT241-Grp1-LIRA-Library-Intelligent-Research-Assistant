@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 import { PaginationDto } from './pagination.dto';
 
 export class SearchCatalogDto extends PaginationDto {
@@ -7,4 +7,8 @@ export class SearchCatalogDto extends PaginationDto {
   @Matches(/\S/)
   @MaxLength(200)
   q!: string;
+
+  @IsOptional()
+  @IsIn(['keyword', 'semantic', 'hybrid'])
+  mode: 'keyword' | 'semantic' | 'hybrid' = 'keyword';
 }

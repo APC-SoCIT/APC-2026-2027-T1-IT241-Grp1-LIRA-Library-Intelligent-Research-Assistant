@@ -2,7 +2,16 @@ const catalogApiUrl = import.meta.env.VITE_CATALOG_API_URL || 'http://localhost:
 
 async function request(path) {
   const response = await fetch(`${catalogApiUrl}${path}`)
-  if (!response.ok) throw new Error(`Catalog request failed (${response.status})`)
+  if (!response.ok) {
+    let message = `Catalog request failed (${response.status})`
+    try {
+      const payload = await response.json()
+      if (typeof payload.message === 'string') message = payload.message
+    } catch {
+      // Keep the HTTP status message when a proxy returns a non-JSON error response.
+    }
+    throw new Error(message)
+  }
   return response.json()
 }
 
@@ -17,10 +26,10 @@ export async function listCatalogBooks() {
   return books
 }
 
-export async function searchCatalogBooks(query) {
+export async function searchCatalogBooks(query, mode = 'keyword') {
   const books = []
   for (let page = 1; ; page++) {
-    const params = new URLSearchParams({ q: query, page: String(page), limit: '100' })
+    const params = new URLSearchParams({ q: query, mode, page: String(page), limit: '100' })
     const payload = await request(`/search?${params.toString()}`)
     if (!payload.items || payload.items.length === 0) break
     books.push(...payload.items)
