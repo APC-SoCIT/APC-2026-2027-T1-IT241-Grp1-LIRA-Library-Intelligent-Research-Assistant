@@ -8,26 +8,31 @@ Koha remains the authoritative source of catalog data. This importer does not co
 
 Requirements:
 
-- Node.js 20 or later
+- Node.js 20.6.0 or later (`--env-file` is required by the npm scripts)
 - npm
 - Network access to `https://gutendex.com/`
 
 ```powershell
 cd integrations/gutenberg-importer
 npm install
+Copy-Item .env.example .env
 ```
 
-No credentials or `.env` file are required. Optional settings can be provided through environment variables or `.env` by the local shell:
+Run the commands from `integrations/gutenberg-importer`. The `start` and `import` scripts require a local `.env` file. Copy `.env.example` to `.env` before running the CLI. The `.env` file is ignored and must not contain credentials committed to Git.
 
-| Variable | Default | Purpose |
+The scripts load `.env` using Node's `--env-file=.env` flag. Existing process environment variables take precedence over values from `.env`. Supported CLI arguments take precedence over their corresponding settings: `--batch-size` overrides `GUTENBERG_BATCH_SIZE`, and `--output-dir` overrides `GUTENBERG_OUTPUT_DIR`.
+
+The code fallback defaults remain available when configuration is read directly in code or tests:
+
+| Variable | Code fallback | Recommended `.env` value | Purpose |
 | --- | --- | --- |
-| `GUTENDEX_BASE_URL` | `https://gutendex.com` | Gutendex API base URL |
-| `GUTENDEX_TIMEOUT_MS` | `30000` | Per-attempt request timeout |
-| `GUTENDEX_MAX_ATTEMPTS` | `3` | Maximum attempts including the initial request |
-| `GUTENDEX_RETRY_INITIAL_DELAY_MS` | `250` | Initial retry backoff |
-| `GUTENDEX_RETRY_MAX_DELAY_MS` | `2000` | Maximum retry delay |
-| `GUTENBERG_OUTPUT_DIR` | `./output` | Output directory |
-| `GUTENBERG_BATCH_SIZE` | `10` | Concurrent requests per batch |
+| `GUTENDEX_BASE_URL` | `https://gutendex.com` | `https://gutendex.com` | Gutendex API base URL |
+| `GUTENDEX_TIMEOUT_MS` | `30000` | `90000` | Per-attempt request timeout |
+| `GUTENDEX_MAX_ATTEMPTS` | `3` | `3` | Maximum attempts including the initial request |
+| `GUTENDEX_RETRY_INITIAL_DELAY_MS` | `250` | `5000` | Initial retry backoff |
+| `GUTENDEX_RETRY_MAX_DELAY_MS` | `2000` | `15000` | Maximum retry delay |
+| `GUTENBERG_OUTPUT_DIR` | `./output` | `./output` | Output directory |
+| `GUTENBERG_BATCH_SIZE` | `10` | `1` | Concurrent requests per batch |
 
 ## CLI usage
 
@@ -44,7 +49,7 @@ The command writes:
 
 The command returns a non-zero exit code when one or more requested IDs fail, while still writing valid records from the successful IDs. Invalid records are reported rather than silently skipped.
 
-For small or unreliable test imports, use `--batch-size 2` or `--batch-size 3` to limit concurrent Gutendex requests. The default remains 10 for compatibility.
+For small or unreliable test imports, keep `--batch-size 1` or `--batch-size 2` to limit concurrent Gutendex requests. The recommended `.env` value is `1`. These settings reduce failures caused by slow responses or service pressure, but cannot prevent external service outages, throttling, or HTTP 5xx responses.
 
 ## Mapping
 
