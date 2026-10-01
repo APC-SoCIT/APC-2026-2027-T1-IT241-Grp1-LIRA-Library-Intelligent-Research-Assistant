@@ -1,0 +1,65 @@
+@startuml
+skinparam defaultTextAlignment center
+skinparam wrapWidth 200
+skinparam maxMessageSize 150
+
+skinparam rectangle {
+    BackgroundColor<<person>> #08427B
+    FontColor<<person>> #FFFFFF
+    BorderColor<<person>> #08427B
+
+    BackgroundColor<<container>> #1168BD
+    FontColor<<container>> #FFFFFF
+    BorderColor<<container>> #1168BD
+
+    BackgroundColor<<external_system>> #999999
+    FontColor<<external_system>> #FFFFFF
+    BorderColor<<external_system>> #999999
+}
+skinparam database {
+    BackgroundColor<<container>> #1168BD
+    FontColor<<container>> #FFFFFF
+    BorderColor<<container>> #1168BD
+}
+
+title Container Diagram for LIRA System (Level 2)
+
+rectangle "==Student/Faculty\n<size:12><<person>></size>\n\nAPC end users." as student <<person>>
+rectangle "==Librarian\n<size:12><<person>></size>\n\nAdministrative users." as librarian <<person>>
+
+package "LIRA System <<system>>" {
+  rectangle "==Single-Page Application\n<size:12><<container: React, Vite, Tailwind CSS>></size>\n\nProvides the responsive web interface for catalog\ndiscovery, Read Online, citation tools,\nand the chat widget." as spa <<container>>
+  
+  rectangle "==Backend API Gateway\n<size:12><<container: NestJS, TypeScript>></size>\n\nPrimary application gateway handling business\nlogic, user sessions, deterministic citation\nformatting, and external integrations." as api_gateway <<container>>
+  
+  rectangle "==AI/RAG Pipeline Service\n<size:12><<container: Python>></size>\n\nOrchestrates semantic search, vectorizes\nknowledge base docs, validates AI responses,\nand manages OpenRouter LLM context." as rag_service <<container>>
+  
+  rectangle "==Gutenberg Importer\n<size:12><<container: TypeScript Script>></size>\n\nStandalone importer that normalizes Gutendex\nrecords to MARCXML for manual Koha staging." as importer <<container>>
+  
+  database "==Application Database\n<size:12><<container: Supabase PostgreSQL>></size>\n\nStores LIRA-specific application data: user\nprofiles, My List, reservation requests,\nand report metadata." as relational_db <<container>>
+  
+  database "==Vector Database\n<size:12><<container: Supabase pgvector>></size>\n\nStores high-dimensional document embeddings for\nsemantic catalog search and grounded\nchatbot context." as vector_db <<container>>
+}
+
+rectangle "==Koha ILS\n<size:12><<external_system>></size>\n\nCore library management." as koha <<external_system>>
+rectangle "==Microsoft Entra ID\n<size:12><<external_system>></size>\n\nInstitutional SSO." as entra <<external_system>>
+rectangle "==OpenRouter API\n<size:12><<external_system>></size>\n\nExternal LLMs." as ai_engine <<external_system>>
+rectangle "==Project Gutenberg\n<size:12><<external_system>></size>\n\nGutendex API." as gutenberg <<external_system>>
+
+student --> spa : Visits library.apc.edu.ph\n[HTTPS]
+librarian --> spa : Visits LIRA admin dashboard\n[HTTPS]
+
+spa --> entra : Redirects for login/token retrieval\n[OAuth2]
+spa --> api_gateway : Makes API calls\n[JSON/HTTPS]
+
+api_gateway --> koha : Queries availability, updates circulation logs\n[REST API]
+api_gateway --> relational_db : Reads/Writes user data & lists\n[TCP/SQL]
+api_gateway --> rag_service : Routes natural language queries & prompt configurations\n[gRPC/HTTP]
+api_gateway --> gutenberg : Retrieves e-book content for Read Online\n[HTTPS]
+
+rag_service --> vector_db : Queries embeddings / semantic similarity\n[TCP/SQL]
+rag_service --> ai_engine : Sends RAG-augmented prompts\n[HTTPS/API]
+
+importer --> gutenberg : Fetches Gutendex metadata for catalog staging\n[HTTPS]
+
+@enduml

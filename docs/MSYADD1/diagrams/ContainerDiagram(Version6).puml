@@ -1,0 +1,33 @@
+@startuml C4_Container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Container Diagram for LIRA System (Scoped to AI Features & Sample Data)
+
+Person(student, "Student / Faculty", "Library patron")
+Person(librarian, "Library Staff", "Administrator, maintains FAQ knowledge base")
+
+System_Boundary(lira_boundary, "LIRA System") {
+    Container(web_ui, "Web Portal / UI", "Next.js", "Student portal, e-book reader, AI chat widget, and citation panel.")
+    Container(api_gateway, "API Gateway", "API Framework", "Routes incoming traffic and AI requests to appropriate processing components.")
+    Container(ai_service, "AI Processing Service", "Microservice", "Handles text extraction, chunking, prompt orchestration, and AI model routing.")
+    ContainerDb(vector_db, "Vector Database", "ChromaDB / Weaviate", "Stores indexed catalog items, e-book vector embeddings, and FAQ documents.")
+}
+
+System_Ext(koha, "Koha ILS", "Institutional library system; read-only source for catalog data.")
+System_Ext(gutenberg, "Project Gutenberg", "Public repository; source for sample e-book text (TXT/EPUB) and metadata.")
+System_Ext(openrouter, "OpenRouter API", "AI/LLM generation service.")
+System_Ext(ms365, "Microsoft 365", "SSO authentication provider.")
+
+Rel(student, web_ui, "Interacts with", "HTTPS")
+Rel(librarian, web_ui, "Administers via CMS view", "HTTPS")
+
+Rel(web_ui, ms365, "Authenticates via Azure AD", "OAuth/HTTPS")
+Rel(web_ui, api_gateway, "Sends API requests", "JSON/HTTPS")
+
+Rel(api_gateway, ai_service, "Routes processing requests", "REST/JSON")
+
+Rel(ai_service, vector_db, "Reads/writes vector embeddings & index", "Vector Search API")
+Rel(ai_service, koha, "Syncs catalog records", "REST")
+Rel(ai_service, gutenberg, "Retrieves book text & metadata", "HTTPS/REST")
+Rel(ai_service, openrouter, "Sends prompts, retrieves text", "HTTPS")
+@enduml
