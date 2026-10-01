@@ -1,0 +1,118 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="vtTJSefT06flIMmEZUVc" name="Page-1">
+    <mxGraphModel dx="3333" dy="1622" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="lane_student_faculty" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="Student/Faculty" vertex="1">
+          <mxGeometry height="1400" width="250" x="40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_lira" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="LIRA System" vertex="1">
+          <mxGeometry height="1400" width="450" x="290" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="node5_no" parent="lane_lira" style="rounded=1;whiteSpace=wrap;html=1;" value="Display report preview" vertex="1">
+          <mxGeometry height="60" width="120" x="218" y="960" as="geometry" />
+        </mxCell>
+        <mxCell id="end1" parent="lane_lira" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;strokeWidth=4;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="75" y="1320" as="geometry" />
+        </mxCell>
+        <mxCell id="node5_yes" parent="lane_lira" style="rounded=1;whiteSpace=wrap;html=1;" value="Output empty report notification" vertex="1">
+          <mxGeometry height="60" width="120" x="30" y="1200" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="lane_lira" source="node5_yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="end1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_librarian" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="Librarian" vertex="1">
+          <mxGeometry height="1400" width="250" x="740" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_koha" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="Koha ILS" vertex="1">
+          <mxGeometry height="1400" width="250" x="990" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="start1" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#000000;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="850" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="node1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Select report type &amp; date range" vertex="1">
+          <mxGeometry height="60" width="120" x="805" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="node2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Request usage &amp; circulation data" vertex="1">
+          <mxGeometry height="60" width="120" x="455" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="dec1" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="Koha Offline?" vertex="1">
+          <mxGeometry height="80" width="80" x="475" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="node3_yes" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Append warning note (Partial Report)" vertex="1">
+          <mxGeometry height="60" width="120" x="320" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="node_lira_agg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Aggregate local LIRA data" vertex="1">
+          <mxGeometry height="60" width="120" x="320" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="node3_no" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Execute Read Analytics (CRUD)" vertex="1">
+          <mxGeometry height="60" width="120" x="1055" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="node4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Aggregate combined data" vertex="1">
+          <mxGeometry height="60" width="120" x="1055" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="dec2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="No Data?" vertex="1">
+          <mxGeometry height="80" width="80" x="1075" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="node6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Click to export report" vertex="1">
+          <mxGeometry height="60" width="120" x="805" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="node7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Generate file (PDF/Excel)" vertex="1">
+          <mxGeometry height="60" width="120" x="1055" y="1120" as="geometry" />
+        </mxCell>
+        <mxCell id="node8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Provide file to user" vertex="1">
+          <mxGeometry height="60" width="120" x="455" y="1240" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="start1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="node1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="node1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="node2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="node2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="dec1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="dec1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="node3_yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="node3_yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="node_lira_agg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="node_lira_agg" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="node5_no">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="dec1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="node3_no">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="node3_no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="node4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="node4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="dec2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="dec2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="node5_yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="dec2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="node5_no">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="node5_no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="node6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="node6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="node7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="node7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="node8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="node8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="end1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="1320" as="sourcePoint" />
+            <mxPoint x="515" y="1360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
