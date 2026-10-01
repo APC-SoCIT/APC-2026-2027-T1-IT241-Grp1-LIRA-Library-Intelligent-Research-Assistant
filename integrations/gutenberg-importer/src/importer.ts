@@ -2,7 +2,8 @@ import { GutendexClient } from './gutendex/gutendex.client.js';
 import { normalizeBook } from './gutendex/normalize-book.js';
 import { GutendexError } from './gutendex/gutendex.errors.js';
 import { NormalizedBook } from './gutendex/gutendex.types.js';
-import { toMarcRecord, MarcRecord } from './marc/marc.types.js';
+import { curatedSubjectsForRecord, toMarcRecord, MarcRecord } from './marc/marc.types.js';
+import { SubjectMap } from './subject-map.js';
 
 export interface ImportError {
   id: number;
@@ -15,16 +16,18 @@ export interface ImportResult {
   records: MarcRecord[];
   errors: ImportError[];
   duplicateIds: number[];
+  curatedSubjects: Record<string, string[]>;
 }
 
 export class GutenbergImporter {
-  constructor(private readonly client: GutendexClient) {}
+  constructor(private readonly client: GutendexClient, private readonly subjectMap: SubjectMap = new Map()) {}
 
   async import(ids: number[], batchSize: number): Promise<ImportResult> {
     const duplicateIds = findDuplicates(ids);
     const uniqueIds = [...new Set(ids)];
     const books: NormalizedBook[] = [];
     const errors: ImportError[] = duplicateIds.map((id) => ({ id, message: 'Duplicate Gutenberg ID in batch; generated once', kind: 'duplicate' }));
+    const curatedSubjects: Record<string, string[]> = {};
 
     for (let index = 0; index < uniqueIds.length; index += batchSize) {
       const batch = uniqueIds.slice(index, index + batchSize);
@@ -38,13 +41,21 @@ export class GutenbergImporter {
           continue;
         }
         try {
-          books.push(normalizeBook(result.value, id));
+          const book = normalizeBook(result.value, id);
+          curatedSubjects[String(id)] = curatedSubjectsForRecord(this.subjectMap.get(id) ?? []);
+          books.push(book);
         } catch (error: unknown) {
           errors.push(toImportError(id, error));
         }
       }
     }
-    return { books, records: books.map(toMarcRecord), errors, duplicateIds };
+    return {
+      books,
+      records: books.map((book) => toMarcRecord(book, curatedSubjects[String(book.id)] ?? [])),
+      errors,
+      duplicateIds,
+      curatedSubjects,
+    };
   }
 }
 

@@ -50,6 +50,22 @@ test('maps MARC indicators, matching identifier, repeated fields, and escaped Un
   validateMarcXml(xml, 1);
 });
 
+test('preserves source subjects and appends deduplicated curated subjects as local 650 fields', () => {
+  const book = normalizeBook({ id: 84, title: 'Subjects', subjects: ['History', 'Art'] }, 84);
+  const record = toMarcRecord(book, [' Psychology ', 'art', 'Psychology', 'history', 'Architecture']);
+  assert.deepEqual(
+    record.fields.filter((field) => field.tag === '650').map((field) => ({ value: field.subfields?.[0]?.value, ind2: field.ind2 })),
+    [
+      { value: 'History', ind2: '0' },
+      { value: 'Art', ind2: '0' },
+      { value: 'Psychology', ind2: '4' },
+      { value: 'art', ind2: '4' },
+      { value: 'history', ind2: '4' },
+      { value: 'Architecture', ind2: '4' },
+    ],
+  );
+});
+
   test('selects only plain text when HTML is missing', () => {
     const book = normalizeBook({ id: 84, title: 'No HTML', formats: { 'text/plain': 'https://example.test/book.txt', 'application/rdf+xml': 'https://example.test/book.rdf' } }, 84);
     const record = toMarcRecord(book);

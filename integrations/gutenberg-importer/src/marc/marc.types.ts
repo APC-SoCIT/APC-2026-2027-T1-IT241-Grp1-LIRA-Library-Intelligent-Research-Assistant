@@ -18,7 +18,7 @@ export interface MarcRecord {
   fields: MarcField[];
 }
 
-export function toMarcRecord(book: NormalizedBook): MarcRecord {
+export function toMarcRecord(book: NormalizedBook, curatedSubjects: string[] = []): MarcRecord {
   const [primaryAuthor, ...additionalAuthors] = book.authors;
   const fields: MarcField[] = [
     { tag: '001', value: `PG${book.id}` },
@@ -30,11 +30,23 @@ export function toMarcRecord(book: NormalizedBook): MarcRecord {
   for (const language of book.languages) fields.push({ tag: '041', ind1: ' ', ind2: ' ', subfields: [{ code: 'a', value: marcLanguageCode(language) }] });
   for (const summary of book.summaries) fields.push({ tag: '520', ind1: ' ', ind2: ' ', subfields: [{ code: 'a', value: summary }] });
   for (const subject of book.subjects) fields.push({ tag: '650', ind1: ' ', ind2: '0', subfields: [{ code: 'a', value: subject }] });
-    for (const format of selectResourceFormats(book.formats)) fields.push({ tag: '856', ind1: '4', ind2: '0', subfields: [{ code: 'u', value: format.url }] });
+  for (const subject of curatedSubjectsForRecord(curatedSubjects)) fields.push({ tag: '650', ind1: ' ', ind2: '4', subfields: [{ code: 'a', value: subject }] });
+  for (const format of selectResourceFormats(book.formats)) fields.push({ tag: '856', ind1: '4', ind2: '0', subfields: [{ code: 'u', value: format.url }] });
   return { leader: '00000nam a2200000 i 4500', fields };
 }
 
-  function selectResourceFormats(formats: NormalizedBook['formats']): NormalizedBook['formats'] {
+export function curatedSubjectsForRecord(curatedSubjects: string[]): string[] {
+  const seen = new Set<string>();
+  return curatedSubjects.flatMap((subject) => {
+    const normalized = subject.trim();
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) return [];
+    seen.add(key);
+    return [normalized];
+  });
+}
+
+function selectResourceFormats(formats: NormalizedBook['formats']): NormalizedBook['formats'] {
     const html = formats.find((format) => format.mediaType.toLowerCase().split(';', 1)[0] === 'text/html');
     const plainText = formats.find((format) => format.mediaType.toLowerCase().split(';', 1)[0] === 'text/plain');
     return [html, plainText].filter((format): format is NormalizedBook['formats'][number] => format !== undefined);

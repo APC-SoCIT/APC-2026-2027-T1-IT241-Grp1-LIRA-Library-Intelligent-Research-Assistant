@@ -4,19 +4,25 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { readConfig } from './config.js';
 import { GutendexClient } from './gutendex/gutendex.client.js';
-import { GutenbergImporter, ImportResult } from './importer.js';
+import { GutenbergImporter } from './importer.js';
 import { recordsToMarcXml } from './marc/marcxml-writer.js';
 import { validateMarcXml } from './marc/validate-marcxml.js';
+import { toReport } from './report.js';
+import { readSubjectMap } from './subject-map.js';
 
 interface CliOptions {
   ids: number[];
   outputDir?: string;
   batchSize?: number;
+  subjectMapPath?: string;
 }
 
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
   const config = readConfig();
+  const subjectMap = options.subjectMapPath
+    ? await readSubjectMap(resolve(options.subjectMapPath))
+    : new Map();
   const outputDir = resolve(options.outputDir ?? config.outputDir);
   const importer = new GutenbergImporter(new GutendexClient({
     baseUrl: config.baseUrl,
@@ -24,7 +30,7 @@ async function main(): Promise<void> {
     maxAttempts: config.maxAttempts,
     retryInitialDelayMs: config.retryInitialDelayMs,
     retryMaxDelayMs: config.retryMaxDelayMs,
-  }));
+  }), subjectMap);
   const result = await importer.import(options.ids, options.batchSize ?? config.batchSize);
   const xml = recordsToMarcXml(result.records);
   validateMarcXml(xml, result.records.length);
@@ -46,10 +52,11 @@ function parseArgs(args: string[]): CliOptions {
   const ids: number[] = [];
   let outputDir: string | undefined;
   let batchSize: number | undefined;
+  let subjectMapPath: string | undefined;
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
     if (argument === '--help') {
-      console.log('Usage: npm run import -- --ids 84,1342,11 [--output-dir ./output] [--batch-size 10]');
+      console.log('Usage: npm run import -- --ids 84,1342,11 [--output-dir ./output] [--batch-size 10] [--subject-map ./subjects.json]');
       process.exit(0);
     }
     if (argument === '--ids') {
@@ -61,12 +68,15 @@ function parseArgs(args: string[]): CliOptions {
       if (!outputDir) throw new Error('--output-dir requires a path');
     } else if (argument === '--batch-size') {
       batchSize = parsePositiveInteger(args[++index], '--batch-size');
+    } else if (argument === '--subject-map') {
+      subjectMapPath = args[++index];
+      if (!subjectMapPath) throw new Error('--subject-map requires a JSON file path');
     } else {
       throw new Error(`Unknown argument: ${argument}`);
     }
   }
   if (ids.length === 0) throw new Error('At least one Gutenberg ID is required; use --ids 84,1342,11');
-  return { ids, outputDir, batchSize };
+  return { ids, outputDir, batchSize, subjectMapPath };
 }
 
 function parseId(value: string): number {
@@ -77,16 +87,6 @@ function parsePositiveInteger(value: string | undefined, label: string): number 
   const parsed = Number(value);
   if (!Number.isSafeInteger(parsed) || parsed <= 0) throw new Error(`${label} must be a positive integer`);
   return parsed;
-}
-
-function toReport(ids: number[], result: ImportResult): object {
-  return {
-    ids,
-    generatedRecords: result.records.length,
-    duplicateIds: result.duplicateIds,
-    errors: result.errors,
-    books: result.books.map((book) => ({ id: book.id, title: book.title, source: book.source })),
-  };
 }
 
 main().catch((error: unknown) => {

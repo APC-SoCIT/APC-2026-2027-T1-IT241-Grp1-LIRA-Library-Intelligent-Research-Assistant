@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { GutendexClient } from '../src/gutendex/gutendex.client.js';
 import { GutenbergImporter } from '../src/importer.js';
+import { toReport } from '../src/report.js';
 
 const response = (payload: unknown, status = 200): Response => new Response(JSON.stringify(payload), { status, headers: { 'Content-Type': 'application/json' } });
 
@@ -123,4 +124,18 @@ test('preserves successful records when another ID fails', async () => {
   const result = await new GutenbergImporter(client).import([84, 999999], 2);
   assert.deepEqual(result.books.map((book) => book.id), [84]);
   assert.deepEqual(result.errors.map((error) => error.id), [999999]);
+});
+
+test('applies mapped curated subjects even when a source subject has the same text', async () => {
+  const client = new GutendexClient({ fetchImpl: async () => response({ id: 84, title: 'Book', subjects: ['History'] }) });
+  const result = await new GutenbergImporter(client, new Map([[84, ['Psychology', 'History']], [999, ['Unrelated']]])).import([84], 1);
+  assert.deepEqual(result.curatedSubjects, { '84': ['Psychology', 'History'] });
+  assert.deepEqual(toReport([84], result), {
+    ids: [84],
+    generatedRecords: 1,
+    duplicateIds: [],
+    errors: [],
+    curatedSubjects: { '84': ['Psychology', 'History'] },
+    books: [{ id: 84, title: 'Book', source: result.books[0]?.source }],
+  });
 });
