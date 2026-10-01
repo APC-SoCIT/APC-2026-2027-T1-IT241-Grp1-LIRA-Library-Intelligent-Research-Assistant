@@ -6,6 +6,7 @@ import {
   FiPrinter,
   FiShoppingCart,
 } from 'react-icons/fi'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BookCover from './BookCover'
 import { translate } from '../i18n/catalogTranslations'
@@ -23,19 +24,18 @@ function getOnlineResources(book) {
     })
 }
 
-function Metadata({ label, value, emptyValue }) {
+function Metadata({ label, value }) {
   return (
-    <div className="grid gap-1 border-b border-[#eee5d7] px-4 py-3 last:border-b-0 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
-      <dt className="text-xs font-semibold uppercase tracking-wide text-[#89775f]">{label}</dt>
-      <dd className={`break-words text-sm ${value ? 'text-[#342c24]' : 'italic text-[#a79a87]'}`}>
-        {value || emptyValue}
-      </dd>
+    <div className="grid content-start gap-1 border-b border-[#eee5d7] px-4 py-3 sm:min-h-20 sm:px-5 sm:py-4">
+      <dt className="text-[0.66rem] font-semibold uppercase tracking-wide text-[#89775f]">{label}</dt>
+      <dd className="break-words text-sm leading-5 text-[#342c24]">{value}</dd>
     </div>
   )
 }
 
 export default function BookDetail({ book, language, onBack, onSaveBookmark, onReserveBook, isBookmarked }) {
   const navigate = useNavigate()
+  const [isSummaryExpanded, setIsSummaryExpanded] = useState(false)
   const t = (key) => translate(language, key)
   const resources = getOnlineResources(book)
   const hasGutenbergResource = resources.some((resource) => resource.includes('gutenberg.org'))
@@ -51,11 +51,9 @@ export default function BookDetail({ book, language, onBack, onSaveBookmark, onR
     ['issn', book.issn],
     ['itemTypeLabel', book.itemType],
     ['language', book.language],
-    ['description', book.description],
-    ['genres', book.genres?.join(', ')],
-    ['topicsSubjects', book.subjects?.join(', ')],
+    ['categories', book.categories?.join(', ')],
     ['series', book.series],
-  ]
+  ].filter(([, value]) => value !== null && value !== undefined && value !== '')
 
   return (
     <section className="mt-6 overflow-hidden rounded-3xl border border-[#e8dcc8] bg-[#fffdf8] text-[#342c24] shadow-[0_20px_60px_rgba(91,67,36,0.12)]">
@@ -81,18 +79,24 @@ export default function BookDetail({ book, language, onBack, onSaveBookmark, onR
                 <h1 className="mt-2 text-2xl font-bold leading-tight text-[#342c24] sm:text-3xl">{book.title}</h1>
                 {book.subtitle && <p className="mt-2 text-base leading-relaxed text-[#766650]">{book.subtitle}</p>}
                 {book.author && <p className="mt-4 text-sm font-medium text-[#66543d]">{t('by')} {book.author}</p>}
+                {book.description && <div className="mt-4 border-t border-[#e8dcc8] pt-3">
+                  <h2 className="text-sm font-semibold text-[#49351f]">{t('summary')}</h2>
+                  <p className={`mt-1 text-sm leading-6 text-[#675b4a] ${isSummaryExpanded ? 'whitespace-pre-line' : 'line-clamp-3'}`}>{book.description}</p>
+                  {book.description.length > 220 && <button type="button" onClick={() => setIsSummaryExpanded((expanded) => !expanded)} className="mt-1 text-xs font-semibold text-[#79572f] hover:underline">
+                    {t(isSummaryExpanded ? 'showLess' : 'readMore')}
+                  </button>}
+                </div>}
               </div>
             </div>
           </div>
 
           <section className="mt-7 overflow-hidden rounded-2xl border border-[#e8dcc8] bg-white/80">
             <div className="border-b border-[#eee5d7] bg-[#faf5eb] px-4 py-4 sm:px-5">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#9a784a]">{t('bibliographicInformation')}</p>
-              <h2 className="mt-1 text-lg font-semibold text-[#342c24]">{t('aboutThisBook')}</h2>
+              <h2 className="text-lg font-semibold text-[#342c24]">{t('bibliographicInformation')}</h2>
             </div>
-            <dl>
+            <dl className="grid sm:grid-cols-2">
               {metadata.map(([labelKey, value]) => (
-                <Metadata key={labelKey} label={t(labelKey)} value={value} emptyValue={t('notProvidedByKoha')} />
+                <Metadata key={labelKey} label={t(labelKey)} value={value} />
               ))}
             </dl>
           </section>

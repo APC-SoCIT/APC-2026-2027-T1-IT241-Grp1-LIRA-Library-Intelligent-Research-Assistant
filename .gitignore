@@ -12,6 +12,16 @@ dist/
 dist-ssr
 coverage/
 
+# Local test artifacts
+/test-data/
+/test-output/
+/testing/
+/book.html
+
+# One-off Supabase SQL; keep versioned migrations tracked
+/supabase/scratch/
+/supabase/*.scratch.sql
+
 # Logs
 logs
 *.log

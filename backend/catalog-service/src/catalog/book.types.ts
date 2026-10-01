@@ -14,6 +14,7 @@ export interface Book {
   itemType: string | null;
   genres: string[];
   subjects: string[];
+  categories?: string[];
   series: string | null;
   url: string | null;
 }

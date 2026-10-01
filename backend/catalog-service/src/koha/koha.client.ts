@@ -2,9 +2,29 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosError, AxiosRequestConfig } from 'axios';
+import { XMLParser, XMLValidator } from 'fast-xml-parser';
 import { firstValueFrom } from 'rxjs';
 import { KohaIntegrationError } from './koha.exceptions';
 import { KohaBiblio, KohaBiblioResponse } from './koha.types';
+
+const controlledCategories = new Map([
+  'Psychology',
+  'Engineering',
+  'Computer Science',
+  'Literature',
+  'Photography',
+  'Accounting',
+  'Architecture',
+  'Business & Economics',
+  'History',
+].map((category) => [category.toLowerCase(), category]));
+
+const marcXmlParser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: '@_',
+  parseTagValue: false,
+  trimValues: true,
+});
 
 @Injectable()
 export class KohaClient {
@@ -26,38 +46,36 @@ export class KohaClient {
   }
 
   async getBiblios(page: number, limit: number): Promise<KohaBiblio[]> {
-    const response = await this.request<KohaBiblioResponse>('/api/v1/biblios', {
-      params: { _page: page, _per_page: limit },
-    });
-    return this.extractBiblios(response.data);
+    return this.getBibliosWithCategories({ params: { _page: page, _per_page: limit } });
   }
 
   async getBiblio(id: number): Promise<KohaBiblio> {
-    const response = await this.request<KohaBiblio>(`/api/v1/biblios/${id}`);
-    if (!this.isRecord(response.data) || (!this.hasNumber(response.data, 'biblio_id') && !this.hasNumber(response.data, 'id'))) {
+    const [jsonResponse, categoryMap] = await Promise.all([
+      this.request<KohaBiblio>(`/api/v1/biblios/${id}`),
+      this.getControlledCategories(`/api/v1/biblios/${id}`),
+    ]);
+    if (!this.isRecord(jsonResponse.data) || (!this.hasNumber(jsonResponse.data, 'biblio_id') && !this.hasNumber(jsonResponse.data, 'id'))) {
       throw new KohaIntegrationError('unexpected', 'Koha returned an invalid bibliographic record');
     }
-    return response.data;
+    const recordId = jsonResponse.data.biblio_id ?? jsonResponse.data.id;
+    return { ...jsonResponse.data, categories: categoryMap.get(recordId as number) ?? [] };
   }
 
   async searchBiblios(query: string, page: number, limit: number): Promise<KohaBiblio[]> {
-  const searchTerm = `%${query}%`;
-
-  const response = await this.request<KohaBiblioResponse>('/api/v1/biblios', {
-    params: {
-      q: JSON.stringify({
-        '-or': [
-          { title: { '-like': searchTerm } },
-          { author: { '-like': searchTerm } },
-          { isbn: { '-like': searchTerm } },
-        ],
-      }),
-      _page: page,
-      _per_page: limit,
-    },
-  });
-
-  return this.extractBiblios(response.data);
+    const searchTerm = `%${query}%`;
+    return this.getBibliosWithCategories({
+      params: {
+        q: JSON.stringify({
+          '-or': [
+            { title: { '-like': searchTerm } },
+            { author: { '-like': searchTerm } },
+            { isbn: { '-like': searchTerm } },
+          ],
+        }),
+        _page: page,
+        _per_page: limit,
+      },
+    });
   }
 
   async checkConnectivity(): Promise<void> {
@@ -75,6 +93,87 @@ export class KohaClient {
     } catch (error: unknown) {
       throw this.toIntegrationError(error);
     }
+  }
+
+  private async getBibliosWithCategories(options: AxiosRequestConfig): Promise<KohaBiblio[]> {
+    const [jsonResponse, marcResponse] = await Promise.all([
+      this.request<KohaBiblioResponse>('/api/v1/biblios', options),
+      this.getControlledCategories('/api/v1/biblios', options),
+    ]);
+    const records = this.extractBiblios(jsonResponse.data);
+    return records.map((record) => {
+      const id = record.biblio_id ?? record.id;
+      return { ...record, categories: typeof id === 'number' ? marcResponse.get(id) ?? [] : [] };
+    });
+  }
+
+  private async getControlledCategories(path: string, options: AxiosRequestConfig = {}): Promise<Map<number, string[]>> {
+    try {
+      const response = await this.request<string>(path, {
+        ...options,
+        responseType: 'text',
+        headers: { ...options.headers, Accept: 'application/marcxml+xml' },
+      });
+      return this.extractControlledCategories(response.data);
+    } catch {
+      this.logger.warn('Koha MARCXML category enrichment failed; returning catalog records without categories');
+      return new Map();
+    }
+  }
+
+  private extractControlledCategories(marcXml: string): Map<number, string[]> {
+    const validation = XMLValidator.validate(marcXml);
+    if (validation !== true) {
+      throw new KohaIntegrationError('unexpected', 'Koha returned invalid MARCXML');
+    }
+
+    const parsed = marcXmlParser.parse(marcXml) as Record<string, unknown>;
+    const collection = this.isRecord(parsed.collection) ? parsed.collection : parsed;
+    const records = this.asArray(collection.record);
+    const categoriesByBiblioId = new Map<number, string[]>();
+
+    for (const rawRecord of records) {
+      if (!this.isRecord(rawRecord)) continue;
+      const fields = this.asArray(rawRecord.datafield).filter((field): field is Record<string, unknown> => this.isRecord(field));
+      const controlFields = this.asArray(rawRecord.controlfield).filter((field): field is Record<string, unknown> => this.isRecord(field));
+      const idField = fields.find((field) => field['@_tag'] === '999');
+      const idSubfield = idField && this.asArray(idField.subfield)
+        .find((field): field is Record<string, unknown> => this.isRecord(field) && field['@_code'] === 'c');
+      const controlNumber = controlFields.find((field) => field['@_tag'] === '001');
+      const internalId = this.positiveInteger(this.xmlText(idSubfield) ?? this.xmlText(controlNumber));
+      if (internalId === undefined) continue;
+
+      const categories = new Set<string>();
+      for (const field of fields) {
+        if (field['@_tag'] !== '650' || field['@_ind2'] !== '4') continue;
+        for (const subfield of this.asArray(field.subfield)) {
+          if (!this.isRecord(subfield) || subfield['@_code'] !== 'a') continue;
+          const value = this.xmlText(subfield);
+          const category = value ? controlledCategories.get(value.toLowerCase()) : undefined;
+          if (category) categories.add(category);
+        }
+      }
+      if (categories.size > 0) categoriesByBiblioId.set(internalId, [...categories]);
+    }
+
+    return categoriesByBiblioId;
+  }
+
+  private asArray(value: unknown): unknown[] {
+    if (value === undefined || value === null) return [];
+    return Array.isArray(value) ? value : [value];
+  }
+
+  private xmlText(value: Record<string, unknown> | undefined): string | undefined {
+    if (!value) return undefined;
+    if (typeof value['#text'] === 'string') return value['#text'].trim();
+    return undefined;
+  }
+
+  private positiveInteger(value: string | undefined): number | undefined {
+    if (!value || !/^\d+$/.test(value)) return undefined;
+    const parsed = Number(value);
+    return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
   }
 
   private extractBiblios(payload: KohaBiblioResponse): KohaBiblio[] {

@@ -27,7 +27,7 @@ describe('CatalogService', () => {
     koha.getBiblios = jest.fn().mockResolvedValue([{ biblio_id: 1, title: 'Title', author: null, publication_year: '2024', item_type: 'BK' }]);
 
     await expect(service.listBooks(1, 20)).resolves.toEqual({
-      items: [{ id: 1, title: 'Title', subtitle: null, author: null, isbn: null, issn: null, publisher: null, publicationYear: 2024, publicationPlace: null, edition: null, language: null, description: null, itemType: 'BK', genres: [], subjects: [], series: null, url: null }],
+      items: [{ id: 1, title: 'Title', subtitle: null, author: null, isbn: null, issn: null, publisher: null, publicationYear: 2024, publicationPlace: null, edition: null, language: null, description: null, itemType: 'BK', genres: [], subjects: [], categories: [], series: null, url: null }],
       pagination: { page: 1, limit: 20 },
     });
   });
@@ -38,11 +38,24 @@ describe('CatalogService', () => {
       title: 'Record',
       genre_form: ['Fiction', 'Historical fiction'],
       subject: [{ name: 'Women authors' }],
+      categories: ['Literature'],
       collection_title: 'Library classics',
     }]);
 
     await expect(service.listBooks(1, 20)).resolves.toMatchObject({
-      items: [{ genres: ['Fiction', 'Historical fiction'], subjects: ['Women authors'], series: 'Library classics' }],
+      items: [{ genres: ['Fiction', 'Historical fiction'], subjects: ['Women authors'], categories: ['Literature'], series: 'Library classics' }],
+    });
+  });
+
+  it('uses Koha abstract as the book summary when description is absent', async () => {
+    koha.getBiblios = jest.fn().mockResolvedValue([{
+      biblio_id: 3,
+      title: 'Pride and Prejudice',
+      abstract: 'Elizabeth Bennet and Mr. Darcy reconsider their first impressions.',
+    }]);
+
+    await expect(service.listBooks(1, 20)).resolves.toMatchObject({
+      items: [{ description: 'Elizabeth Bennet and Mr. Darcy reconsider their first impressions.' }],
     });
   });
 
@@ -97,6 +110,7 @@ describe('CatalogService', () => {
       itemType: null,
       genres: [],
       subjects: [],
+      categories: [],
       series: null,
       url: null,
     };

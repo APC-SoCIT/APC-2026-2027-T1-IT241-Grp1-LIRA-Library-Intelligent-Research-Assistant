@@ -11,7 +11,7 @@ export default function CatalogAccessPage() {
   const [searchParams] = useSearchParams()
 
   useEffect(() => {
-    if (session) setHasCatalogAccess(true)
+    setHasCatalogAccess(Boolean(session))
   }, [session])
 
   if (hasCatalogAccess) {
