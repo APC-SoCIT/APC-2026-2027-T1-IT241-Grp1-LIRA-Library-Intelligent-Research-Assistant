@@ -12,6 +12,11 @@ dist/
 dist-ssr
 coverage/
 
+# Local Vercel state and downloaded deployment binaries
+.vercel/
+/backend/catalog-service/vendor/
+/backend/catalog-service/public/
+
 # Logs
 logs
 *.log
