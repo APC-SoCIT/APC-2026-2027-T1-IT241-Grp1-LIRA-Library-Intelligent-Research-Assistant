@@ -32,6 +32,7 @@ function recordDiagnostics(detail: string): void {
     ['tailnet-lock', /tailnet lock.*(?:sign|reject|fail)|node key.*(?:unsigned|not signed)/i],
     ['daemon-proxy-in-use', /tshttpproxy: using proxy/i],
     ['daemon-proxy-skipped', /tshttpproxy: skipping .*proxy pointing to self/i],
+    ['control-auth-paused', /authRoutine: awaiting unpause/i],
     ['control-key-received', /control server key from/i],
     ['control-registration-started', /RegisterReq: onode=/i],
     ['control-registration-response', /RegisterReq: got response/i],
@@ -110,6 +111,8 @@ async function loginFailure(error: unknown): Promise<Error> {
     reason = 'The auth key was rejected. Replace TS_AUTHKEY with a valid reusable auth key in Vercel Production and redeploy.';
   } else if (diagnostics.has('tag-rejected')) {
     reason = 'The device tag was rejected. Check tag:lira-backend ownership and the auth key tags.';
+  } else if (diagnostics.has('control-auth-paused')) {
+    reason = 'The daemon paused authentication while waiting for network availability.';
   } else if (diagnostics.has('dns-failure')) {
     reason = 'The daemon reported a DNS failure. Check outbound DNS access from the deployed runtime.';
   } else if (diagnostics.has('tls-failure')) {
@@ -143,7 +146,7 @@ async function connect(key: string): Promise<void> {
     daemonFailed = false;
 
     const controlProxy = await startTailscaleControlProxy();
-    console.info('Tailscale deployment transport: node-control-proxy-v2.');
+    console.info('Tailscale deployment transport: node-control-proxy-v3 (assume network up).');
     const daemonEnvironment: NodeJS.ProcessEnv = {
       ...process.env,
       HTTP_PROXY: controlProxy,
@@ -154,6 +157,10 @@ async function connect(key: string): Promise<void> {
       no_proxy: 'localhost,127.0.0.1,::1',
       // The local proxy tunnels HTTPS only; avoid the port-80 control fast path.
       TS_FORCE_NOISE_443: 'true',
+      // Serverless interface detection can report no network even when the Node
+      // proxy works. In pinned Tailscale 1.102.5 this prevents control login from
+      // pausing on that detection; authentication and TLS checks still apply.
+      TS_ASSUME_NETWORK_UP_FOR_TEST: 'true',
     };
     // The daemon receives its key through the private file during `tailscale up`.
     delete daemonEnvironment.TS_AUTHKEY;

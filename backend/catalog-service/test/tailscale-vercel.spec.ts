@@ -116,6 +116,7 @@ describe('Tailscale deployment proxy', () => {
       HTTP_PROXY: 'http://127.0.0.1:40000',
       HTTPS_PROXY: 'http://127.0.0.1:40000',
       TS_FORCE_NOISE_443: 'true',
+      TS_ASSUME_NETWORK_UP_FOR_TEST: 'true',
     });
     expect(spawn.mock.calls[0][2].env.TS_AUTHKEY).toBeUndefined();
     expect(fetch).not.toHaveBeenCalled();
@@ -211,6 +212,21 @@ describe('Tailscale deployment proxy', () => {
     const output = JSON.stringify((console.error as jest.Mock).mock.calls);
     expect(output).toContain('control-connection-timeout');
     expect(output).toContain('Control HTTPS probe: HTTP 200');
+  });
+
+  it('identifies paused authentication ahead of unrelated background DNS failures', async () => {
+    run.mockRejectedValueOnce(new Error('not connected'))
+      .mockImplementationOnce(async () => {
+        child.stderr.write('authRoutine: awaiting unpause\nlookup log.tailscale.com: no such host\n' + key);
+        throw new Error('context deadline exceeded');
+      })
+      .mockResolvedValueOnce({ stdout: JSON.stringify({ BackendState: 'NeedsLogin' }), stderr: '' });
+
+    await expect(getProxy()).rejects.toThrow('The daemon paused authentication');
+    const output = JSON.stringify((console.error as jest.Mock).mock.calls);
+    expect(output).toContain('control-auth-paused');
+    expect(output).toContain('dns-failure');
+    expect(output).not.toContain(key);
   });
 
   it.each([
