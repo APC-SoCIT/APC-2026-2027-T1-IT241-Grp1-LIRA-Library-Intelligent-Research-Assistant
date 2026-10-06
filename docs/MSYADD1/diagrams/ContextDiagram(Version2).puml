@@ -1,0 +1,18 @@
+@startuml LIRA_Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title System Context Diagram for APC Library Intelligent Research Assistant (LIRA)
+
+Person(student, "Student / Faculty", "Library patron searching for resources, citations, and AI assistance.")
+Person(librarian, "Librarian", "Administers the catalog, manages book loans, and configures the chatbot.")
+
+System(lira, "LIRA System", "APC Library Intelligent Research Assistant providing AI-driven search, summaries, citations, and chatbot support.")
+
+System_Ext(koha, "Koha ILS", "External Integrated Library System for managing catalog records and book loans.")
+System_Ext(ai, "AI LLM Services", "External AI backend for generating summaries, citations, recommendations, and conversational responses.")
+
+Rel(student, lira, "Uses for resource discovery, e-book summaries, citations, and chatbot inquiries")
+Rel(librarian, lira, "Uses for catalog management, report generation, FAQ creation, and AI configuration")
+Rel(lira, koha, "Retrieves loan status, validates catalog data, and commits records")
+Rel(lira, ai, "Sends prompts and context to generate text, summaries, and personalized recommendations")
+@enduml

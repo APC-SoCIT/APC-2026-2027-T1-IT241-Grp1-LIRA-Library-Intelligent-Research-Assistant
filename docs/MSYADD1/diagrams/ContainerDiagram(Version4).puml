@@ -1,0 +1,29 @@
+@startuml LIRA_Container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Container Diagram for LIRA System
+
+Person(student, "Student/Faculty", "Library patron")
+Person(librarian, "Library Staff", "Administrator")
+
+System_Ext(koha, "Koha ILS", "Library System")
+System_Ext(ai, "OpenRouter API (AI LLM Service)", "AI Services")
+System_Ext(m365, "Microsoft 365", "Authentication Provider")
+
+System_Boundary(lira, "LIRA System") {
+    Container(web, "Web Portal / UI", "Next.js (React Framework)", "Provides the responsive student-facing interface for searches, catalog management, and the AI chat widget.")
+    Container(api, "API Gateway", "API Framework", "Routes requests, handles API traffic, and orchestrates communication between the frontend and internal services.")
+    Container(ai_service, "AI Processing Service", "Microservice (e.g., Python)", "Handles complex logic for context parsing, prompt formatting, internal routing, and AI integrations.")
+    ContainerDb(db, "Vector Database", "ChromaDB / Weaviate", "Stores indexed representations of catalog records and FAQ content for semantic search and retrieval.")
+}
+
+Rel(student, web, "Interacts with", "HTTPS")
+Rel(librarian, web, "Administers knowledge base via", "HTTPS")
+Rel(web, m365, "Authenticates users", "OAuth/HTTPS")
+Rel(web, api, "Sends API requests", "JSON/HTTPS")
+
+Rel(api, ai_service, "Routes AI generation and synthesis requests", "REST/gRPC")
+Rel(ai_service, db, "Reads from and writes to", "Vector Search API")
+Rel(ai_service, ai, "Sends prompts and retrieves generated text", "HTTPS")
+Rel(ai_service, koha, "Syncs catalog metadata in read-only capacity", "REST API")
+@enduml
