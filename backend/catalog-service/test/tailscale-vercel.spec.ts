@@ -58,6 +58,9 @@ describe('Tailscale deployment proxy', () => {
     jest.doMock('node:fs', () => files);
     jest.doMock('node:os', () => ({ platform: operatingSystem, tmpdir: () => '/tmp' }));
     jest.doMock('node:timers/promises', () => ({ setTimeout: jest.fn().mockResolvedValue(undefined) }));
+    jest.doMock('../src/tailscale-control-proxy', () => ({
+      startTailscaleControlProxy: jest.fn().mockResolvedValue('http://127.0.0.1:40000'),
+    }));
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'info').mockImplementation(() => {});
     jest.spyOn(global, 'fetch').mockResolvedValue({ status: 200, body: null } as Response);
@@ -108,6 +111,12 @@ describe('Tailscale deployment proxy', () => {
       files.writeFileSync.mock.calls[0][0], { force: true },
     );
     expect(process.env.HTTP_PROXY).toBe(originalHttpProxy);
+    expect(spawn.mock.calls[0][2].env).toMatchObject({
+      HTTP_PROXY: 'http://127.0.0.1:40000',
+      HTTPS_PROXY: 'http://127.0.0.1:40000',
+      TS_FORCE_NOISE_443: 'true',
+    });
+    expect(spawn.mock.calls[0][2].env.TS_AUTHKEY).toBeUndefined();
     expect(fetch).not.toHaveBeenCalled();
   });
 

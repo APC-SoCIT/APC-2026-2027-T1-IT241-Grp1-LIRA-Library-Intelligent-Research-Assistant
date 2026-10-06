@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import type { AxiosProxyConfig } from 'axios';
+import { startTailscaleControlProxy } from './tailscale-control-proxy';
 
 const run = promisify(execFile);
 const directory = join(tmpdir(), 'lira-tailscale');
@@ -131,13 +132,28 @@ async function connect(key: string): Promise<void> {
     rmSync(socket, { force: true });
     daemonFailed = false;
 
+    const controlProxy = await startTailscaleControlProxy();
+    const daemonEnvironment: NodeJS.ProcessEnv = {
+      ...process.env,
+      HTTP_PROXY: controlProxy,
+      HTTPS_PROXY: controlProxy,
+      http_proxy: controlProxy,
+      https_proxy: controlProxy,
+      NO_PROXY: 'localhost,127.0.0.1,::1',
+      no_proxy: 'localhost,127.0.0.1,::1',
+      // The local proxy tunnels HTTPS only; avoid the port-80 control fast path.
+      TS_FORCE_NOISE_443: 'true',
+    };
+    // The daemon receives its key through the private file during `tailscale up`.
+    delete daemonEnvironment.TS_AUTHKEY;
+
     daemon = spawn(binary('tailscaled'), [
       '--tun=userspace-networking',
       '--state=mem:',
       '--statedir=' + directory,
       '--socket=' + socket,
       '--outbound-http-proxy-listen=127.0.0.1:1055',
-    ], { stdio: ['ignore', 'ignore', 'pipe'] });
+    ], { stdio: ['ignore', 'ignore', 'pipe'], env: daemonEnvironment });
 
     const startedDaemon = daemon;
     let logTail = '';
