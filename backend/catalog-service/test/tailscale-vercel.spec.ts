@@ -110,6 +110,7 @@ describe('Tailscale deployment proxy', () => {
     run.mockRejectedValueOnce(new Error('not connected'))
       .mockRejectedValueOnce(new Error('Authentication failed with ' + key))
       .mockRejectedValueOnce(new Error('not connected'))
+      .mockRejectedValueOnce(new Error('not connected'))
       .mockResolvedValueOnce({ stdout: '', stderr: '' });
 
     await expect(getProxy()).rejects.toThrow('Tailscale login failed');
@@ -120,6 +121,28 @@ describe('Tailscale deployment proxy', () => {
 
     await expect(getProxy()).resolves.toMatchObject({ port: 1055 });
     expect(run.mock.calls.filter((call) => call[1].includes('up'))).toHaveLength(2);
+  });
+
+  it.each([
+    ['NeedsMachineAuth', 'context deadline exceeded', 'Device approval is required'],
+    ['NeedsLogin', 'invalid auth key', 'The auth key was rejected'],
+    ['NeedsLogin', 'tag is not allowed', 'The device tag was rejected'],
+    ['NeedsLogin', 'context deadline exceeded', 'Login timed out'],
+  ])('reports a safe reason for login failure in state %s: %s', async (state, detail, reason) => {
+    run.mockRejectedValueOnce(new Error('not connected'))
+      .mockRejectedValueOnce(Object.assign(new Error('private output ' + key), {
+        stderr: detail + '\n' + key + '\nhttps://login.tailscale.com/a/private-login-token',
+      }))
+      .mockResolvedValueOnce({ stdout: JSON.stringify({ BackendState: state }), stderr: '' });
+
+    await expect(getProxy()).rejects.toThrow(reason);
+    const output = JSON.stringify((console.error as jest.Mock).mock.calls);
+    expect(output).toContain('state: ' + state);
+    expect(output).not.toContain(key);
+    expect(output).not.toContain('private-login-token');
+    expect(files.rmSync).toHaveBeenCalledWith(
+      files.writeFileSync.mock.calls[0][0], { force: true },
+    );
   });
 
   it('stops a failed daemon before trying to authenticate', async () => {

@@ -16,15 +16,44 @@ let daemon: ChildProcess | undefined;
 let daemonFailed = false;
 let connecting: Promise<void> | undefined;
 
-async function isConnected(): Promise<boolean> {
+async function backendState(): Promise<string | undefined> {
   try {
     const { stdout } = await run(binary('tailscale'), [
       '--socket=' + socket, 'status', '--json',
     ], { timeout: 5000 });
-    return JSON.parse(stdout).BackendState === 'Running';
+    const state: unknown = JSON.parse(stdout).BackendState;
+    // Only return known state names, never arbitrary daemon output.
+    return typeof state === 'string' &&
+      ['NoState', 'NeedsLogin', 'NeedsMachineAuth', 'Stopped', 'Starting', 'Running'].includes(state)
+      ? state : undefined;
   } catch {
-    return false;
+    return undefined;
   }
+}
+
+async function isConnected(): Promise<boolean> {
+  return await backendState() === 'Running';
+}
+
+async function loginFailure(error: unknown): Promise<Error> {
+  const state = await backendState();
+  const failure = error as { message?: unknown; stderr?: unknown; code?: unknown; killed?: unknown } | null;
+  const detail = [failure?.message, failure?.stderr]
+    .filter((value): value is string => typeof value === 'string').join('\n');
+  let reason = 'Check auth key, tags, expiry and device approval.';
+
+  if (state === 'NeedsMachineAuth' || /needs? (?:machine )?approval|pending approval/i.test(detail)) {
+    reason = 'Device approval is required. Approve lira-vercel in Tailscale Machines or use a pre-approved auth key.';
+  } else if (/invalid.*(?:auth|key)|(?:auth|key).*(?:invalid|expired|revoked|not found)|not a valid key/i.test(detail)) {
+    reason = 'The auth key was rejected. Replace TS_AUTHKEY with a valid reusable auth key in Vercel Production and redeploy.';
+  } else if (/tag.*(?:invalid|not permitted|not allowed|unauthorized)/i.test(detail)) {
+    reason = 'The device tag was rejected. Check tag:lira-backend ownership and the auth key tags.';
+  } else if (failure?.killed === true || failure?.code === 'ETIMEDOUT' || /deadline exceeded|timed? out|timeout/i.test(detail)) {
+    reason = 'Login timed out. Check device approval and connectivity to the Tailscale control service.';
+  }
+
+  // Child-process output can contain keys or login URLs. Emit fixed messages only.
+  return new Error(`Tailscale login failed${state ? ` (state: ${state})` : ''}. ${reason}`);
 }
 
 function failDaemon(message: string): never {
@@ -72,9 +101,8 @@ async function connect(key: string): Promise<void> {
       '--accept-dns=false',
       '--timeout=45s',
     ], { timeout: 50000 });
-  } catch {
-    // Keep child-process errors and their output out of logs and HTTP responses.
-    throw new Error('Tailscale login failed. Check auth key, tags, expiry and device approval.');
+  } catch (error: unknown) {
+    throw await loginFailure(error);
   } finally {
     rmSync(authKeyFile, { force: true });
   }
