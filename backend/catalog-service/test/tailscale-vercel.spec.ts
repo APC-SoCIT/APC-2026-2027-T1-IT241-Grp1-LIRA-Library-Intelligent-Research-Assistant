@@ -1,4 +1,5 @@
 import { promisify } from 'node:util';
+import { PassThrough } from 'node:stream';
 import type { getTailscaleProxy } from '../src/tailscale-vercel';
 
 describe('Tailscale deployment proxy', () => {
@@ -24,6 +25,7 @@ describe('Tailscale deployment proxy', () => {
     once: jest.Mock;
     unref: jest.Mock;
     kill: jest.Mock;
+    stderr: PassThrough;
   };
 
   beforeEach(() => {
@@ -38,6 +40,7 @@ describe('Tailscale deployment proxy', () => {
       once: jest.fn(),
       unref: jest.fn(),
       kill: jest.fn(),
+      stderr: new PassThrough(),
     };
     spawn = jest.fn().mockReturnValue(child);
     operatingSystem = jest.fn().mockReturnValue('linux');
@@ -57,6 +60,7 @@ describe('Tailscale deployment proxy', () => {
     jest.doMock('node:timers/promises', () => ({ setTimeout: jest.fn().mockResolvedValue(undefined) }));
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'info').mockImplementation(() => {});
+    jest.spyOn(global, 'fetch').mockResolvedValue({ status: 200, body: null } as Response);
 
     getProxy = require('../src/tailscale-vercel').getTailscaleProxy;
   });
@@ -104,6 +108,7 @@ describe('Tailscale deployment proxy', () => {
       files.writeFileSync.mock.calls[0][0], { force: true },
     );
     expect(process.env.HTTP_PROXY).toBe(originalHttpProxy);
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it('cleans up the key and hides login errors, then permits a later retry', async () => {
@@ -143,6 +148,71 @@ describe('Tailscale deployment proxy', () => {
     expect(files.rmSync).toHaveBeenCalledWith(
       files.writeFileSync.mock.calls[0][0], { force: true },
     );
+  });
+
+  it('recognizes authentication errors in daemon health even when the CLI only reports a timeout', async () => {
+    run.mockRejectedValueOnce(new Error('not connected'))
+      .mockRejectedValueOnce(new Error('context deadline exceeded'))
+      .mockResolvedValueOnce({ stdout: JSON.stringify({
+        BackendState: 'NeedsLogin',
+        Health: ['Last login error: invalid auth key ' + key, 'https://login.tailscale.com/a/private-token'],
+      }), stderr: '' });
+
+    await expect(getProxy()).rejects.toThrow('The auth key was rejected');
+    const output = JSON.stringify((console.error as jest.Mock).mock.calls);
+    expect(output).toContain('auth-key-rejected');
+    expect(output).toContain('Control HTTPS probe: HTTP 200');
+    expect(output).not.toContain(key);
+    expect(output).not.toContain('private-token');
+    expect(fetch).toHaveBeenCalledWith('https://controlplane.tailscale.com/key', {
+      method: 'HEAD', signal: expect.any(AbortSignal), redirect: 'manual',
+    });
+  });
+
+  it('recognizes fragmented DNS errors from the daemon without logging its raw output', async () => {
+    run.mockRejectedValueOnce(new Error('not connected'))
+      .mockImplementationOnce(async () => {
+        child.stderr.write('private credentials ' + key + '\nlookup controlplane.tailscale.com: no such');
+        child.stderr.write(' host\nhttps://login.tailscale.com/a/private-token');
+        throw new Error('context deadline exceeded');
+      })
+      .mockResolvedValueOnce({ stdout: JSON.stringify({ BackendState: 'NeedsLogin' }), stderr: '' });
+    (fetch as jest.Mock).mockRejectedValueOnce(Object.assign(new Error(key), {
+      cause: { code: 'ENOTFOUND' },
+    }));
+
+    await expect(getProxy()).rejects.toThrow('The daemon reported a DNS failure');
+    const output = JSON.stringify((console.error as jest.Mock).mock.calls);
+    expect(output).toContain('dns-failure');
+    expect(output).toContain('Control HTTPS probe: ENOTFOUND');
+    expect(output).not.toContain(key);
+    expect(output).not.toContain('private-token');
+  });
+
+  it('reports a control connection failure separately from successful Node HTTPS access', async () => {
+    run.mockRejectedValueOnce(new Error('not connected'))
+      .mockImplementationOnce(async () => {
+        child.stderr.write('register request: Post https://controlplane.tailscale.com/machine/register: context deadline exceeded');
+        throw new Error('context deadline exceeded');
+      })
+      .mockResolvedValueOnce({ stdout: JSON.stringify({ BackendState: 'NeedsLogin' }), stderr: '' });
+
+    await expect(getProxy()).rejects.toThrow('The daemon reported an outbound connection failure');
+    const output = JSON.stringify((console.error as jest.Mock).mock.calls);
+    expect(output).toContain('control-connection-timeout');
+    expect(output).toContain('Control HTTPS probe: HTTP 200');
+  });
+
+  it('does not print unknown HTTPS errors that may contain credentials', async () => {
+    run.mockRejectedValueOnce(new Error('not connected'))
+      .mockRejectedValueOnce(new Error('context deadline exceeded'))
+      .mockResolvedValueOnce({ stdout: JSON.stringify({ BackendState: 'NeedsLogin' }), stderr: '' });
+    (fetch as jest.Mock).mockRejectedValueOnce(Object.assign(new Error(key), {
+      cause: { code: key },
+    }));
+
+    await expect(getProxy()).rejects.toThrow('Control HTTPS probe: failed');
+    expect(JSON.stringify((console.error as jest.Mock).mock.calls)).not.toContain(key);
   });
 
   it('stops a failed daemon before trying to authenticate', async () => {
