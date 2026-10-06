@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import type { AxiosProxyConfig } from 'axios';
-import { startTailscaleControlProxy } from './tailscale-control-proxy';
+import { getTailscaleControlProxyStats, startTailscaleControlProxy } from './tailscale-control-proxy';
 
 const run = promisify(execFile);
 const directory = join(tmpdir(), 'lira-tailscale');
@@ -30,6 +30,16 @@ function recordDiagnostics(detail: string): void {
     ['network-failure', /network is unreachable|no route to host|connection refused|connection reset|operation not permitted|permission denied/i],
     ['control-connection-timeout', /(?:controlplane|login)\.tailscale\.com.*(?:deadline exceeded|timed? out|timeout)/i],
     ['tailnet-lock', /tailnet lock.*(?:sign|reject|fail)|node key.*(?:unsigned|not signed)/i],
+    ['daemon-proxy-in-use', /tshttpproxy: using proxy/i],
+    ['daemon-proxy-skipped', /tshttpproxy: skipping .*proxy pointing to self/i],
+    ['control-key-received', /control server key from/i],
+    ['control-registration-started', /RegisterReq: onode=/i],
+    ['control-registration-response', /RegisterReq: got response/i],
+    ['tcp-socket-denied', /dial tcp[^\n]*(?:operation not permitted|permission denied)/i],
+    ['udp-socket-denied', /(?:dial|read|write) udp[^\n]*(?:operation not permitted|permission denied)/i],
+    ['loopback-proxy-refused', /dial tcp[^\n]*127\.0\.0\.1:[0-9]+[^\n]*connection refused/i],
+    ['loopback-proxy-denied', /dial tcp[^\n]*127\.0\.0\.1:[0-9]+[^\n]*(?:operation not permitted|permission denied)/i],
+    ['control-dns-failure', /lookup (?:controlplane|login)\.tailscale\.com[^\n]*(?:no such host|server misbehaving|connection refused|operation not permitted|permission denied)/i],
   ];
   for (const [category, pattern] of categories) {
     if (pattern.test(detail)) diagnostics.add(category);
@@ -114,7 +124,7 @@ async function loginFailure(error: unknown): Promise<Error> {
   const probe = await controlHttpsProbe();
   return new Error(`Tailscale login failed${state ? ` (state: ${state})` : ''}. ${reason} ` +
     `Diagnostics: ${[...diagnostics].sort().join(', ') || 'no recognized daemon error'}. ` +
-    `Control HTTPS probe: ${probe}.`);
+    `Control HTTPS probe: ${probe}. Node proxy: ${getTailscaleControlProxyStats()}.`);
 }
 
 function failDaemon(message: string): never {
@@ -133,6 +143,7 @@ async function connect(key: string): Promise<void> {
     daemonFailed = false;
 
     const controlProxy = await startTailscaleControlProxy();
+    console.info('Tailscale deployment transport: node-control-proxy-v2.');
     const daemonEnvironment: NodeJS.ProcessEnv = {
       ...process.env,
       HTTP_PROXY: controlProxy,

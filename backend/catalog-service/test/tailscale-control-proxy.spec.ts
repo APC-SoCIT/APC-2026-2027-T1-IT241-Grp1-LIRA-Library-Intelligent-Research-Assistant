@@ -33,7 +33,8 @@ describe('Tailscale control HTTPS tunnel', () => {
   it('preserves opaque encrypted bytes, including CONNECT head bytes, through the Node tunnel', async () => {
     const echoPort = await listen(createTcpServer((socket) => socket.pipe(socket)));
     const dial = jest.fn(() => createConnection({ host: '127.0.0.1', port: echoPort }));
-    const port = await listen(createTailscaleControlProxy(dial));
+    const proxy = createTailscaleControlProxy(dial);
+    const port = await listen(proxy);
     const socket = client(port);
     const payload = Buffer.from([0x16, 0x03, 0x03, 0x00, 0xff, 0x7f]);
     const echoed = new Promise<Buffer>((resolve, reject) => {
@@ -54,6 +55,10 @@ describe('Tailscale control HTTPS tunnel', () => {
     ]));
     await expect(echoed).resolves.toEqual(payload);
     expect(dial).toHaveBeenCalledWith({ host: 'controlplane.tailscale.com', port: 443 });
+    expect(proxy.controlStats()).toEqual({
+      requests: 1, established: 1, failed: 0, sent: payload.length, received: payload.length,
+      controlRequests: 1, controlEstablished: 1, controlSent: payload.length, controlReceived: payload.length,
+    });
   });
 
   it.each([

@@ -60,6 +60,7 @@ describe('Tailscale deployment proxy', () => {
     jest.doMock('node:timers/promises', () => ({ setTimeout: jest.fn().mockResolvedValue(undefined) }));
     jest.doMock('../src/tailscale-control-proxy', () => ({
       startTailscaleControlProxy: jest.fn().mockResolvedValue('http://127.0.0.1:40000'),
+      getTailscaleControlProxyStats: jest.fn().mockReturnValue('requests=0, established=0, failed=0, sent=0, received=0'),
     }));
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'info').mockImplementation(() => {});
@@ -210,6 +211,26 @@ describe('Tailscale deployment proxy', () => {
     const output = JSON.stringify((console.error as jest.Mock).mock.calls);
     expect(output).toContain('control-connection-timeout');
     expect(output).toContain('Control HTTPS probe: HTTP 200');
+  });
+
+  it.each([
+    ['tshttpproxy: using proxy http://127.0.0.1:40000; dial tcp 127.0.0.1:40000: socket: operation not permitted',
+      ['daemon-proxy-in-use', 'tcp-socket-denied', 'loopback-proxy-denied']],
+    ['lookup controlplane.tailscale.com on 127.0.0.1:53: read udp 127.0.0.1:9999: permission denied',
+      ['control-dns-failure', 'udp-socket-denied']],
+    ['dial tcp 127.0.0.1:40000: connect: connection refused', ['loopback-proxy-refused']],
+  ])('identifies the failed daemon operation without exposing raw errors: %s', async (detail, categories) => {
+    run.mockRejectedValueOnce(new Error('not connected'))
+      .mockImplementationOnce(async () => {
+        child.stderr.write(detail + '\n' + key);
+        throw new Error('context deadline exceeded');
+      })
+      .mockResolvedValueOnce({ stdout: JSON.stringify({ BackendState: 'NeedsLogin' }), stderr: '' });
+
+    await expect(getProxy()).rejects.toThrow('Node proxy: requests=0, established=0');
+    const output = JSON.stringify((console.error as jest.Mock).mock.calls);
+    for (const category of categories) expect(output).toContain(category);
+    expect(output).not.toContain(key);
   });
 
   it('does not print unknown HTTPS errors that may contain credentials', async () => {
