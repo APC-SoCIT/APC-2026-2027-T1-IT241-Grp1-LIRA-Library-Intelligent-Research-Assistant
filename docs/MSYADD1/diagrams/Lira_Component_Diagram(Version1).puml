@@ -1,0 +1,87 @@
+@startuml LIRA_C4_Component
+!include <C4/C4_Component>
+
+' ============================
+' MIDNIGHT / CYBERPUNK THEME
+' ============================
+skinparam backgroundColor #0A0A0F
+skinparam defaultFontColor #E0E0E0
+skinparam defaultFontName Consolas
+skinparam shadowing false
+skinparam ArrowColor #DC143C
+skinparam ArrowFontColor #FF6B81
+skinparam ArrowFontSize 12
+
+skinparam rectangle {
+    BorderColor #DC143C
+    FontColor #E0E0E0
+}
+
+skinparam databaseBackgroundColor #1A1A22
+skinparam databaseBorderColor #DC143C
+
+' Override C4 element colors for dark theme
+UpdateElementStyle("person", $bgColor="#1A1A22", $fontColor="#F5F5F5", $borderColor="#DC143C")
+UpdateElementStyle("system", $bgColor="#141419", $fontColor="#F5F5F5", $borderColor="#8B0000")
+UpdateElementStyle("container", $bgColor="#1A1A22", $fontColor="#F5F5F5", $borderColor="#DC143C")
+UpdateElementStyle("component", $bgColor="#141419", $fontColor="#F5F5F5", $borderColor="#DC143C")
+UpdateElementStyle("external_system", $bgColor="#101014", $fontColor="#B0B0B0", $borderColor="#5C5C66")
+UpdateElementStyle("boundary", $bgColor="#0A0A0F", $fontColor="#DC143C", $borderColor="#DC143C")
+
+LAYOUT_WITH_LEGEND()
+LAYOUT_TOP_DOWN()
+
+title <color:#DC143C>LIRA — C4 Component Diagram</color>\n<size:12><color:#B0B0B0>Web Application Decomposition</color></size>
+
+' ---------- Person Actors ----------
+Person(student, "APC Student", "Uses a web browser to search, chat, and request summaries/citations.")
+Person(staff, "Library Staff", "Uses the web app to manage FAQ and policy content.")
+
+' ---------- External Systems & DBs ----------
+System_Ext(koha, "Koha ILS", "REST API (read-only)\nCatalog metadata, availability, bibliographic records.")
+System_Ext(azuread, "Microsoft 365\n(Azure AD)", "Manages student authentication, issues identity tokens.")
+System_Ext(openrouter, "OpenRouter API", "Unified AI routing layer\n(GPT, Claude, Gemini, DeepSeek).")
+
+ContainerDb(vectordb, "Vector Database", "ChromaDB / Weaviate", "Stores semantic embeddings of catalog records and FAQ content.")
+
+' ---------- Container Boundary (Web Application) ----------
+Container_Boundary(webapp_boundary, "Web Application (Next.js Container)") {
+    
+    Component(frontend, "Frontend UI Components", "React / Next.js Pages", "Handles browser-side logic, UI state, user interactions, and rendering.")
+    
+    Component(api_router, "API Router", "Next.js API Route Handlers", "Central hub that orchestrates multi-service calls and handles incoming HTTPS requests.")
+    
+    Component(auth_orch, "Authentication Orchestrator", "NextAuth.js / MSAL", "Validates student identity, manages OAuth2 flows, and protects routes.")
+    
+    Component(llm_orch, "LLM Prompt Orchestrator", "TypeScript Service", "Constructs complex prompts with dynamic context, manages chat history, and parses AI responses.")
+    
+    Component(vector_client, "Vector DB Client Service", "TypeScript Service", "Orchestrates semantic similarity searches and embedding generation logic.")
+    
+    Component(koha_adapter, "Koha Catalog Adapter", "TypeScript Service", "Interfaces with the Koha REST API to retrieve and format catalog metadata.")
+    
+    Component(content_mgr, "Content Management Service", "TypeScript Service", "Handles FAQ/policy CRUD operations for staff.")
+}
+
+' ---------- Relationships ----------
+
+' User Interactions
+Rel(student, frontend, "Searches, chats, requests summaries/citations", "HTTPS")
+Rel(staff, frontend, "Manages FAQ & policy content", "HTTPS")
+
+' Internal Web App Routing
+Rel(frontend, api_router, "Makes API calls for data and AI features", "HTTPS/JSON")
+
+Rel(api_router, auth_orch, "Triggers auth flows / validates sessions", "Internal API")
+Rel(api_router, llm_orch, "Delegates chat & summary generation", "Internal API")
+Rel(api_router, vector_client, "Delegates semantic search queries", "Internal API")
+Rel(api_router, koha_adapter, "Delegates bibliographic data lookups", "Internal API")
+Rel(api_router, content_mgr, "Delegates staff content updates", "Internal API")
+
+' External Service Calls
+Rel(auth_orch, azuread, "Authenticates users via OAuth2 flow", "HTTPS/OAuth2")
+Rel(llm_orch, openrouter, "Sends prompts + context / receives AI text", "HTTPS/JSON")
+Rel(vector_client, vectordb, "Queries similarity / stores embeddings", "gRPC/HTTP")
+Rel(koha_adapter, koha, "Retrieves catalog & bib data (read-only)", "REST/HTTPS")
+Rel(content_mgr, vectordb, "Indexes updated FAQ embeddings", "gRPC/HTTP")
+
+@enduml

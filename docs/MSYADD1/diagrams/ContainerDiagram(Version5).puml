@@ -1,0 +1,46 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+' Layout adjustments for better spacing, text wrapping, and right-angle arrows
+skinparam linetype ortho
+skinparam nodesep 100
+skinparam ranksep 120
+skinparam wrapWidth 250
+skinparam maxMessageSize 150
+
+LAYOUT_TOP_DOWN()
+
+title Container Diagram for LIRA
+
+Person(librarian, "Librarian", "Administers policy FAQs & views analytics.")
+Person(patron, "Student / Faculty", "Uses smart search, auto-citations, recommendations, & chatbot.")
+
+System_Ext(ms365, "Microsoft 365 (Azure AD)", "Handles SSO Authentication.")
+
+System_Boundary(lira_system, "LIRA System") {
+    Container(web_app, "Web Application", "Next.js / React", "Hosts responsive student portal, administrative dashboard, and chat UI.")
+    
+    Container(ai_service, "AI & Search Intelligence Service", "Python / LangChain", "Executes vector embedding generation, semantic search, and RAG prompt formulation.")
+    Container(core_api, "Core API Service", "Next.js API Routes / Node.js", "Manages business logic, APA/IEEE citation generation, and Koha API requests.")
+    
+    ContainerDb(db, "LIRA Database & Vector Store", "PostgreSQL & ChromaDB / Weaviate", "Stores vector embeddings, FAQ knowledge bases, and user engagement metrics.")
+}
+
+System_Ext(koha, "Koha ILS", "Perl / LAMP Stack", "External library management system.")
+System_Ext(openrouter, "OpenRouter API Platform", "Cloud Gateway", "Unified multi-model LLM access.")
+
+Rel_Down(librarian, web_app, "Accesses admin dashboard", "HTTPS")
+Rel_Down(patron, web_app, "Accesses portal & chat interface", "HTTPS")
+
+Rel_Right(web_app, ms365, "Authenticates login", "OAuth 2.0")
+Rel_Down(web_app, ai_service, "Sends natural language queries & chat prompts", "REST / WSS")
+Rel_Down(web_app, core_api, "Requests metadata, citations, & recommendations", "REST")
+
+Rel_Right(ai_service, core_api, "Synchronizes requests")
+
+Rel_Down(ai_service, db, "Queries vector embeddings & FAQ knowledge base")
+Rel_Down(core_api, db, "Reads/writes interaction logs & local queues")
+
+Rel_Down(ai_service, openrouter, "Dispatches prompt payloads", "REST API")
+Rel_Down(core_api, koha, "Fetches MARC 21 bibliographic metadata", "REST API")
+@enduml
