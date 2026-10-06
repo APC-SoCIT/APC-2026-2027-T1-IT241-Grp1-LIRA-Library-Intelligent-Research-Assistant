@@ -11,6 +11,33 @@ describe('validateEnvironment', () => {
     expect(validateEnvironment(baseEnvironment)).toEqual(baseEnvironment);
   });
 
+  it('requires a Tailscale key only when the deployment integration is enabled', () => {
+    expect(() => validateEnvironment({
+      ...baseEnvironment,
+      LIRA_USE_TAILSCALE: '1',
+      TS_AUTHKEY: '   ',
+    })).toThrow('TS_AUTHKEY is required');
+    expect(validateEnvironment({
+      ...baseEnvironment,
+      LIRA_USE_TAILSCALE: '0',
+    })).toMatchObject(baseEnvironment);
+  });
+
+  it('accepts a configured Tailscale deployment', () => {
+    expect(validateEnvironment({
+      ...baseEnvironment,
+      LIRA_USE_TAILSCALE: '1',
+      TS_AUTHKEY: 'test-auth-key',
+    })).toMatchObject(baseEnvironment);
+  });
+
+  it('rejects a flag typo instead of silently bypassing Tailscale', () => {
+    expect(() => validateEnvironment({
+      ...baseEnvironment,
+      LIRA_USE_TAILSCALE: 'true',
+    })).toThrow('LIRA_USE_TAILSCALE must be 0 or 1');
+  });
+
   it('requires all semantic secrets together when enabling the feature', () => {
     expect(() => validateEnvironment({
       ...baseEnvironment,

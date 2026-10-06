@@ -1,4 +1,6 @@
-const catalogApiUrl = import.meta.env.VITE_CATALOG_API_URL || 'http://localhost:3001/api/catalog'
+const catalogApiUrl = (
+  import.meta.env.VITE_CATALOG_API_URL || 'http://localhost:3001/api/catalog'
+).replace(/\/+$/, '')
 
 async function request(path) {
   const response = await fetch(`${catalogApiUrl}${path}`)

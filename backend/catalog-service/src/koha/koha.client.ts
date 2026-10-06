@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosError, AxiosRequestConfig } from 'axios';
 import { firstValueFrom } from 'rxjs';
+import { getTailscaleProxy } from '../tailscale-vercel';
 import { KohaIntegrationError } from './koha.exceptions';
 import { KohaBiblio, KohaBiblioResponse } from './koha.types';
 
@@ -66,8 +67,10 @@ export class KohaClient {
 
   private async request<T>(path: string, options: AxiosRequestConfig = {}) {
     try {
+      const proxy = await getTailscaleProxy();
       return await firstValueFrom(this.http.get<T>(`${this.baseUrl}${path}`, {
         ...options,
+        ...(proxy ? { proxy } : {}),
         auth: this.auth,
         timeout: this.timeout,
         headers: { Accept: 'application/json', ...options.headers },

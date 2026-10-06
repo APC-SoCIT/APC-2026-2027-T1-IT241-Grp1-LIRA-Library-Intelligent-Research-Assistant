@@ -54,6 +54,14 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
     throw new Error('KOHA_TIMEOUT_MS must be an integer between 100 and 60000');
   }
 
+  const useTailscale = String(environment.LIRA_USE_TAILSCALE ?? '0');
+  if (!['0', '1'].includes(useTailscale)) {
+    throw new Error('LIRA_USE_TAILSCALE must be 0 or 1');
+  }
+  if (useTailscale === '1' && !String(environment.TS_AUTHKEY ?? '').trim()) {
+    throw new Error('TS_AUTHKEY is required when LIRA_USE_TAILSCALE=1');
+  }
+
   const semanticKeys = [
     'OPENROUTER_API_KEY',
     'SUPABASE_URL',
