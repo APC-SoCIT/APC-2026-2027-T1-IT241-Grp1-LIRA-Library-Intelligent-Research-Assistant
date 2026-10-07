@@ -24,6 +24,16 @@ export class CatalogService {
     }
   }
 
+  async listNewArrivals(page: number, limit: number): Promise<BookListResponse> {
+    try {
+      // Koha biblionumbers increase as bibliographic records are created.
+      const records = await this.koha.getBiblios(page, limit, '-biblio_id');
+      return { items: records.map((record) => this.normalize(record)), pagination: { page, limit } };
+    } catch (error: unknown) {
+      throw this.mapKohaError(error);
+    }
+  }
+
   async getBook(id: number): Promise<Book> {
     try {
       return this.normalize(await this.koha.getBiblio(id));
@@ -169,10 +179,11 @@ export class CatalogService {
       publicationPlace: this.stringOrNull(record.publication_place),
       edition: this.stringOrNull(record.edition),
       language: this.stringOrNull(record.language),
-      description: this.stringOrNull(record.description),
+      description: this.stringOrNull(record.description ?? record.abstract),
       itemType: this.stringOrNull(record.item_type),
       genres: this.stringList(record.genres ?? record.genre ?? record.genre_forms ?? record.genre_form),
       subjects: this.stringList(record.subjects ?? record.subject ?? record.subject_headings ?? record.subject_heading),
+      categories: this.stringList(record.categories),
       series: this.stringOrNull(record.series_title ?? record.collection_title),
       url: this.stringOrNull(record.url),
     };

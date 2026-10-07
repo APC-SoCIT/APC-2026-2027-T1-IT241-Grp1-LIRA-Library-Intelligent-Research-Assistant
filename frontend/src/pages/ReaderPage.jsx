@@ -6,8 +6,9 @@ import {
 } from 'react-icons/fi'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import ReadingListPicker from '../components/ReadingListPicker'
 import { getCatalogBook, getCatalogBookContent } from '../services/catalogService'
-import { recordCatalogBookView, recordReading } from '../services/studentLibraryService'
+import { listBookmarks, recordCatalogBookView, recordReading, removeBookmark } from '../services/studentLibraryService'
 import { adaptCatalogBook } from '../utils/catalogCategories'
 
 function getReadingUrl(book) {
@@ -33,42 +34,102 @@ function parseBookElements(html, baseUrl) {
     .filter((el) => (el.tag === 'img' && el.src) || (el.text?.length > 0))
 }
 
+function getVoiceKey(voice) {
+  return voice.voiceURI || voice.name
+}
+
+function voiceQualityScore(voice) {
+  let score = voice.default ? 1 : 0
+  if (/(natural|neural|premium|enhanced)/i.test(voice.name)) score += 5
+  if (/(google|microsoft|apple|siri)/i.test(voice.name)) score += 2
+  return score
+}
+
+function getLanguageLabel(language) {
+  try {
+    const displayName = new Intl.DisplayNames([navigator.language], { type: 'language' }).of(language)
+    return displayName ? `${displayName} (${language})` : language
+  } catch {
+    return language
+  }
+}
+
 // --- Text-to-Speech Hook ---
 function useTTS() {
   const [voices, setVoices] = useState([])
-  const [selectedVoice, setSelectedVoice] = useState('')
+  const [selectedVoice, setSelectedVoice] = useState(() => localStorage.getItem('lira_tts_voice') || '')
+  const [selectedLanguage, setSelectedLanguage] = useState('all')
+  const [rate, setRate] = useState(() => Number(localStorage.getItem('lira_tts_rate')) || 1)
+  const [pitch, setPitch] = useState(() => Number(localStorage.getItem('lira_tts_pitch')) || 1)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const utteranceRef = useRef(null)
 
   useEffect(() => {
     const loadVoices = () => {
-      const available = window.speechSynthesis.getVoices()
+      const available = window.speechSynthesis.getVoices().sort((left, right) =>
+        voiceQualityScore(right) - voiceQualityScore(left)
+        || left.name.localeCompare(right.name),
+      )
       setVoices(available)
-      if (available.length > 0 && !selectedVoice) {
-        const english = available.find(v => v.lang.startsWith('en'))
-        setSelectedVoice((english || available[0]).name)
-      }
+      setSelectedVoice((current) => available.some((voice) => getVoiceKey(voice) === current)
+        ? current
+        : getVoiceKey(available.find((voice) => voice.lang.toLowerCase().startsWith(navigator.language.toLowerCase())) || available[0] || { name: '' }))
+      setSelectedLanguage((current) => current !== 'all'
+        ? current
+        : available.find((voice) => voice.lang.toLowerCase().startsWith(navigator.language.toLowerCase()))?.lang || 'all')
     }
     loadVoices()
     window.speechSynthesis.onvoiceschanged = loadVoices
-    return () => { window.speechSynthesis.cancel() }
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null
+      window.speechSynthesis.cancel()
+    }
   }, [])
+
+  const availableLanguages = [...new Set(voices.map((voice) => voice.lang).filter(Boolean))]
+  const filteredVoices = voices.filter((voice) => selectedLanguage === 'all' || voice.lang === selectedLanguage)
+
+  useEffect(() => {
+    if (selectedVoice && filteredVoices.some((voice) => getVoiceKey(voice) === selectedVoice)) return
+    setSelectedVoice(getVoiceKey(filteredVoices[0] || { name: '' }))
+  }, [filteredVoices, selectedVoice])
+
+  useEffect(() => {
+    localStorage.setItem('lira_tts_voice', selectedVoice)
+    localStorage.setItem('lira_tts_rate', String(rate))
+    localStorage.setItem('lira_tts_pitch', String(pitch))
+  }, [selectedVoice, rate, pitch])
 
   const speak = useCallback((text) => {
     window.speechSynthesis.cancel()
     if (!text) return
     const utterance = new SpeechSynthesisUtterance(text)
-    const voice = voices.find(v => v.name === selectedVoice)
+    const voice = voices.find((candidate) => getVoiceKey(candidate) === selectedVoice)
     if (voice) utterance.voice = voice
-    utterance.rate = 1
-    utterance.onend = () => { setIsSpeaking(false); setIsPaused(false) }
-    utterance.onerror = () => { setIsSpeaking(false); setIsPaused(false) }
+    utterance.lang = voice?.lang || (selectedLanguage === 'all' ? navigator.language : selectedLanguage)
+    utterance.rate = rate
+    utterance.pitch = pitch
+    utterance.volume = 1
+    utterance.onend = () => {
+      if (utteranceRef.current !== utterance) return
+      setIsSpeaking(false)
+      setIsPaused(false)
+    }
+    utterance.onerror = () => {
+      if (utteranceRef.current !== utterance) return
+      setIsSpeaking(false)
+      setIsPaused(false)
+    }
     utteranceRef.current = utterance
     window.speechSynthesis.speak(utterance)
     setIsSpeaking(true)
     setIsPaused(false)
-  }, [voices, selectedVoice])
+  }, [voices, selectedVoice, selectedLanguage, rate, pitch])
+
+  const previewVoice = useCallback(() => {
+    speak('This is a preview of the selected reading voice. You can adjust the speed and pitch to suit your listening preference.')
+  }, [speak])
 
   const pause = useCallback(() => {
     window.speechSynthesis.pause()
@@ -82,11 +143,31 @@ function useTTS() {
 
   const stop = useCallback(() => {
     window.speechSynthesis.cancel()
+    utteranceRef.current = null
     setIsSpeaking(false)
     setIsPaused(false)
   }, [])
 
-  return { voices, selectedVoice, setSelectedVoice, isSpeaking, isPaused, speak, pause, resume, stop }
+  return {
+    voices,
+    filteredVoices,
+    availableLanguages,
+    selectedVoice,
+    setSelectedVoice,
+    selectedLanguage,
+    setSelectedLanguage,
+    rate,
+    setRate,
+    pitch,
+    setPitch,
+    isSpeaking,
+    isPaused,
+    speak,
+    previewVoice,
+    pause,
+    resume,
+    stop,
+  }
 }
 
 export default function ReaderPage() {
@@ -99,6 +180,10 @@ export default function ReaderPage() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [error, setError] = useState('')
   const [activityError, setActivityError] = useState('')
+  const [isBookmarked, setIsBookmarked] = useState(false)
+  const [isBookmarking, setIsBookmarking] = useState(false)
+  const [showListPicker, setShowListPicker] = useState(false)
+  const [bookmarkMessage, setBookmarkMessage] = useState('')
   const [viewMode, setViewMode] = useState('book') // 'book' or 'scroll'
   const [fontSize, setFontSize] = useState(16)
   const [bookHeight, setBookHeight] = useState(85) // vh
@@ -120,6 +205,35 @@ export default function ReaderPage() {
       .then((record) => setBook(adaptCatalogBook(record)))
       .catch((requestError) => setError(requestError.message || 'Could not load this book.'))
   }, [bookId])
+
+  useEffect(() => {
+    let active = true
+    listBookmarks()
+      .then((bookmarks) => {
+        if (active) setIsBookmarked(bookmarks.some((bookmark) => String(bookmark.book_id) === String(bookId)))
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [bookId])
+
+  const handleBookmark = async () => {
+    if (!book || isBookmarking) return
+    setIsBookmarking(true)
+    setBookmarkMessage('')
+    try {
+      if (isBookmarked) {
+        await removeBookmark(book.id)
+        setIsBookmarked(false)
+        setBookmarkMessage('Removed from your lists.')
+      } else {
+        setShowListPicker(true)
+      }
+    } catch (bookmarkError) {
+      setBookmarkMessage(bookmarkError.message || 'Could not update your list.')
+    } finally {
+      setIsBookmarking(false)
+    }
+  }
 
   const readingUrl = getReadingUrl(book)
 
@@ -385,18 +499,33 @@ export default function ReaderPage() {
       {showTTS && (
         <div className="rdr-tts-panel">
           <div className="rdr-tts-inner">
-            <label className="rdr-tts-label">
-              <FiVolume2 />
-              <select
-                value={tts.selectedVoice}
-                onChange={(e) => tts.setSelectedVoice(e.target.value)}
-                className="rdr-tts-select"
-              >
-                {tts.voices.map(v => (
-                  <option key={v.name} value={v.name}>{v.name}</option>
-                ))}
-              </select>
-            </label>
+            <div className="rdr-tts-settings">
+              <label className="rdr-tts-label">
+                <span>Language</span>
+                <select value={tts.selectedLanguage} onChange={(event) => tts.setSelectedLanguage(event.target.value)} className="rdr-tts-select">
+                  <option value="all">All languages</option>
+                  {tts.availableLanguages.map((language) => <option key={language} value={language}>{getLanguageLabel(language)}</option>)}
+                </select>
+              </label>
+              <label className="rdr-tts-label">
+                <span>Voice</span>
+                <select value={tts.selectedVoice} onChange={(event) => tts.setSelectedVoice(event.target.value)} className="rdr-tts-select" disabled={tts.filteredVoices.length === 0}>
+                  {tts.filteredVoices.map((voice, index) => (
+                    <option key={getVoiceKey(voice)} value={getVoiceKey(voice)}>{voice.name} · {voice.lang}{index === 0 ? ' · recommended' : ''}</option>
+                  ))}
+                  {tts.filteredVoices.length === 0 && <option value="">No voices available</option>}
+                </select>
+              </label>
+              <label className="rdr-tts-range">
+                <span>Speed <output>{tts.rate.toFixed(2)}×</output></span>
+                <input type="range" min="0.7" max="1.4" step="0.05" value={tts.rate} onChange={(event) => tts.setRate(Number(event.target.value))} />
+              </label>
+              <label className="rdr-tts-range">
+                <span>Pitch <output>{tts.pitch.toFixed(2)}</output></span>
+                <input type="range" min="0.75" max="1.25" step="0.05" value={tts.pitch} onChange={(event) => tts.setPitch(Number(event.target.value))} />
+              </label>
+              <button type="button" className="rdr-tts-preview" onClick={tts.previewVoice} disabled={!tts.selectedVoice}>Preview voice</button>
+            </div>
             <div className="rdr-tts-controls">
               {!tts.isSpeaking ? (
                 <button type="button" className="rdr-tts-btn rdr-tts-play" onClick={() => tts.speak(currentPageText)} title="Read aloud">
@@ -583,11 +712,29 @@ export default function ReaderPage() {
           <button type="button" className={`rdr-tool-btn ${showTTS ? 'rdr-tool-active' : ''}`} onClick={() => setShowTTS(v => !v)} title="Text to Speech">
             {tts.isSpeaking ? <FiVolume2 /> : <FiVolumeX />}
           </button>
-          <button type="button" className="rdr-tool-btn" title="Bookmark">
+          <button
+            type="button"
+            className={`rdr-tool-btn ${isBookmarked ? 'rdr-tool-active' : ''}`}
+            onClick={handleBookmark}
+            disabled={!book || isBookmarking}
+            title={isBookmarked ? 'Remove from your lists' : 'Save to a list'}
+            aria-label={isBookmarked ? 'Remove from your lists' : 'Save to a list'}
+            aria-pressed={isBookmarked}
+          >
             <FiBookmark />
           </button>
+          <span className="sr-only" aria-live="polite">{bookmarkMessage}</span>
         </div>
       </footer>
+      {showListPicker && book && <ReadingListPicker
+        book={book}
+        onClose={() => setShowListPicker(false)}
+        onSaved={(bookmark, listName) => {
+          setIsBookmarked(true)
+          setBookmarkMessage(`Saved to ${listName || 'your list'}.`)
+          setShowListPicker(false)
+        }}
+      />}
     </main>
   )
 }

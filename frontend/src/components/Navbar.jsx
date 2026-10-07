@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { FiChevronDown, FiExternalLink, FiGlobe, FiMenu, FiX } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 
 const navLinks = [
   { label: 'Home', href: '#', active: true },
@@ -89,10 +90,13 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => (
+            {navLinks.map((link) => {
+              const isHome = link.label === 'Home'
+              const NavItem = isHome ? Link : 'a'
+              return (
               <div key={link.label} className="nav-item relative">
-                <a
-                  href={link.href}
+                <NavItem
+                  {...(isHome ? { to: '/' } : { href: link.href })}
                   target={link.external ? '_blank' : undefined}
                   rel={link.external ? 'noopener noreferrer' : undefined}
                   className={`flex items-center gap-1 px-3 py-2 text-sm font-medium transition-colors ${
@@ -104,7 +108,7 @@ export default function Navbar() {
                   {link.label}
                   {link.external && <FiExternalLink className="w-3 h-3" />}
                   {link.children && <FiChevronDown className="w-3 h-3" />}
-                </a>
+                </NavItem>
                 {link.children && (
                   <div className="nav-dropdown absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
                     {link.children.map((child) => (
@@ -119,7 +123,8 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
-            ))}
+              )
+            })}
           </div>
 
           {/* Right side */}
@@ -179,6 +184,20 @@ export default function Navbar() {
 
 function MobileNavItem({ link }) {
   const [open, setOpen] = useState(false);
+
+  if (!link.children) {
+    const MobileLink = link.label === 'Home' ? Link : 'a'
+    return (
+      <MobileLink
+        {...(link.label === 'Home' ? { to: '/' } : { href: link.href })}
+        target={link.external ? '_blank' : undefined}
+        rel={link.external ? 'noopener noreferrer' : undefined}
+        className="block px-3 py-2.5 text-sm text-gray-200 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+      >
+        {link.label}
+      </MobileLink>
+    )
+  }
 
   return (
     <div>

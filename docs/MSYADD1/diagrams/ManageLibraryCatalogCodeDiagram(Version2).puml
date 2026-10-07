@@ -1,0 +1,143 @@
+@startuml ManageLibraryCatalogCodeDiagram_Version2
+title LIRA Code Diagram - Manage Library Catalog Use Case with Microsoft SSO
+
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam linetype polyline
+skinparam nodesep 25
+skinparam ranksep 45
+skinparam componentStyle rectangle
+skinparam component {
+  BackgroundColor #F8FBFF
+  BorderColor #2F4F6F
+  ArrowColor #2F4F6F
+}
+skinparam package {
+  BackgroundColor #FFFFFF
+  BorderColor #B7C6D8
+  FontColor #1F3B57
+}
+skinparam database {
+  BackgroundColor #F4FAF4
+  BorderColor #4F7A4F
+}
+skinparam cloud {
+  BackgroundColor #FFF8DC
+  BorderColor #8A6D3B
+}
+skinparam note {
+  BackgroundColor #FFF8DC
+  BorderColor #8A6D3B
+}
+
+actor "Student / Faculty" as user
+actor "Librarian" as librarian
+
+cloud "Microsoft Entra ID\n(APC Microsoft Account / SSO)" as microsoft_sso
+cloud "Koha ILS\nAuthoritative catalog and circulation" as koha
+cloud "DocuPulse\nExternal metadata sync" as docupulse
+
+package "LIRA Frontend - React / Vite" as frontend {
+  component "CatalogAccessPage.jsx" as catalog_access
+  component "AuthPanel.jsx" as auth_panel
+  component "OpacPage.jsx" as opac_page
+  component "OpacSearchResults.jsx" as search_results
+  component "BookDetail.jsx" as book_detail
+  component "catalogService.js" as catalog_service_js
+  component "authService.js\nMicrosoft OAuth / MSAL" as auth_service_js
+  component "studentLibraryService.js" as student_library_service_js
+  component "adaptCatalogBook()\ncatalogCategories.js" as catalog_adapter
+}
+
+package "Authentication Boundary" as auth_boundary {
+  component "Auth Controller" as auth_controller
+  component "Microsoft OAuth / MSAL Adapter" as msal_adapter
+  component "JWT Claims and Session Service" as session_service
+  component "Account Provisioning" as provisioning_service
+}
+
+package "Catalog Service API - NestJS" as catalog_boundary {
+  component "CatalogController" as catalog_controller
+  component "SearchCatalogDto" as search_catalog_dto
+  component "PaginationDto" as pagination_dto
+  component "CatalogService" as catalog_service
+  component "SemanticSearchService" as semantic_search
+  component "KohaClient" as koha_client
+  component "Book type mapper\nnormalize()" as normalize_book
+}
+
+database "Supabase Application Storage\nprofiles, catalog activity,\nreading lists, bookmarks, reservations" as lira_db
+database "Supabase Vector Store\ncatalog_embeddings" as embeddings
+
+user --> catalog_access : opens catalog
+catalog_access --> auth_panel : requests authenticated session
+auth_panel --> auth_service_js : sign in / sign out
+auth_service_js --> auth_controller : start / complete auth
+auth_controller --> msal_adapter : authorization callback
+msal_adapter --> microsoft_sso : OpenID Connect
+auth_controller --> session_service : validate claims / issue session
+session_service --> provisioning_service : provision or update account
+provisioning_service --> lira_db : microsoft_accounts + profiles
+catalog_access --> opac_page : renders after valid session
+
+opac_page --> catalog_service_js : listCatalogBooks()\nsearchCatalogBooks(query, mode)
+catalog_service_js --> catalog_controller : GET /api/catalog/books\nGET /api/catalog/search
+catalog_controller --> search_catalog_dto : validates query and mode
+catalog_controller --> pagination_dto : validates page and limit
+catalog_controller --> catalog_service : delegates catalog request
+
+catalog_service --> koha_client : keyword / list / detail lookup
+koha_client --> koha : REST API catalog records
+catalog_service --> semantic_search : semantic or hybrid search
+semantic_search --> embeddings : match catalog embeddings
+catalog_service --> normalize_book : maps Koha record to Book DTO
+catalog_service --> lira_db : catalog views and search history
+catalog_service_js --> catalog_adapter : converts API DTO for UI filters/cards
+opac_page --> search_results : displays matching records
+search_results --> book_detail : selected item
+book_detail --> opac_page : reserve / save / read actions
+
+opac_page --> student_library_service_js : record search/view\nsave bookmark\nadd reservation
+student_library_service_js --> lira_db : reading_history, reading_lists,\nbookmarks, reservations
+
+librarian --> catalog_access : signs in with APC account
+librarian --> koha : manages authoritative catalog records
+librarian --> docupulse : synchronizes external metadata
+
+note right of microsoft_sso
+  Microsoft Entra ID is the identity provider.
+  LIRA stores the Entra object_id and tenant_id
+  in microsoft_accounts, then links each account
+  to exactly one profiles row.
+  Supabase is application storage only.
+end note
+
+note right of koha
+  Koha remains the source of truth for bibliographic
+  records, items, availability, and circulation.
+  LIRA references book_id, biblio_id, and item_id.
+end note
+
+note bottom of embeddings
+  SQL source: catalog_embeddings.
+  Embeddings are represented as JSON in the
+  MySQL Workbench-compatible ERD export.
+end note
+
+note bottom of catalog_service
+  Supports keyword, semantic, and hybrid search.
+  Existing tests cover normalization, invalid search,
+  Koha errors, semantic pagination, and hybrid ranking.
+end note
+
+legend right
+  == Diagram Legend ==
+  Solid arrow: runtime call or data flow
+  Microsoft Entra ID: APC SSO identity provider
+  Supabase: application storage and vector data
+  Koha: external library system and catalog authority
+endlegend
+
+@enduml

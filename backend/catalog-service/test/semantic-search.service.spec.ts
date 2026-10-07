@@ -42,6 +42,7 @@ describe('SemanticSearchService', () => {
       itemType: null,
       genres: [],
       subjects: [],
+      categories: [],
       series: null,
       url: null,
     };
@@ -113,6 +114,7 @@ describe('SemanticSearchService', () => {
       itemType: null,
       genres: [],
       subjects: [],
+      categories: [],
       series: null,
       url: null,
     };

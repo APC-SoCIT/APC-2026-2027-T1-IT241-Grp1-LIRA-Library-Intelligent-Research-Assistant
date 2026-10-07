@@ -12,6 +12,11 @@ export class CatalogController {
     return this.catalog.listBooks(pagination.page, pagination.limit);
   }
 
+  @Get('new-arrivals')
+  listNewArrivals(@Query() pagination: PaginationDto) {
+    return this.catalog.listNewArrivals(pagination.page, pagination.limit);
+  }
+
   @Get('books/:id')
   getBook(@Param('id', new ParseIntPipe({ errorHttpStatusCode: 400 })) id: number) {
     if (id < 1) throw new BadRequestException('Book ID must be a positive integer');

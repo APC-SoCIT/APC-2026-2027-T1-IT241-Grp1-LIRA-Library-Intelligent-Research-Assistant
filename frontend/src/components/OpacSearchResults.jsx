@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { FiBookOpen, FiExternalLink, FiList, FiShoppingCart, FiX } from 'react-icons/fi'
+import { FiBookOpen, FiChevronDown, FiExternalLink, FiList, FiShoppingCart, FiX } from 'react-icons/fi'
 import BookCover from './BookCover'
 import { translate } from '../i18n/catalogTranslations'
 
@@ -7,8 +7,7 @@ const pageSize = 8
 
 const facets = [
   { key: 'itemType', labelKey: 'itemTypes' },
-  { key: 'genres', labelKey: 'genres' },
-  { key: 'subjects', labelKey: 'topicsSubjects' },
+  { key: 'categories', labelKey: 'categories' },
   { key: 'author', labelKey: 'authors' },
   { key: 'series', labelKey: 'series' },
   { key: 'publicationPlace', labelKey: 'places' },
@@ -114,6 +113,7 @@ export default function OpacSearchResults({
   const t = (key) => translate(language, key)
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedFacets, setSelectedFacets] = useState({})
+  const [filtersExpanded, setFiltersExpanded] = useState(true)
   const gutenbergCount = books.filter(hasGutenbergResource).length
   const sourceBooks = books.filter((book) => sourceFilter !== 'gutenberg' || hasGutenbergResource(book))
 
@@ -148,30 +148,39 @@ export default function OpacSearchResults({
     })
   }
 
+  const toggleFilters = () => setFiltersExpanded(!filtersExpanded)
+
   const pageNumbers = Array.from(
     { length: Math.min(5, totalPages) },
     (_, index) => Math.max(1, Math.min(visiblePage - 2, totalPages - 4)) + index,
   )
 
   return (
-    <section className="mt-6 grid gap-5 lg:grid-cols-[250px_minmax(0,1fr)]">
+    <section className={`mt-6 grid gap-5 ${filtersExpanded ? 'lg:grid-cols-[250px_minmax(0,1fr)]' : 'grid-cols-1'}`}>
       <aside className="h-fit rounded-2xl border border-[#e8dcc8] bg-[#fffdf8] p-4 shadow-sm">
         <div className="flex items-center justify-between border-b border-[#eee5d7] pb-3">
           <div>
             <p className="text-[0.65rem] font-bold uppercase tracking-[0.15em] text-[#9a784a]">{t('refineSearch')}</p>
             <h2 className="mt-1 font-semibold text-[#342c24]">{t('refineSearch')}</h2>
           </div>
-          {selectedFacetCount > 0 && (
+          <div className="flex items-center gap-2">
+            {selectedFacetCount > 0 && <button type="button" onClick={() => setSelectedFacets({})} className="text-xs font-semibold text-[#79572f] hover:underline">{t('clear')}</button>}
+            {selectedFacetCount > 0 && !filtersExpanded && <span className="rounded-full bg-[#f4ead9] px-2 py-0.5 text-xs text-[#806747]">{selectedFacetCount}</span>}
             <button
               type="button"
-              onClick={() => setSelectedFacets({})}
-              className="text-xs font-semibold text-[#79572f] hover:underline"
+              onClick={toggleFilters}
+              aria-expanded={filtersExpanded}
+              aria-controls="catalog-refine-controls"
+              aria-label={filtersExpanded ? 'Collapse search filters' : 'Expand search filters'}
+              title={filtersExpanded ? 'Collapse filters' : 'Expand filters'}
+              className="grid h-8 w-8 place-items-center rounded-md border border-[#e8dcc8] text-[#79572f] hover:bg-[#faf5eb]"
             >
-              {t('clear')}
+              <FiChevronDown className={`transition-transform ${filtersExpanded ? 'rotate-180' : ''}`} aria-hidden="true" />
             </button>
-          )}
+          </div>
         </div>
 
+        {filtersExpanded && <div id="catalog-refine-controls">
         <label className="mt-4 block text-xs font-semibold text-[#675b4a]">
           {t('onlineResource')}
           <select
@@ -202,6 +211,7 @@ export default function OpacSearchResults({
         <p className="mt-3 border-t border-[#eee5d7] pt-3 text-[0.68rem] leading-5 text-[#978873]">
           {t('availabilityNotProvided')}
         </p>
+        </div>}
       </aside>
 
       <div className="min-w-0">
@@ -263,13 +273,14 @@ export default function OpacSearchResults({
                       {book.title}
                     </button>
                     <p className="mt-1 text-sm text-[#675b4a]">{book.author || t('authorNotListed')}</p>
+                    {book.description && <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#81725f]">{book.description}</p>}
 
                     <dl className="mt-3 grid gap-x-5 gap-y-1 text-xs text-[#81725f] sm:grid-cols-2">
                       {book.publisher && <div><dt className="inline font-semibold">{t('publisher')}: </dt><dd className="inline">{book.publisher}</dd></div>}
                       {book.publicationYear && <div><dt className="inline font-semibold">{t('year')}: </dt><dd className="inline">{book.publicationYear}</dd></div>}
                       {book.isbn && <div><dt className="inline font-semibold">{t('isbn')}: </dt><dd className="inline">{book.isbn}</dd></div>}
                       {book.itemType && <div><dt className="inline font-semibold">{t('type')}: </dt><dd className="inline">{getFacetLabel('itemType', book.itemType, t)}</dd></div>}
-                      {book.genres?.length > 0 && <div className="sm:col-span-2"><dt className="inline font-semibold">{t('genre')}: </dt><dd className="inline">{book.genres.join(', ')}</dd></div>}
+                      {book.categories?.length > 0 && <div className="sm:col-span-2 flex flex-wrap items-center gap-1.5"><dt className="font-semibold">{t('categories')}:</dt><dd className="flex flex-wrap gap-1.5">{book.categories.map((category) => <span key={category} className="rounded bg-[#e8f0fa] px-2 py-1 text-[0.68rem] font-semibold text-[#31516f]">{category}</span>)}</dd></div>}
                     </dl>
 
                     {resources.length > 0 && (

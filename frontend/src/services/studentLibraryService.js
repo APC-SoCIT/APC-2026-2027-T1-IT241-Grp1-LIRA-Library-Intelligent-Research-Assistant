@@ -20,6 +20,41 @@ export async function getStudentProfile() {
   return data
 }
 
+export async function updateStudentProfile(profile) {
+  const { client, user } = await requireUser()
+  const firstName = profile.first_name.trim()
+  const middleInitial = profile.middle_initial.trim()
+  const lastName = profile.last_name.trim()
+  const suffix = profile.suffix.trim()
+  const school = profile.school.trim()
+  if (!firstName || !lastName || !school) throw new Error('First name, last name, and school are required.')
+
+  const fullName = [firstName, middleInitial, lastName, suffix].filter(Boolean).join(' ')
+  const profileUpdate = await client.from('profiles').update({
+    full_name: fullName,
+    first_name: firstName,
+    middle_initial: middleInitial || null,
+    last_name: lastName,
+    suffix: suffix || null,
+    school,
+    updated_at: new Date().toISOString(),
+  }).eq('id', user.id).select().single()
+  if (profileUpdate.error) throw profileUpdate.error
+
+  const authUpdate = await client.auth.updateUser({
+    data: {
+      full_name: fullName,
+      first_name: firstName,
+      middle_initial: middleInitial || null,
+      last_name: lastName,
+      suffix: suffix || null,
+      school,
+    },
+  })
+  if (authUpdate.error) throw authUpdate.error
+  return profileUpdate.data
+}
+
 export async function recordReading(book) {
   const { client, user } = await requireUser()
   const { data, error } = await client.from('reading_history').upsert({
@@ -100,14 +135,64 @@ export async function getCatalogRecommendationHistory() {
   }
 }
 
-export async function saveBookmark(book) {
+export async function listReadingLists() {
   const { client, user } = await requireUser()
+  const { data, error } = await client.from('reading_lists').select('*').eq('user_id', user.id).order('created_at', { ascending: true })
+  if (error) throw error
+  return data
+}
+
+export async function createReadingList(name) {
+  const { client, user } = await requireUser()
+  const normalizedName = name.trim()
+  if (!normalizedName || normalizedName.length > 60) throw new Error('List names must be between 1 and 60 characters.')
+  const { data, error } = await client.from('reading_lists').insert({
+    user_id: user.id,
+    name: normalizedName,
+  }).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function renameReadingList(listId, name) {
+  const { client, user } = await requireUser()
+  const normalizedName = name.trim()
+  if (!normalizedName || normalizedName.length > 60) throw new Error('List names must be between 1 and 60 characters.')
+  const { data, error } = await client.from('reading_lists').update({
+    name: normalizedName,
+    updated_at: new Date().toISOString(),
+  }).eq('user_id', user.id).eq('id', listId).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteReadingList(listId) {
+  const { client, user } = await requireUser()
+  const { error } = await client.from('reading_lists').delete().eq('user_id', user.id).eq('id', listId)
+  if (error) throw error
+}
+
+export async function saveBookmark(book, listId) {
+  const { client, user } = await requireUser()
+  if (listId === undefined || listId === null) throw new Error('Choose a list before saving this book.')
   const { data, error } = await client.from('bookmarks').upsert({
     user_id: user.id,
+    list_id: listId,
     book_id: book.id,
     title: book.title,
     author: book.author || null,
   }, { onConflict: 'user_id,book_id' }).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function moveBookmark(bookId, listId) {
+  const { client, user } = await requireUser()
+  const { data, error } = await client.from('bookmarks').update({ list_id: listId })
+    .eq('user_id', user.id)
+    .eq('book_id', bookId)
+    .select()
+    .single()
   if (error) throw error
   return data
 }
@@ -118,9 +203,11 @@ export async function removeBookmark(bookId) {
   if (error) throw error
 }
 
-export async function listBookmarks() {
+export async function listBookmarks(listId) {
   const { client, user } = await requireUser()
-  const { data, error } = await client.from('bookmarks').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+  let request = client.from('bookmarks').select('*').eq('user_id', user.id)
+  if (listId !== undefined && listId !== null) request = request.eq('list_id', listId)
+  const { data, error } = await request.order('created_at', { ascending: false })
   if (error) throw error
   return data
 }

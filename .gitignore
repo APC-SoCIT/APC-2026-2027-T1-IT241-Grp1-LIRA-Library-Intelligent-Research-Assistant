@@ -17,6 +17,16 @@ coverage/
 /backend/catalog-service/vendor/
 /backend/catalog-service/public/
 
+# Local test artifacts
+/test-data/
+/test-output/
+/testing/
+/book.html
+
+# One-off Supabase SQL; keep versioned migrations tracked
+/supabase/scratch/
+/supabase/*.scratch.sql
+
 # Logs
 logs
 *.log
@@ -48,3 +58,6 @@ data/marc/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 !data/marc/.gitkeep
+
+# Local sprint-plan export
+LIRA_Sprint_Plan_Rephrased.xlsx

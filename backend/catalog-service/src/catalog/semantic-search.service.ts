@@ -209,6 +209,7 @@ export class SemanticSearchService {
       book.description && `Description: ${book.description}`,
       book.genres.length > 0 && `Genres: ${book.genres.join(', ')}`,
       book.subjects.length > 0 && `Subjects: ${book.subjects.join(', ')}`,
+      book.categories?.length && `Categories: ${book.categories.join(', ')}`,
       book.series && `Series: ${book.series}`,
       book.publisher && `Publisher: ${book.publisher}`,
       book.publicationPlace && `Publication place: ${book.publicationPlace}`,
@@ -240,6 +241,7 @@ export class SemanticSearchService {
       && (typeof book.itemType === 'string' || book.itemType === null)
       && Array.isArray(book.genres)
       && Array.isArray(book.subjects)
+      && (book.categories === undefined || Array.isArray(book.categories))
       && (typeof book.series === 'string' || book.series === null)
       && (typeof book.url === 'string' || book.url === null);
   }

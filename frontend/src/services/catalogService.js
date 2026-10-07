@@ -28,6 +28,11 @@ export async function listCatalogBooks() {
   return books
 }
 
+export async function listNewArrivalBooks(limit = 12) {
+  const payload = await request(`/new-arrivals?page=1&limit=${encodeURIComponent(limit)}`)
+  return payload.items || []
+}
+
 export async function searchCatalogBooks(query, mode = 'keyword') {
   const books = []
   for (let page = 1; ; page++) {

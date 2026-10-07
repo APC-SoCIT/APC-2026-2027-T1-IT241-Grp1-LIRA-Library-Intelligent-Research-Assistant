@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { FiArrowUp, FiAtSign, FiBookOpen, FiChevronDown, FiFacebook, FiUser } from 'react-icons/fi'
 import OpacPage from './OpacPage'
@@ -6,15 +5,14 @@ import AuthPanel from '../components/auth/AuthPanel'
 import { useAuth } from '../hooks/useAuth'
 
 export default function CatalogAccessPage() {
-  const [hasCatalogAccess, setHasCatalogAccess] = useState(false)
-  const { session, configured } = useAuth()
+  const { session, loading, configured } = useAuth()
   const [searchParams] = useSearchParams()
 
-  useEffect(() => {
-    if (session) setHasCatalogAccess(true)
-  }, [session])
+  if (loading) {
+    return <div className="catalog-loading-screen" role="status" aria-live="polite">Checking your account...</div>
+  }
 
-  if (hasCatalogAccess) {
+  if (session) {
     return <OpacPage user={session?.user} bookId={searchParams.get('book')} />
   }
 
@@ -57,7 +55,7 @@ export default function CatalogAccessPage() {
         <section className="catalog-login-panel">
           <div className="catalog-gold-rule" />
           <h2>Access the library resources with your LIRA account</h2>
-          <AuthPanel session={session} configured={configured} onAccessCatalog={() => setHasCatalogAccess(true)} />
+          <AuthPanel session={session} configured={configured} />
 
           <div className="catalog-external-card">
             <h3>For External Researchers</h3>

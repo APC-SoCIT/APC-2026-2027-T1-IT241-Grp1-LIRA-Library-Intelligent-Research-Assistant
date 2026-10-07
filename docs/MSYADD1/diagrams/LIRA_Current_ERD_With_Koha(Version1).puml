@@ -1,0 +1,161 @@
+@startuml LIRA_Current_ERD_With_Koha
+title LIRA Current ERD with Koha Connection
+
+left to right direction
+hide circle
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam linetype polyline
+skinparam nodesep 70
+skinparam ranksep 90
+skinparam class {
+  BackgroundColor #F8FBFF
+  BorderColor #2F4F6F
+  ArrowColor #2F4F6F
+}
+skinparam package {
+  BackgroundColor #FFFFFF
+  BorderColor #B7C6D8
+  FontColor #1F3B57
+}
+skinparam note {
+  BackgroundColor #FFF8DC
+  BorderColor #8A6D3B
+}
+
+package "Supabase Auth" {
+  entity "auth.users" as auth_users {
+    * id : uuid
+    --
+    email
+    metadata
+  }
+}
+
+package "LIRA Student Data" {
+  entity "profiles" as profiles {
+    * id : uuid
+    --
+    full_name
+    school
+  }
+
+  entity "reading_lists" as reading_lists {
+    * id : bigint
+    --
+    user_id
+    name
+  }
+
+  entity "bookmarks" as bookmarks {
+    * id : bigint
+    --
+    user_id
+    list_id
+    book_id
+  }
+
+  entity "reading_history" as reading_history {
+    * id : bigint
+    --
+    user_id
+    book_id
+    last_read_at
+  }
+
+  entity "reservations" as reservations {
+    * id : bigint
+    --
+    user_id
+    book_id
+    created_at
+  }
+}
+
+package "LIRA Catalog Activity" {
+  entity "catalog_search_history" as search_history {
+    * id : bigint
+    --
+    user_id
+    query
+    created_at
+  }
+
+  entity "catalog_book_views" as book_views {
+    * user_id : uuid
+    * book_id : bigint
+    --
+    title
+    viewed_at
+  }
+
+  entity "catalog_embeddings" as embeddings {
+    * book_id : bigint
+    --
+    searchable_text
+    embedding
+    book_data
+  }
+}
+
+package "Koha ILS - External Source of Truth" {
+  entity "biblios" as koha_biblios {
+    * biblio_id : number
+    --
+    title
+    author
+    isbn / issn
+    item_type
+    availability
+  }
+
+  entity "MARCXML categories" as koha_marcxml {
+    * 999$c : biblio_id
+    --
+    650 _4 $a : category
+  }
+}
+
+auth_users ||--|| profiles
+auth_users ||--o{ reading_lists
+auth_users ||--o{ bookmarks
+auth_users ||--o{ reading_history
+auth_users ||--o{ reservations
+auth_users ||--o{ search_history
+auth_users ||--o{ book_views
+
+reading_lists ||--o{ bookmarks
+
+bookmarks }o..|| koha_biblios
+reading_history }o..|| koha_biblios
+reservations }o..|| koha_biblios
+book_views }o..|| koha_biblios
+embeddings ||..|| koha_biblios
+koha_marcxml }o..|| koha_biblios
+
+note top of koha_biblios
+  Koha owns the real catalog record.
+  LIRA stores only references and snapshots
+  using book_id = Koha biblio_id.
+end note
+
+note bottom of reservations
+  Current reservations are a cart/queue in LIRA,
+  not confirmed Koha holds yet.
+end note
+
+note bottom of embeddings
+  Semantic search index.
+  book_data stores a Koha-derived snapshot.
+end note
+
+legend right
+  == Relationship Guide ==
+  Solid line: real database foreign key
+  Dotted line: logical Koha reference by book_id
+  PK: first field marked with *
+endlegend
+
+@enduml
