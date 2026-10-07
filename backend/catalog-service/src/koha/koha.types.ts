@@ -12,6 +12,7 @@ export interface KohaBiblio {
   edition?: string | null;
   language?: string | null;
   description?: string | null;
+  abstract?: string | null;
   item_type?: string | null;
   genre?: unknown;
   genres?: unknown;
@@ -21,6 +22,7 @@ export interface KohaBiblio {
   subjects?: unknown;
   subject_heading?: unknown;
   subject_headings?: unknown;
+  categories?: unknown;
   collection_title?: string | null;
   series_title?: string | null;
   url?: string | null;

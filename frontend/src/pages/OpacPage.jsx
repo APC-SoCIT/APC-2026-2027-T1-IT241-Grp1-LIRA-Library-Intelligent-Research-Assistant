@@ -1,17 +1,21 @@
-import { FiSearch, FiShoppingCart, FiList, FiUser, FiChevronDown, FiGlobe, FiBookOpen } from 'react-icons/fi';
-import { useEffect, useState } from 'react';
+import { FiSearch, FiShoppingCart, FiList, FiUser, FiChevronDown, FiGlobe, FiBookOpen, FiLogOut, FiSettings } from 'react-icons/fi';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OpacSearchResults from '../components/OpacSearchResults';
 import BookDetail from '../components/BookDetail';
 import CatalogRecommendations from '../components/CatalogRecommendations';
 import ChatbotPlaceholder from '../components/chatbot/ChatbotPlaceholder';
-import { addReservationCartItem, getCatalogRecommendationHistory, listBookmarks, listReservations, recordCatalogBookView, recordCatalogSearch, removeBookmark, saveBookmark } from '../services/studentLibraryService';
+import ReadingListPicker from '../components/ReadingListPicker';
+import ProfileSettingsDialog from '../components/ProfileSettingsDialog';
+import { addReservationCartItem, getCatalogRecommendationHistory, getStudentProfile, listBookmarks, listReservations, recordCatalogBookView, recordCatalogSearch, removeBookmark } from '../services/studentLibraryService';
 import { listCatalogBooks, searchCatalogBooks } from '../services/catalogService';
 import { adaptCatalogBook } from '../utils/catalogCategories';
 import { catalogLanguages, translate } from '../i18n/catalogTranslations';
+import { signOut } from '../services/authService';
 
 export default function OpacPage({ user, bookId }) {
   const [books, setBooks] = useState([]);
+  const [catalogBooks, setCatalogBooks] = useState([]);
   const [catalogError, setCatalogError] = useState('');
   const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
@@ -21,10 +25,17 @@ export default function OpacPage({ user, bookId }) {
   const [selectedBook, setSelectedBook] = useState(null);
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [bookmarks, setBookmarks] = useState([]);
+  const [bookmarkTarget, setBookmarkTarget] = useState(null);
   const [bookmarkMessage, setBookmarkMessage] = useState('');
   const [reservationCart, setReservationCart] = useState([]);
   const [recommendationHistory, setRecommendationHistory] = useState({ views: [], readings: [], searches: [] });
+  const [studentSchool, setStudentSchool] = useState(user?.user_metadata?.school || user?.user_metadata?.course || '');
   const [showRecommendations, setShowRecommendations] = useState(false);
+  const [studentProfile, setStudentProfile] = useState(null);
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const [showProfileSettings, setShowProfileSettings] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const accountMenuRef = useRef(null);
   const [language, setLanguage] = useState(() => {
     const savedLanguage = localStorage.getItem('lira_catalog_language');
     return catalogLanguages.some(({ code }) => code === savedLanguage) ? savedLanguage : 'en';
@@ -32,10 +43,21 @@ export default function OpacPage({ user, bookId }) {
   const navigate = useNavigate();
 
   const firstName = user?.user_metadata?.first_name || user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Student';
+  const displayFirstName = studentProfile?.first_name || firstName;
   const t = (key) => translate(language, key);
+
+  useEffect(() => {
+    if (!showAccountMenu) return undefined;
+    const closeOnOutsideClick = (event) => {
+      if (!accountMenuRef.current?.contains(event.target)) setShowAccountMenu(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
+  }, [showAccountMenu]);
 
   const handleSelectBook = (book) => {
     setSelectedBook(book);
+    setShowRecommendations(false);
     const viewedAt = new Date().toISOString();
     const view = {
       book_id: book.id,
@@ -64,11 +86,31 @@ export default function OpacPage({ user, bookId }) {
   useEffect(() => {
     let isCurrent = true;
     listCatalogBooks()
-      .then((items) => { if (isCurrent) setBooks(items.map(adaptCatalogBook)); })
+      .then((items) => {
+        if (!isCurrent) return;
+        const catalog = items.map(adaptCatalogBook);
+        setBooks(catalog);
+        setCatalogBooks(catalog);
+      })
       .catch((error) => { if (isCurrent) setCatalogError(error.message || 'Could not load the library catalog.'); })
       .finally(() => { if (isCurrent) setIsLoadingCatalog(false); });
     return () => { isCurrent = false; };
   }, []);
+
+  useEffect(() => {
+    let isCurrent = true;
+    setStudentSchool(user?.user_metadata?.school || user?.user_metadata?.course || '');
+    if (!user) return () => { isCurrent = false; };
+    getStudentProfile()
+      .then((profile) => {
+        if (isCurrent) {
+          setStudentProfile(profile);
+          setStudentSchool(profile.school || profile.course || user.user_metadata?.school || user.user_metadata?.course || '');
+        }
+      })
+      .catch(() => {});
+    return () => { isCurrent = false; };
+  }, [user]);
 
   useEffect(() => {
     const selected = books.find((book) => String(book.id) === String(bookId));
@@ -98,6 +140,18 @@ export default function OpacPage({ user, bookId }) {
     localStorage.setItem('lira_catalog_language', nextLanguage);
   };
 
+  const handleSignOut = async () => {
+    setShowAccountMenu(false);
+    setIsSigningOut(true);
+    try {
+      await signOut();
+      navigate('/catalog', { replace: true });
+    } catch (error) {
+      setBookmarkMessage(error.message || 'Could not sign out. Please try again.');
+      setIsSigningOut(false);
+    }
+  };
+
   const handleShowBookmarks = async () => {
     setShowBookmarks((visible) => !visible);
     if (!showBookmarks) {
@@ -118,9 +172,7 @@ export default function OpacPage({ user, bookId }) {
         setBookmarks((current) => current.filter((item) => item.book_id !== book.id));
         setBookmarkMessage(`Removed “${book.title}” from your list.`);
       } else {
-        const bookmark = await saveBookmark(book);
-        setBookmarks((current) => [bookmark, ...current.filter((item) => item.book_id !== bookmark.book_id)]);
-        setBookmarkMessage(`Saved “${book.title}” to your list.`);
+        setBookmarkTarget(book);
       }
     } catch (error) {
       setBookmarkMessage(error.message || 'Could not save this book.');
@@ -182,9 +234,15 @@ export default function OpacPage({ user, bookId }) {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button type="button" className="flex items-center gap-1 font-semibold hover:text-blue-600 transition-colors">
-            <FiUser className="w-4 h-4" /> {t('welcome')}, {firstName} <FiChevronDown className="w-3 h-3" />
-          </button>
+          <div className="relative" ref={accountMenuRef}>
+            <button type="button" onClick={() => setShowAccountMenu((visible) => !visible)} aria-haspopup="menu" aria-expanded={showAccountMenu} className="flex items-center gap-1 font-semibold text-[#1b2a4a] transition-colors hover:text-blue-700">
+              <FiUser className="w-4 h-4" aria-hidden="true" /> {t('welcome')}, {displayFirstName} <FiChevronDown className={`h-3 w-3 transition-transform ${showAccountMenu ? 'rotate-180' : ''}`} aria-hidden="true" />
+            </button>
+            {showAccountMenu && <div className="account-menu" role="menu">
+              <button type="button" role="menuitem" onClick={() => { setShowAccountMenu(false); setShowProfileSettings(true); }}><FiSettings aria-hidden="true" /> Profile settings</button>
+              <button type="button" role="menuitem" onClick={handleSignOut} disabled={isSigningOut}><FiLogOut aria-hidden="true" /> {isSigningOut ? 'Signing out...' : 'Sign out'}</button>
+            </div>}
+          </div>
           <label className="flex items-center gap-1.5 rounded-md border border-slate-200 px-2 py-1 hover:border-blue-400">
             <FiGlobe className="h-4 w-4" aria-hidden="true" />
             <span className="sr-only">{t('language')}</span>
@@ -215,10 +273,29 @@ export default function OpacPage({ user, bookId }) {
         </aside>
       )}
       {bookmarkMessage && <div className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 bg-[#1b2a4a] px-4 py-2 text-sm text-white shadow-lg">{bookmarkMessage}</div>}
+      {bookmarkTarget && <ReadingListPicker
+        book={bookmarkTarget}
+        onClose={() => setBookmarkTarget(null)}
+        onSaved={(bookmark, listName) => {
+          setBookmarks((current) => [bookmark, ...current.filter((item) => item.book_id !== bookmark.book_id)]);
+          setBookmarkMessage(`Saved “${bookmark.title}” to ${listName || 'your list'}.`);
+          setBookmarkTarget(null);
+        }}
+      />}
+      {showProfileSettings && <ProfileSettingsDialog
+        user={user}
+        onClose={() => setShowProfileSettings(false)}
+        onUpdated={(profile) => {
+          setStudentProfile(profile);
+          setStudentSchool(profile.school || '');
+          setShowProfileSettings(false);
+          setBookmarkMessage('Profile settings saved.');
+        }}
+      />}
 
       {/* Hero Banner */}
-      <div className="bg-gradient-to-br from-[#142544] via-[#1b2a4a] to-[#245485] px-5 py-12 text-white sm:px-8 sm:py-16">
-        <img src="/opac-banner.png" alt={t('bannerAlt')} className="mx-auto block h-auto w-full max-w-[2000px]" />
+      <div className="overflow-hidden bg-[#0b3978] text-white">
+        <img src="/opac-banner.png" alt={t('bannerAlt')} className="block h-auto w-full" />
       </div>
 
       {/* Main Content Area */}
@@ -231,18 +308,18 @@ export default function OpacPage({ user, bookId }) {
         </div>
 
         {/* Search Bar container */}
-        <form onSubmit={handleSearch} onMouseEnter={() => setShowRecommendations(true)} className="mx-auto flex max-w-5xl flex-wrap gap-2 rounded-xl bg-white p-2 shadow-lg ring-1 ring-slate-200">
+        <form onSubmit={handleSearch} onMouseEnter={() => { if (!selectedBook) setShowRecommendations(true); }} className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 rounded-xl bg-white p-2 shadow-lg ring-1 ring-slate-200">
             <input 
               aria-label={t('searchPlaceholder')}
               type="text" 
               placeholder={t('searchPlaceholder')}
-              onFocus={() => setShowRecommendations(true)}
-              className="min-w-0 flex-1 basis-64 rounded-lg px-4 py-3 text-slate-800 outline-none"
+              onFocus={() => { if (!selectedBook) setShowRecommendations(true); }}
+              className="h-12 min-w-0 flex-1 basis-64 rounded-lg px-4 text-slate-800 outline-none"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); if (!selectedBook) setShowRecommendations(true); }}
             />
-          <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600">
-            <span>{t('searchModeLabel')}</span>
+          <label className="flex h-12 shrink-0 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-medium text-slate-600">
+            <span className="whitespace-nowrap">{t('searchModeLabel')}</span>
             <select
               value={searchMode}
               onChange={(event) => setSearchMode(event.target.value)}
@@ -253,10 +330,10 @@ export default function OpacPage({ user, bookId }) {
               <option value="hybrid">{t('hybridSearch')}</option>
             </select>
           </label>
-          <button type="button" onClick={() => setShowRecommendations((visible) => !visible)} aria-pressed={showRecommendations} className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-semibold transition-colors ${showRecommendations ? 'border-[#73532f] bg-[#faf5eb] text-[#5b4126]' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
-            <FiBookOpen className="h-4 w-4" aria-hidden="true" /> {t('recommendations')}
-          </button>
-          <button type="submit" disabled={isSearching} className="flex items-center justify-center gap-2 rounded-lg bg-[#1b2a4a] px-5 py-3 font-semibold text-white transition-colors hover:bg-blue-900 disabled:cursor-wait disabled:opacity-60">
+          {!selectedBook && <button type="button" onClick={() => setShowRecommendations((visible) => !visible)} aria-pressed={showRecommendations} aria-label={t('recommendations')} aria-controls="catalog-recommendations-panel" title={t('recommendations')} className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border transition-colors ${showRecommendations ? 'border-[#73532f] bg-[#faf5eb] text-[#5b4126]' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+            <FiBookOpen className="h-4 w-4" aria-hidden="true" />
+          </button>}
+          <button type="submit" disabled={isSearching} className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#1b2a4a] px-5 font-semibold text-white transition-colors hover:bg-blue-900 disabled:cursor-wait disabled:opacity-60">
              <FiSearch className="w-5 h-5" />
              {isSearching ? t('searching') : t('search')}
           </button>
@@ -267,19 +344,28 @@ export default function OpacPage({ user, bookId }) {
           <div className="bg-red-50 border border-red-200 p-6 text-center text-sm text-red-700">{catalogError}</div>
         ) : isLoadingCatalog ? (
           <div className="bg-white border border-gray-200 p-8 text-center text-sm text-gray-500">{t('loadingCatalog')}</div>
-        ) : selectedBook ? (
-          <BookDetail book={selectedBook} language={language} onBack={() => setSelectedBook(null)} onSaveBookmark={handleSaveBookmark} onReserveBook={handleAddToCart} isBookmarked={bookmarks.some((item) => item.book_id === selectedBook.id)} />
         ) : (
-          <OpacSearchResults books={books} query={searchQuery} language={language} sourceFilter={sourceFilter} onSourceFilterChange={setSourceFilter} onSelectBook={handleSelectBook} onSaveBookmark={handleSaveBookmark} onReserveBook={handleAddToCart} isBookmarked={(book) => bookmarks.some((item) => item.book_id === book.id)} />
-        )}
-        {showRecommendations && !isLoadingCatalog && (
-          <CatalogRecommendations
-            books={books}
-            history={recommendationHistory}
-            selectedBook={selectedBook}
-            language={language}
-            onSelectBook={handleSelectBook}
-          />
+          <div className={`catalog-discovery-layout ${showRecommendations ? 'with-recommendations' : ''}`}>
+            <div className="min-w-0">
+              {selectedBook ? (
+                <BookDetail book={selectedBook} language={language} onBack={() => setSelectedBook(null)} onSaveBookmark={handleSaveBookmark} onReserveBook={handleAddToCart} isBookmarked={bookmarks.some((item) => item.book_id === selectedBook.id)} />
+              ) : (
+                <OpacSearchResults books={books} query={searchQuery} language={language} sourceFilter={sourceFilter} onSourceFilterChange={setSourceFilter} onSelectBook={handleSelectBook} onSaveBookmark={handleSaveBookmark} onReserveBook={handleAddToCart} isBookmarked={(book) => bookmarks.some((item) => item.book_id === book.id)} />
+              )}
+            </div>
+            {!selectedBook && showRecommendations && <aside id="catalog-recommendations-panel" className="catalog-recommendations-rail" aria-label={t('recommendations')}>
+              <CatalogRecommendations
+                books={catalogBooks.length > 0 ? catalogBooks : books}
+                history={recommendationHistory}
+                selectedBook={selectedBook}
+                language={language}
+                query={searchQuery}
+                school={studentSchool}
+                onSelectBook={handleSelectBook}
+                compact
+              />
+            </aside>}
+          </div>
         )}
       </main>
       
