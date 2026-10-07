@@ -1,0 +1,366 @@
+@startuml LIRA_Full_System_ERD_With_AI_Koha
+title LIRA Full System ERD with AI Services and Koha
+
+left to right direction
+hide circle
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam linetype polyline
+skinparam nodesep 55
+skinparam ranksep 75
+skinparam class {
+  BackgroundColor #F8FBFF
+  BorderColor #2F4F6F
+  ArrowColor #2F4F6F
+}
+skinparam package {
+  BackgroundColor #FFFFFF
+  BorderColor #B7C6D8
+  FontColor #1F3B57
+}
+skinparam note {
+  BackgroundColor #FFF8DC
+  BorderColor #8A6D3B
+}
+
+package "Identity and Profiles" {
+  entity "Microsoft Entra ID\n(APC Microsoft Account)" as microsoft_accounts {
+    * object_id : uuid
+    --
+    email
+    display_name
+    tenant_id
+  }
+
+  entity "profiles\n(LIRA local profile)" as profiles {
+    * id : uuid
+    --
+    microsoft_object_id
+    full_name
+    school
+    role
+  }
+}
+
+package "Koha ILS - External Source of Truth" {
+  entity "koha_biblios" as koha_biblios {
+    * biblio_id : number
+    --
+    title
+    author
+    isbn
+    item_type
+  }
+
+  entity "koha_items" as koha_items {
+    * item_id : number
+    --
+    biblio_id
+    barcode
+    availability
+  }
+
+  entity "koha_loans" as koha_loans {
+    * loan_id : number
+    --
+    item_id
+    borrower_id
+    due_date
+  }
+}
+
+package "Catalog and Student Library Data" {
+  entity "catalog_embeddings" as catalog_embeddings {
+    * book_id : bigint
+    --
+    embedding
+    book_data
+  }
+
+  entity "catalog_book_views" as book_views {
+    * user_id : uuid
+    * book_id : bigint
+    --
+    title
+    viewed_at
+  }
+
+  entity "catalog_search_history" as search_history {
+    * id : bigint
+    --
+    user_id
+    query
+  }
+
+  entity "reading_lists" as reading_lists {
+    * id : bigint
+    --
+    user_id
+    name
+  }
+
+  entity "bookmarks" as bookmarks {
+    * id : bigint
+    --
+    user_id
+    list_id
+    book_id
+  }
+
+  entity "reading_history" as reading_history {
+    * id : bigint
+    --
+    user_id
+    book_id
+    last_read_at
+  }
+}
+
+package "Circulation and Reservations" {
+  entity "reservations" as reservations {
+    * id : bigint
+    --
+    user_id
+    book_id
+    created_at
+  }
+
+  entity "loan_transactions\n(proposed)" as loan_transactions {
+    * id : bigint
+    --
+    user_id
+    book_id
+    item_id
+    status
+    due_date
+  }
+
+  entity "overdue_alerts\n(proposed)" as overdue_alerts {
+    * id : bigint
+    --
+    loan_id
+    alert_status
+    sent_at
+  }
+}
+
+package "AI Chatbot and Knowledge Base (proposed)" {
+  entity "chatbot_configs" as chatbot_configs {
+    * id : bigint
+    --
+    version
+    tone
+    active
+  }
+
+  entity "knowledge_sources" as knowledge_sources {
+    * id : bigint
+    --
+    title
+    source_type
+    status
+  }
+
+  entity "knowledge_chunks" as knowledge_chunks {
+    * id : bigint
+    --
+    source_id
+    chunk_text
+    embedding
+  }
+
+  entity "chat_sessions" as chat_sessions {
+    * id : bigint
+    --
+    user_id
+    config_id
+    created_at
+  }
+
+  entity "chat_messages" as chat_messages {
+    * id : bigint
+    --
+    session_id
+    role
+    message_text
+  }
+
+  entity "chat_response_sources" as chat_sources {
+    * id : bigint
+    --
+    message_id
+    chunk_id
+    book_id
+  }
+}
+
+package "AI Outputs (proposed)" {
+  entity "summary_requests" as summary_requests {
+    * id : bigint
+    --
+    user_id
+    book_id
+    length
+    status
+  }
+
+  entity "summaries" as summaries {
+    * id : bigint
+    --
+    request_id
+    summary_text
+    source_context
+  }
+
+  entity "citation_requests" as citation_requests {
+    * id : bigint
+    --
+    user_id
+    book_id
+    style
+    status
+  }
+
+  entity "citations" as citations {
+    * id : bigint
+    --
+    request_id
+    citation_text
+    missing_fields
+  }
+
+  entity "recommendation_runs" as recommendation_runs {
+    * id : bigint
+    --
+    user_id
+    strategy
+    created_at
+  }
+
+  entity "recommendation_items" as recommendation_items {
+    * id : bigint
+    --
+    run_id
+    book_id
+    reason
+  }
+}
+
+package "Analytics and Reports (proposed)" {
+  entity "report_requests" as report_requests {
+    * id : bigint
+    --
+    staff_user_id
+    report_type
+    date_range
+  }
+
+  entity "report_exports" as report_exports {
+    * id : bigint
+    --
+    request_id
+    file_type
+    export_url
+  }
+
+  entity "audit_events" as audit_events {
+    * id : bigint
+    --
+    user_id
+    action
+    entity_name
+  }
+}
+
+entity "OpenRouter AI Provider" as ai_provider {
+  external_service
+}
+
+microsoft_accounts ||--|| profiles
+profiles ||--o{ search_history
+profiles ||--o{ book_views
+profiles ||--o{ reading_lists
+profiles ||--o{ bookmarks
+profiles ||--o{ reading_history
+profiles ||--o{ reservations
+profiles ||--o{ loan_transactions
+profiles ||--o{ chat_sessions
+profiles ||--o{ summary_requests
+profiles ||--o{ citation_requests
+profiles ||--o{ recommendation_runs
+profiles ||--o{ report_requests
+profiles ||--o{ audit_events
+
+reading_lists ||--o{ bookmarks
+
+koha_biblios ||--o{ koha_items
+koha_items ||--o{ koha_loans
+
+koha_biblios ||..|| catalog_embeddings
+koha_biblios ||..o{ book_views
+koha_biblios ||..o{ bookmarks
+koha_biblios ||..o{ reading_history
+koha_biblios ||..o{ reservations
+koha_biblios ||..o{ loan_transactions
+koha_biblios ||..o{ summary_requests
+koha_biblios ||..o{ citation_requests
+koha_biblios ||..o{ recommendation_items
+koha_biblios ||..o{ chat_sources
+koha_items ||..o{ loan_transactions
+koha_loans ||..o{ overdue_alerts
+
+chatbot_configs ||--o{ chat_sessions
+knowledge_sources ||--o{ knowledge_chunks
+chat_sessions ||--o{ chat_messages
+chat_messages ||--o{ chat_sources
+knowledge_chunks ||--o{ chat_sources
+
+summary_requests ||--|| summaries
+citation_requests ||--|| citations
+recommendation_runs ||--o{ recommendation_items
+report_requests ||--o{ report_exports
+
+knowledge_chunks ..> ai_provider
+chat_messages ..> ai_provider
+summary_requests ..> ai_provider
+recommendation_runs ..> ai_provider
+
+note top of koha_biblios
+  Koha remains the catalog and circulation
+  source of truth. LIRA links to Koha by
+  book_id / biblio_id and item_id.
+end note
+
+note top of microsoft_accounts
+  Authentication is delegated to APC's Microsoft
+  Entra ID tenant. LIRA stores the Microsoft object
+  ID as the external identity reference.
+end note
+
+note bottom of catalog_embeddings
+  Current table exists.
+  Used for semantic and hybrid catalog search.
+end note
+
+note bottom of chatbot_configs
+  Proposed tables for the planned AI chatbot,
+  managed knowledge sources, prompt rules,
+  and response traceability.
+end note
+
+note bottom of summaries
+  Proposed AI output tables for summaries,
+  citations, and recommendations.
+end note
+
+legend right
+  == Legend ==
+  Solid line: database foreign key or owned data
+  Dotted line: logical reference to Koha / AI provider
+  Microsoft account: APC SSO identity source
+  "(proposed)": not in current LIRA migrations yet
+endlegend
+
+@enduml

@@ -1,4 +1,4 @@
-import { FiSearch, FiShoppingCart, FiList, FiUser, FiChevronDown, FiGlobe, FiBookOpen, FiLogOut, FiSettings } from 'react-icons/fi';
+import { FiSearch, FiShoppingCart, FiList, FiUser, FiChevronDown, FiGlobe, FiBookOpen, FiLogOut, FiSettings, FiHome } from 'react-icons/fi';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OpacSearchResults from '../components/OpacSearchResults';
@@ -225,6 +225,9 @@ export default function OpacPage({ user, bookId }) {
       <nav className="bg-white border-b border-gray-200 px-4 py-2 flex justify-between items-center text-sm text-[#1b2a4a]">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-4">
+            <button type="button" onClick={() => navigate('/')} className="flex items-center gap-1 hover:text-blue-600 transition-colors">
+              <FiHome className="w-4 h-4" aria-hidden="true" /> Home
+            </button>
             <button type="button" onClick={() => navigate('/catalog/reservations')} className="flex items-center gap-1 hover:text-blue-600 transition-colors relative">
               <FiShoppingCart className="w-4 h-4" /> {t('reservationCart')} {reservationCart.length > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full absolute -top-2 -right-3">{reservationCart.length}</span>}
             </button>

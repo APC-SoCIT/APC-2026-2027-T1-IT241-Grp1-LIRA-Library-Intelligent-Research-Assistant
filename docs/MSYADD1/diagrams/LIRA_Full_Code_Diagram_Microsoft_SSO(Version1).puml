@@ -1,0 +1,232 @@
+@startuml LIRA_Full_Code_Diagram_Microsoft_SSO
+title LIRA Full Code / Component Diagram with APC Microsoft SSO
+
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam linetype polyline
+skinparam nodesep 25
+skinparam ranksep 45
+skinparam componentStyle rectangle
+skinparam component {
+  BackgroundColor #F8FBFF
+  BorderColor #2F4F6F
+  ArrowColor #2F4F6F
+}
+skinparam package {
+  BackgroundColor #FFFFFF
+  BorderColor #B7C6D8
+  FontColor #1F3B57
+}
+skinparam database {
+  BackgroundColor #F4FAF4
+  BorderColor #4F7A4F
+}
+skinparam cloud {
+  BackgroundColor #FFF8DC
+  BorderColor #8A6D3B
+}
+skinparam note {
+  BackgroundColor #FFF8DC
+  BorderColor #8A6D3B
+}
+
+actor "Student / Library User" as user
+actor "Librarian / Administrator" as staff
+
+cloud "Microsoft Entra ID\n(APC Microsoft Account / SSO)" as microsoft_sso
+cloud "OpenRouter API\n(LLM and embedding provider)" as openrouter
+
+package "LIRA Frontend - React Application" as frontend {
+  component "Application Shell\nRouting and session state" as app_shell
+  component "Microsoft SSO UI\nSign-in, callback, sign-out" as sso_ui
+  component "Catalog UI\nKeyword / semantic / hybrid search" as catalog_ui
+  component "Book Details UI\nAvailability and metadata" as book_ui
+  component "Reading UI\nBookmarks, lists, history" as reading_ui
+  component "Loans UI\nReservations, checkout, due dates" as loans_ui
+  component "AI Chatbot UI\nFAQ and guided assistance" as chatbot_ui
+  component "AI Tools UI\nSummaries, citations, recommendations" as ai_ui
+  component "Admin UI\nChatbot config and reports" as admin_ui
+  component "Frontend Services\nHTTP clients and API state" as frontend_services
+}
+
+package "Authentication" as auth_boundary {
+    component "Auth Controller" as auth_controller
+    component "Microsoft OAuth / MSAL Adapter" as msal_adapter
+    component "JWT Claims and Session Service" as session_service
+    component "Account Provisioning" as provisioning_service
+  }
+
+  package "Catalog Service" as catalog_boundary {
+    component "Catalog Controller" as catalog_controller
+    component "Catalog Service" as catalog_service
+    component "Semantic Search Service" as semantic_search
+    component "Koha Client" as koha_client
+    component "Book Normalizer" as book_normalizer
+    component "Health Controller" as health_controller
+  }
+
+  package "Loans Service" as loans_boundary {
+    component "Loans Controller" as loans_controller
+    component "Circulation Service" as circulation_service
+    component "Availability and Eligibility Rules" as eligibility_rules
+    component "Overdue Alert Service" as overdue_service
+  }
+
+  package "AI Service" as ai_boundary {
+    component "AI Facade / Response Shaper" as ai_facade
+    component "FAQ / RAG Chatbot" as faq_chatbot
+    component "Knowledge Retrieval" as knowledge_retrieval
+    component "Summary Generator" as summary_generator
+    component "Citation Generator" as citation_generator
+    component "Recommendation Engine" as recommendation_engine
+    component "Prompt and Output Validation" as ai_validation
+  }
+
+  package "Chatbot Config Service" as config_boundary {
+    component "Chatbot Config Controller" as config_controller
+    component "Config Versioning and Activation" as config_versioning
+    component "Knowledge Source Manager" as knowledge_manager
+    component "Staff Authorization Guard" as staff_guard
+  }
+
+  package "Analytics Service" as analytics_boundary {
+    component "Metrics and Report Service" as report_service
+    component "Usage / Catalog / Loan Metrics" as metrics_queries
+    component "PDF and CSV Exporter" as report_exporter
+  }
+
+package "Shared Backend" as shared_boundary {
+  component "Auth Guards and Request Context" as auth_guards
+  component "Validation and Error Handling" as validation
+  component "Request Logging and Audit Adapter" as audit_adapter
+  component "Configuration and Secret Provider" as config_provider
+}
+
+package "Supabase Platform - Storage Only" as supabase_storage {
+  database "Supabase Database\nprofiles, activity, loans, reports" as lira_db
+  database "Supabase Vector Store\ncatalog embeddings and retrieval" as vector_db
+  database "Supabase Knowledge Data\nsources, chunks, config versions" as knowledge_db
+}
+cloud "Koha ILS\nAuthoritative catalog and circulation" as koha
+
+user --> app_shell : uses
+staff --> app_shell : uses
+app_shell --> sso_ui
+app_shell --> catalog_ui
+app_shell --> reading_ui
+app_shell --> loans_ui
+app_shell --> chatbot_ui
+app_shell --> ai_ui
+app_shell --> admin_ui
+
+sso_ui --> frontend_services : sign-in / callback
+catalog_ui --> frontend_services : catalog requests
+book_ui --> frontend_services : book and availability requests
+reading_ui --> frontend_services : lists / bookmarks / history
+loans_ui --> frontend_services : reservation / loan requests
+chatbot_ui --> frontend_services : chat messages
+ai_ui --> frontend_services : AI tool requests
+admin_ui --> frontend_services : configuration / reports
+
+frontend_services --> auth_controller : auth
+frontend_services --> catalog_controller : catalog
+frontend_services --> loans_controller : loans
+frontend_services --> ai_facade : AI
+frontend_services --> config_controller : config
+frontend_services --> report_service : reports
+
+auth_controller --> msal_adapter : callback
+msal_adapter --> microsoft_sso : OpenID Connect
+auth_controller --> session_service : session
+session_service --> provisioning_service : account
+provisioning_service --> lira_db : profile
+
+auth_guards --> session_service : validate identity and roles
+auth_controller ..> auth_guards
+catalog_controller ..> auth_guards
+loans_controller ..> auth_guards
+ai_facade ..> auth_guards
+config_controller ..> staff_guard
+report_service ..> auth_guards
+
+catalog_controller --> catalog_service
+catalog_service --> koha_client : catalog data
+koha_client --> koha : REST API
+catalog_service --> book_normalizer : normalize
+catalog_service --> semantic_search : semantic / hybrid
+semantic_search --> vector_db : embeddings
+semantic_search --> openrouter : embed query
+semantic_search --> lira_db : index / history
+catalog_service --> lira_db : views / history
+health_controller --> koha_client : health
+
+loans_controller --> circulation_service
+circulation_service --> eligibility_rules
+circulation_service --> koha_client : availability
+circulation_service --> lira_db : reservations / loans
+circulation_service --> overdue_service : overdue
+overdue_service --> koha : loan status
+
+ai_facade --> faq_chatbot
+ai_facade --> summary_generator
+ai_facade --> citation_generator
+ai_facade --> recommendation_engine
+ai_facade --> ai_validation
+faq_chatbot --> knowledge_retrieval : FAQ context
+knowledge_retrieval --> knowledge_db : chunks
+knowledge_retrieval --> vector_db : retrieval
+summary_generator --> koha_client : book metadata
+citation_generator --> koha_client : APA / MLA
+recommendation_engine --> lira_db : user signals
+recommendation_engine --> catalog_service : book metadata
+faq_chatbot --> openrouter : prompt
+summary_generator --> openrouter : generate
+recommendation_engine --> openrouter : explain
+ai_validation --> ai_facade : validate
+
+config_controller --> staff_guard
+config_controller --> config_versioning
+config_controller --> knowledge_manager
+config_versioning --> knowledge_db : config versions
+knowledge_manager --> knowledge_db : sources / chunks
+staff_guard --> auth_guards : staff role
+
+report_service --> metrics_queries
+metrics_queries --> lira_db : metrics
+metrics_queries --> koha : catalog / loan metrics
+report_service --> report_exporter
+report_exporter --> lira_db : export metadata
+
+audit_adapter --> lira_db : audit events
+validation ..> auth_guards
+config_provider ..> auth_guards : environment and secrets
+
+note right of microsoft_sso
+  Microsoft Entra ID is the identity provider.
+  LIRA receives validated APC account claims;
+  it does not use a Supabase account for login.
+end note
+
+note right of koha
+  Koha remains the source of truth for
+  bibliographic records, items, availability,
+  and circulation data.
+end note
+
+note bottom of lira_db
+  Supabase is the selected application storage platform.
+  It is not the user authentication provider.
+end note
+
+legend right
+  == Diagram Legend ==
+  Solid arrow: runtime call or data flow
+  Dotted arrow: shared guard / cross-cutting dependency
+  Microsoft Entra ID: APC SSO identity provider
+  Koha: external library system
+  OpenRouter: external AI provider
+endlegend
+
+@enduml

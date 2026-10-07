@@ -4,46 +4,11 @@ import { FiArrowRight } from 'react-icons/fi';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import { useNavigate } from 'react-router-dom';
+import BookCover from './BookCover';
 
-const newArrivals = [
-  {
-    title: 'Architectural graphics',
-    author: 'Francis D.K. Ching',
-    cover: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&q=80',
-  },
-  {
-    title: 'Strategic management for tourism, hospitality and events',
-    author: 'Nigel G. Evans',
-    cover: 'https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?w=400&q=80',
-  },
-  {
-    title: 'Philippine gastronomical tourism',
-    author: 'Abram Emmanuel Peralta, Jonna Dotimas, Jefferson Marcelo',
-    cover: 'https://images.unsplash.com/photo-1476275466078-4007374efbbe?w=400&q=80',
-  },
-  {
-    title: 'Valuation : concepts and methods',
-    author: 'Ferdinand L. Timbang',
-    cover: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&q=80',
-  },
-  {
-    title: 'Architecture: form, space, & order',
-    author: 'Francis D.K. Ching',
-    cover: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=400&q=80',
-  },
-  {
-    title: 'Architectural design with SketchUp',
-    author: 'Alexander C. Schreyer',
-    cover: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&q=80',
-  },
-  {
-    title: 'Simplified income taxation',
-    author: 'Ramelo C. Gloria, Aldin L. Pantaleon',
-    cover: 'https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=400&q=80',
-  },
-];
-
-export default function NewArrivalsSection() {
+export default function NewArrivalsSection({ books = [] }) {
+  const navigate = useNavigate();
   return (
     <section className="py-16 lg:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -74,8 +39,8 @@ export default function NewArrivalsSection() {
           }}
           className="new-arrivals-swiper pb-14"
         >
-          {newArrivals.map((book, index) => (
-            <SwiperSlide key={index}>
+          {books.map((book) => (
+            <SwiperSlide key={book.id}>
               {({ isActive }) => (
                 <div className={`bg-white rounded-xl overflow-hidden transition-all duration-300 ${
                   isActive
@@ -84,11 +49,7 @@ export default function NewArrivalsSection() {
                 }`}>
                   {/* Cover */}
                   <div className="aspect-[3/4] overflow-hidden bg-gray-100">
-                    <img
-                      src={book.cover}
-                      alt={book.title}
-                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                    />
+                    <BookCover book={book} className="w-full h-full transition-transform duration-500 hover:scale-105" />
                   </div>
                   {/* Info */}
                   <div className="p-4">
@@ -97,7 +58,8 @@ export default function NewArrivalsSection() {
                     </h3>
                     <p className="text-xs text-gray-400 mb-3 line-clamp-1">{book.author}</p>
                     <a
-                      href="#"
+                      href={`/catalog?book=${book.id}`}
+                      onClick={(event) => { event.preventDefault(); navigate(`/catalog?book=${book.id}`) }}
                       className="inline-flex items-center gap-1 text-gold-600 hover:text-gold-700 text-xs font-semibold transition-colors group"
                     >
                       View details

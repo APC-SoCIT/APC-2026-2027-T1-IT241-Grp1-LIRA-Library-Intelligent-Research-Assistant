@@ -24,6 +24,16 @@ export class CatalogService {
     }
   }
 
+  async listNewArrivals(page: number, limit: number): Promise<BookListResponse> {
+    try {
+      // Koha biblionumbers increase as bibliographic records are created.
+      const records = await this.koha.getBiblios(page, limit, '-biblio_id');
+      return { items: records.map((record) => this.normalize(record)), pagination: { page, limit } };
+    } catch (error: unknown) {
+      throw this.mapKohaError(error);
+    }
+  }
+
   async getBook(id: number): Promise<Book> {
     try {
       return this.normalize(await this.koha.getBiblio(id));

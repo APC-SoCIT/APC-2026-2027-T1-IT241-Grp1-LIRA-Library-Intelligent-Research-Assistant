@@ -58,3 +58,6 @@ data/marc/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 !data/marc/.gitkeep
+
+# Local sprint-plan export
+LIRA_Sprint_Plan_Rephrased.xlsx
