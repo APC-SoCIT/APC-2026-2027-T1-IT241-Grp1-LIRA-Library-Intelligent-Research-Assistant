@@ -1,0 +1,93 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="4. Manage Reports" id="4. Manage Reports">
+    <mxGraphModel dx="2102" dy="1227" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="sl1" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="Librarian" vertex="1">
+          <mxGeometry height="1200" width="500" as="geometry" />
+        </mxCell>
+        <mxCell id="r1" parent="sl1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;" value="" vertex="1">
+          <mxGeometry height="40" width="40" x="230" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="r2" parent="sl1" style="rounded=1;whiteSpace=wrap;html=1;" value="Login Koha" vertex="1">
+          <mxGeometry height="60" width="140" x="180" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="r3" parent="sl1" style="rounded=1;whiteSpace=wrap;html=1;" value="Select Params" vertex="1">
+          <mxGeometry height="60" width="140" x="180" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="r5" parent="sl1" style="rounded=1;whiteSpace=wrap;html=1;" value="Gen Partial Report w/ Warning" vertex="1">
+          <mxGeometry height="60" width="140" x="30" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="r10" parent="sl1" style="rounded=1;whiteSpace=wrap;html=1;" value="Download File" vertex="1">
+          <mxGeometry height="60" width="140" x="310" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="r11" parent="sl1" style="ellipse;whiteSpace=wrap;html=1;shape=doubleEllipse;fillColor=#000000;strokeColor=#ffffff;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="40" width="40" x="230" y="880" as="geometry" />
+        </mxCell>
+        <mxCell id="re12" edge="1" parent="sl1" source="r10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="r11" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="re10" edge="1" parent="sl1" source="r5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="r11" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="520" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sl2" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="Koha ILS" vertex="1">
+          <mxGeometry height="1200" width="500" x="500" as="geometry" />
+        </mxCell>
+        <mxCell id="r4" parent="sl2" style="rhombus;whiteSpace=wrap;html=1;" value="Koha Offline?" vertex="1">
+          <mxGeometry height="60" width="140" x="180" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="r6" parent="sl2" style="rounded=1;whiteSpace=wrap;html=1;" value="Execute Query" vertex="1">
+          <mxGeometry height="60" width="140" x="300" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="r7" parent="sl2" style="rhombus;whiteSpace=wrap;html=1;" value="No Data?" vertex="1">
+          <mxGeometry height="60" width="140" x="300" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="r9" parent="sl2" style="rounded=1;whiteSpace=wrap;html=1;" value="Generate PDF/Excel" vertex="1">
+          <mxGeometry height="60" width="140" x="300" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="r8" parent="sl2" style="rounded=1;whiteSpace=wrap;html=1;" value="Empty Notif" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="re7" edge="1" parent="sl2" source="r7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="r8" value="[Yes]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="re1" edge="1" parent="1" source="r1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="r2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="re2" edge="1" parent="1" source="r2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="r3" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="re3" edge="1" parent="1" source="r3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="r4" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="re4" edge="1" parent="1" source="r4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="r5" value="[Yes]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="re5" edge="1" parent="1" source="r4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="r6" value="[No]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="re6" edge="1" parent="1" source="r6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="r7" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="re8" edge="1" parent="1" source="r7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="r9" value="[No]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="re9" edge="1" parent="1" source="r9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="r10" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="870" y="730" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="re11" edge="1" parent="1" source="r8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="r11" value="">
+          <mxGeometry relative="1" x="-0.5395" as="geometry">
+            <mxPoint x="320" y="540.0000000000002" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,132 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="2. Manage Library Catalog" id="2. Manage Library Catalog">
+    <mxGraphModel dx="1431" dy="835" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="c_sl1" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="Student/Faculty" vertex="1">
+          <mxGeometry height="800" width="280" as="geometry" />
+        </mxCell>
+        <mxCell id="c1" parent="c_sl1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;" value="" vertex="1">
+          <mxGeometry height="40" width="40" x="120" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" parent="c_sl1" style="rounded=1;whiteSpace=wrap;html=1;" value="Login to LIRA" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" parent="c_sl1" style="rounded=1;whiteSpace=wrap;html=1;" value="Enter Search Criteria" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="c9" parent="c_sl1" style="rounded=1;whiteSpace=wrap;html=1;" value="Select Specific Item" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="c_sl2" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="LIRA System" vertex="1">
+          <mxGeometry height="800" width="280" x="280" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" parent="c_sl2" style="rounded=1;whiteSpace=wrap;html=1;" value="Forward Query API" vertex="1">
+          <mxGeometry height="60" width="140" x="60" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="c6" parent="c_sl2" style="rhombus;whiteSpace=wrap;html=1;" value="Results Found?" vertex="1">
+          <mxGeometry height="60" width="140" x="60" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="c10" parent="c_sl2" style="rounded=1;whiteSpace=wrap;html=1;" value="Display Detailed Info" vertex="1">
+          <mxGeometry height="60" width="140" x="110" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="c8" parent="c_sl2" style="rounded=1;whiteSpace=wrap;html=1;" value="Display List of Items" vertex="1">
+          <mxGeometry height="60" width="140" x="150" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="ce8" edge="1" parent="c_sl2" source="c6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="c8" value="[Yes]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c11" parent="c_sl2" style="ellipse;whiteSpace=wrap;html=1;shape=doubleEllipse;fillColor=#000000;strokeColor=#ffffff;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="40" width="40" x="80" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="ce11" edge="1" parent="c_sl2" source="c10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="c11" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c7" parent="c_sl2" style="rounded=1;whiteSpace=wrap;html=1;" value="Display &#39;No Results&#39;" vertex="1">
+          <mxGeometry height="60" width="140" x="-30" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="ce6" edge="1" parent="c_sl2" source="c6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="c7" value="[No]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce7" edge="1" parent="c_sl2" source="c7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="c11" value="">
+          <mxGeometry relative="1" x="-0.2162" as="geometry" />
+        </mxCell>
+        <mxCell id="Dmw_kvYMlcw_44saFBLp-1" edge="1" parent="c_sl2" source="c8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="c7" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="150" y="430" as="sourcePoint" />
+            <mxPoint x="-170" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c_sl3" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="Librarian" vertex="1">
+          <mxGeometry height="800" width="280" x="560" as="geometry" />
+        </mxCell>
+        <mxCell id="c12" parent="c_sl3" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;" value="" vertex="1">
+          <mxGeometry height="40" width="40" x="120" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="c13" parent="c_sl3" style="rounded=1;whiteSpace=wrap;html=1;" value="Login to Koha ILS" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="c14" parent="c_sl3" style="rounded=1;whiteSpace=wrap;html=1;" value="Access Catalog Dashboard" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="c15" parent="c_sl3" style="rounded=1;whiteSpace=wrap;html=1;" value="Submit New Item / Delete / Edit" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="c17" parent="c_sl3" style="rounded=1;whiteSpace=wrap;html=1;" value="View Success Message" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="c_sl4" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="Koha ILS" vertex="1">
+          <mxGeometry height="800" width="280" x="840" as="geometry" />
+        </mxCell>
+        <mxCell id="c5" parent="c_sl4" style="rounded=1;whiteSpace=wrap;html=1;" value="Execute Read Query" vertex="1">
+          <mxGeometry height="60" width="140" x="120" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="c16" parent="c_sl4" style="rounded=1;whiteSpace=wrap;html=1;" value="Execute CRUD &amp; Save" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="ce1" edge="1" parent="1" source="c1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="c2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce2" edge="1" parent="1" source="c2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="c3" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce3" edge="1" parent="1" source="c3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="c4" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce4" edge="1" parent="1" source="c4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="c5" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce5" edge="1" parent="1" source="c5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="c6" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce12" edge="1" parent="1" source="c12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="c13" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce13" edge="1" parent="1" source="c13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="c14" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce14" edge="1" parent="1" source="c14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="c15" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce15" edge="1" parent="1" source="c15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="c16" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce16" edge="1" parent="1" source="c16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="c17" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce17" edge="1" parent="1" source="c17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="c11" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="760" y="730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ce9" edge="1" parent="1" source="c7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="c9" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce10" edge="1" parent="1" source="c9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="c10" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
