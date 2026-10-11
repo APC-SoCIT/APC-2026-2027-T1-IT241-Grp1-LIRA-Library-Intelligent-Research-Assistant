@@ -1,6 +1,5 @@
 /// <reference types="node" />
 
-import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { readConfig } from './config.js';
 import { GutendexClient } from './gutendex/gutendex.client.js';
@@ -9,12 +8,15 @@ import { recordsToMarcXml } from './marc/marcxml-writer.js';
 import { validateMarcXml } from './marc/validate-marcxml.js';
 import { toReport } from './report.js';
 import { readSubjectMap } from './subject-map.js';
+import { readPublicationMap } from './publication-map.js';
+import { checkNewOutputs, writeNewOutput } from './output-files.js';
 
 interface CliOptions {
   ids: number[];
   outputDir?: string;
   batchSize?: number;
   subjectMapPath?: string;
+  publicationMapPath?: string;
 }
 
 async function main(): Promise<void> {
@@ -24,22 +26,23 @@ async function main(): Promise<void> {
     ? await readSubjectMap(resolve(options.subjectMapPath))
     : new Map();
   const outputDir = resolve(options.outputDir ?? config.outputDir);
+  const stem = `gutenberg-${options.ids.join('-')}`;
+  const xmlPath = resolve(outputDir, `${stem}.marcxml`);
+  const reportPath = resolve(outputDir, `${stem}.report.json`);
+  await checkNewOutputs([xmlPath, reportPath]);
+  const publicationMap = options.publicationMapPath ? await readPublicationMap(resolve(options.publicationMapPath)) : new Map();
   const importer = new GutenbergImporter(new GutendexClient({
     baseUrl: config.baseUrl,
     timeoutMs: config.timeoutMs,
     maxAttempts: config.maxAttempts,
     retryInitialDelayMs: config.retryInitialDelayMs,
     retryMaxDelayMs: config.retryMaxDelayMs,
-  }), subjectMap);
+  }), subjectMap, publicationMap);
   const result = await importer.import(options.ids, options.batchSize ?? config.batchSize);
   const xml = recordsToMarcXml(result.records);
   validateMarcXml(xml, result.records.length);
-  await mkdir(outputDir, { recursive: true });
-  const stem = `gutenberg-${options.ids.join('-')}`;
-  const xmlPath = resolve(outputDir, `${stem}.marcxml`);
-  const reportPath = resolve(outputDir, `${stem}.report.json`);
-  await writeFile(xmlPath, xml, 'utf8');
-  await writeFile(reportPath, JSON.stringify(toReport(options.ids, result), null, 2), 'utf8');
+  await writeNewOutput(xmlPath, xml);
+  await writeNewOutput(reportPath, JSON.stringify(toReport(options.ids, result), null, 2));
   console.log(`Generated ${result.records.length} MARCXML record(s): ${xmlPath}`);
   console.log(`Wrote import report: ${reportPath}`);
   if (result.errors.length > 0) {
@@ -53,10 +56,11 @@ function parseArgs(args: string[]): CliOptions {
   let outputDir: string | undefined;
   let batchSize: number | undefined;
   let subjectMapPath: string | undefined;
+  let publicationMapPath: string | undefined;
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
     if (argument === '--help') {
-      console.log('Usage: npm run import -- --ids 84,1342,11 [--output-dir ./output] [--batch-size 10] [--subject-map ./subjects.json]');
+      console.log('Usage: npm run import -- --ids 84,1342,11 [--output-dir ./output] [--batch-size 10] [--subject-map ./subjects.json] [--publication-map ./publication.json]');
       process.exit(0);
     }
     if (argument === '--ids') {
@@ -71,12 +75,15 @@ function parseArgs(args: string[]): CliOptions {
     } else if (argument === '--subject-map') {
       subjectMapPath = args[++index];
       if (!subjectMapPath) throw new Error('--subject-map requires a JSON file path');
+    } else if (argument === '--publication-map') {
+      publicationMapPath = args[++index];
+      if (!publicationMapPath) throw new Error('--publication-map requires a JSON file path');
     } else {
       throw new Error(`Unknown argument: ${argument}`);
     }
   }
   if (ids.length === 0) throw new Error('At least one Gutenberg ID is required; use --ids 84,1342,11');
-  return { ids, outputDir, batchSize, subjectMapPath };
+  return { ids, outputDir, batchSize, subjectMapPath, publicationMapPath };
 }
 
 function parseId(value: string): number {

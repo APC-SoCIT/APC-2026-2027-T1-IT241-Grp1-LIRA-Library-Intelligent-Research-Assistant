@@ -130,12 +130,15 @@ test('applies mapped curated subjects even when a source subject has the same te
   const client = new GutendexClient({ fetchImpl: async () => response({ id: 84, title: 'Book', subjects: ['History'] }) });
   const result = await new GutenbergImporter(client, new Map([[84, ['Psychology', 'History']], [999, ['Unrelated']]])).import([84], 1);
   assert.deepEqual(result.curatedSubjects, { '84': ['Psychology', 'History'] });
-  assert.deepEqual(toReport([84], result), {
+  const report = toReport([84], result) as { schemaVersion: number; books: { missingMetadata: string[] }[] };
+  const { books, ...summary } = report;
+  assert.deepEqual(summary, {
+    schemaVersion: 1,
     ids: [84],
     generatedRecords: 1,
     duplicateIds: [],
     errors: [],
     curatedSubjects: { '84': ['Psychology', 'History'] },
-    books: [{ id: 84, title: 'Book', source: result.books[0]?.source }],
   });
+  assert.deepEqual(books[0]?.missingMetadata, ['cover', 'edition-publication', 'original-work-publication', 'gutenberg-release', 'gutenberg-update']);
 });

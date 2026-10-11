@@ -4,6 +4,7 @@ import { GutendexError } from './gutendex/gutendex.errors.js';
 import { NormalizedBook } from './gutendex/gutendex.types.js';
 import { curatedSubjectsForRecord, toMarcRecord, MarcRecord } from './marc/marc.types.js';
 import { SubjectMap } from './subject-map.js';
+import { PublicationDate, PublicationMap } from './publication-map.js';
 
 export interface ImportError {
   id: number;
@@ -17,10 +18,11 @@ export interface ImportResult {
   errors: ImportError[];
   duplicateIds: number[];
   curatedSubjects: Record<string, string[]>;
+  publicationDates: Record<string, PublicationDate[]>;
 }
 
 export class GutenbergImporter {
-  constructor(private readonly client: GutendexClient, private readonly subjectMap: SubjectMap = new Map()) {}
+  constructor(private readonly client: GutendexClient, private readonly subjectMap: SubjectMap = new Map(), private readonly publicationMap: PublicationMap = new Map()) {}
 
   async import(ids: number[], batchSize: number): Promise<ImportResult> {
     const duplicateIds = findDuplicates(ids);
@@ -51,7 +53,8 @@ export class GutenbergImporter {
     }
     return {
       books,
-      records: books.map((book) => toMarcRecord(book, curatedSubjects[String(book.id)] ?? [])),
+      records: books.map((book) => toMarcRecord(book, curatedSubjects[String(book.id)] ?? [], this.publicationMap.get(book.id) ?? [])),
+      publicationDates: Object.fromEntries(books.map((book) => [String(book.id), this.publicationMap.get(book.id) ?? []])),
       errors,
       duplicateIds,
       curatedSubjects,

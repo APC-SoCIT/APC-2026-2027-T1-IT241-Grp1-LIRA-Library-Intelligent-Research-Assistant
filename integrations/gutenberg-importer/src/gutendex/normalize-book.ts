@@ -1,5 +1,6 @@
 import { GutendexError } from './gutendex.errors.js';
 import { GutendexBook, NormalizedAuthor, NormalizedBook, NormalizedFormat } from './gutendex.types.js';
+import { validatedSourceUrl } from '../resource-mapping.js';
 
 export function normalizeBook(value: unknown, requestedId?: number): NormalizedBook {
   if (!isRecord(value)) throw invalid(requestedId ?? 0, 'response is not an object');
@@ -31,10 +32,10 @@ function normalizeAuthors(value: unknown): NormalizedAuthor[] {
 }
 
 function normalizeFormats(value: unknown): NormalizedFormat[] {
-  if (!isRecord(value)) return [];
+  if (!isRecord(value) || Array.isArray(value)) return [];
   return Object.entries(value).flatMap(([mediaType, url]) => {
-    if (typeof url !== 'string' || !/^https?:\/\//iu.test(url.trim())) return [];
-    return [{ mediaType: normalizeText(mediaType), url: url.trim() }];
+    const validatedUrl = validatedSourceUrl(url);
+    return validatedUrl ? [{ mediaType: normalizeText(mediaType), url: validatedUrl }] : [];
   });
 }
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<collection xmlns="http://www.loc.gov/MARC21/slim">
+  <record>
+    <leader>00000nam a2200000 i 4500</leader>
+    <controlfield tag="001">440</controlfield>
+    <datafield tag="035" ind1=" " ind2=" "><subfield code="a">(OCoLC)fixture-local</subfield></datafield>
+    <datafield tag="035" ind1=" " ind2=" "><subfield code="a">(PG)1342</subfield></datafield>
+    <datafield tag="245" ind1="1" ind2="0"><subfield code="a">Pride and Prejudice</subfield><subfield code="b">Manual fixture subtitle &amp; café</subfield></datafield>
+    <datafield tag="500" ind1=" " ind2=" "><subfield code="a">Manual fixture note</subfield></datafield>
+    <datafield tag="650" ind1=" " ind2="0"><subfield code="a">Literature</subfield></datafield>
+    <datafield tag="856" ind1="4" ind2="0"><subfield code="u">https://www.gutenberg.org/ebooks/1342.html.images</subfield></datafield>
+    <datafield tag="856" ind1="4" ind2="0"><subfield code="u">http://koha.example.test:8080/cgi-bin/koha/opac-retrieve-file.pl?id=fixture-pdf</subfield><subfield code="q">application/pdf</subfield><subfield code="y">Manual PDF</subfield><subfield code="z">Preserve this complete field</subfield></datafield>
+    <datafield tag="856" ind1="4" ind2="0"><subfield code="u">http://koha.example.test:8080/cgi-bin/koha/opac-retrieve-file.pl?id=fixture-epub</subfield><subfield code="y">Manual EPUB</subfield></datafield>
+    <datafield tag="952" ind1=" " ind2=" "><subfield code="p">FIXTURE-BARCODE</subfield><subfield code="9">123</subfield></datafield>
+    <datafield tag="999" ind1=" " ind2=" "><subfield code="c">440</subfield><subfield code="d">440</subfield></datafield>
+    <datafield tag="987" ind1=" " ind2=" "><subfield code="x">Unknown local fixture field</subfield></datafield>
+  </record>
+</collection>

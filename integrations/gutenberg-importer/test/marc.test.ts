@@ -70,7 +70,7 @@ test('preserves source subjects and appends deduplicated curated subjects as loc
     const book = normalizeBook({ id: 84, title: 'No HTML', formats: { 'text/plain': 'https://example.test/book.txt', 'application/rdf+xml': 'https://example.test/book.rdf' } }, 84);
     const record = toMarcRecord(book);
     const resources = record.fields.filter((field) => field.tag === '856').flatMap((field) => field.subfields ?? []);
-    assert.deepEqual(resources, [{ code: 'u', value: 'https://example.test/book.txt' }]);
+    assert.deepEqual(resources, [{ code: 'u', value: 'https://example.test/book.txt' }, { code: 'q', value: 'text/plain' }, { code: 'y', value: 'Plain text' }]);
     assert.deepEqual(record.fields.find((field) => field.tag === '035')?.subfields, [{ code: 'a', value: '(PG)84' }]);
   });
 

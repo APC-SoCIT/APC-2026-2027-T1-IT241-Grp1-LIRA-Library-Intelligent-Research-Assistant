@@ -1,9 +1,11 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
-import { DOMParser, Element as XmlElement, XMLSerializer } from '@xmldom/xmldom';
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { Element as XmlElement } from '@xmldom/xmldom';
 import { MARC_NAMESPACE } from './marc/marcxml-writer.js';
 import { validateMarcXml } from './marc/validate-marcxml.js';
 import { readSubjectMap } from './subject-map.js';
+import { parseMarcXml, serializeRecords } from './marc/marcxml-reader.js';
+import { checkNewOutputs, writeNewOutput } from './output-files.js';
 
 export interface CategorizeOptions {
   inputPaths: string[];
@@ -37,6 +39,7 @@ export async function categorizeMarcXmlFiles(options: CategorizeOptions): Promis
   const inputPaths = options.inputPaths.map((inputPath) => resolve(inputPath));
   const outputPath = resolve(options.outputPath);
   if (inputPaths.includes(outputPath)) throw new Error('Output path must differ from every input MARCXML path');
+  await checkNewOutputs([outputPath, resolve(options.reportPath)]);
   const loadedRecords: LoadedRecord[] = [];
   for (const inputPath of inputPaths) loadedRecords.push(...await readRecords(inputPath));
 
@@ -73,8 +76,7 @@ export async function categorizeMarcXmlFiles(options: CategorizeOptions): Promis
     errors,
   };
   if (errors.length > 0) {
-    await mkdir(dirname(resolve(options.reportPath)), { recursive: true });
-    await writeFile(resolve(options.reportPath), JSON.stringify(initialReport, null, 2), 'utf8');
+    await writeNewOutput(resolve(options.reportPath), JSON.stringify(initialReport, null, 2));
     throw new Error(errors.join('; '));
   }
 
@@ -93,8 +95,7 @@ export async function categorizeMarcXmlFiles(options: CategorizeOptions): Promis
 
   const xml = serializeRecords(uniqueIds.map((id) => recordsById.get(id)?.element).filter((record): record is XmlElement => record !== undefined));
   validateMarcXml(xml, uniqueIds.length);
-  await mkdir(dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, xml, 'utf8');
+  await writeNewOutput(outputPath, xml);
   const report: OfflineAuditReport = {
     inputFiles: inputPaths,
     inputRecordCount: loadedRecords.length,
@@ -108,16 +109,13 @@ export async function categorizeMarcXmlFiles(options: CategorizeOptions): Promis
     categoryTotals,
     errors,
   };
-  await writeFile(resolve(options.reportPath), JSON.stringify(report, null, 2), 'utf8');
+  await writeNewOutput(resolve(options.reportPath), JSON.stringify(report, null, 2));
   return report;
 }
 
 async function readRecords(filePath: string): Promise<LoadedRecord[]> {
   const xml = await readFile(filePath, 'utf8');
-  const document = new DOMParser().parseFromString(xml, 'application/xml');
-  const collection = document.documentElement;
-  if (!collection || collection.localName !== 'collection' || collection.namespaceURI !== MARC_NAMESPACE) throw new Error(`Invalid MARCXML collection in ${filePath}`);
-  return Array.from(collection.getElementsByTagNameNS(MARC_NAMESPACE, 'record')).map((record) => ({
+  return parseMarcXml(xml, filePath).map((record) => ({
     id: readGutenbergId(record, filePath),
     element: record,
     signature: recordSignature(record),
@@ -152,7 +150,7 @@ function findSubfield(field: XmlElement | undefined, code: string): string | und
   return field ? Array.from(field.getElementsByTagNameNS(MARC_NAMESPACE, 'subfield')).find((subfield) => subfield.getAttribute('code') === code)?.textContent?.trim() : undefined;
 }
 
-function appendCategories(record: XmlElement, categories: string[]): string[] {
+export function appendCategories(record: XmlElement, categories: string[]): string[] {
   const existingSubjects = Array.from(record.getElementsByTagNameNS(MARC_NAMESPACE, 'datafield'))
     .filter((field) => field.getAttribute('tag') === '650' && field.getAttribute('ind2') === '4')
     .map((field) => findSubfield(field, 'a')?.toLowerCase())
@@ -177,11 +175,6 @@ function appendCategories(record: XmlElement, categories: string[]): string[] {
     applied.push(category.trim());
   }
   return applied;
-}
-
-function serializeRecords(records: XmlElement[]): string {
-  const serializer = new XMLSerializer();
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<collection xmlns="${MARC_NAMESPACE}">${records.map((record) => serializer.serializeToString(record)).join('')}</collection>`;
 }
 
 function recordSignature(record: XmlElement): string {

@@ -1,14 +1,11 @@
-import { DOMParser, Element as XmlElement } from '@xmldom/xmldom';
+import { Element as XmlElement } from '@xmldom/xmldom';
 import { MARC_NAMESPACE } from './marcxml-writer.js';
+import { parseMarcXml } from './marcxml-reader.js';
 
 export function validateMarcXml(xml: string, expectedRecords: number): void {
-  const document = new DOMParser().parseFromString(xml, 'application/xml');
-  if (document.getElementsByTagName('parsererror').length > 0) throw new Error('Generated MARCXML is not well-formed XML');
-  const collection = document.documentElement;
-  if (!collection || collection.localName !== 'collection' || collection.namespaceURI !== MARC_NAMESPACE) throw new Error('Generated MARCXML has an invalid collection element');
-  const records = collection.getElementsByTagNameNS(MARC_NAMESPACE, 'record');
+  const records = parseMarcXml(xml, 'Generated MARCXML');
   if (records.length !== expectedRecords) throw new Error(`Generated MARCXML contains ${records.length} records; expected ${expectedRecords}`);
-  for (let index = 0; index < records.length; index += 1) validateRecord(records.item(index), index);
+  for (let index = 0; index < records.length; index += 1) validateRecord(records[index] ?? null, index);
 }
 
 function validateRecord(record: XmlElement | null, index: number): void {

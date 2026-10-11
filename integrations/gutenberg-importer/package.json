@@ -8,6 +8,8 @@
     "start": "node --env-file=.env dist/cli.js",
     "import": "npm run build && node --env-file=.env dist/cli.js",
     "categorize": "npm run build && node dist/offline-categorize-cli.js",
+    "enrich": "npm run build && node dist/offline-enrich-cli.js",
+    "example:reader": "npm run build && node dist/reader-example-cli.js",
     "test": "node --import tsx --test"
   },
   "engines": {

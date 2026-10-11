@@ -1,4 +1,6 @@
 import { NormalizedBook } from '../gutendex/gutendex.types.js';
+import { mapResources } from '../resource-mapping.js';
+import { dateNote, editionDateCode, PublicationDate } from '../publication-map.js';
 
 export interface MarcSubfield {
   code: string;
@@ -18,7 +20,7 @@ export interface MarcRecord {
   fields: MarcField[];
 }
 
-export function toMarcRecord(book: NormalizedBook, curatedSubjects: string[] = []): MarcRecord {
+export function toMarcRecord(book: NormalizedBook, curatedSubjects: string[] = [], dates: PublicationDate[] = []): MarcRecord {
   const [primaryAuthor, ...additionalAuthors] = book.authors;
   const fields: MarcField[] = [
     { tag: '001', value: `PG${book.id}` },
@@ -31,7 +33,18 @@ export function toMarcRecord(book: NormalizedBook, curatedSubjects: string[] = [
   for (const summary of book.summaries) fields.push({ tag: '520', ind1: ' ', ind2: ' ', subfields: [{ code: 'a', value: summary }] });
   for (const subject of book.subjects) fields.push({ tag: '650', ind1: ' ', ind2: '0', subfields: [{ code: 'a', value: subject }] });
   for (const subject of curatedSubjectsForRecord(curatedSubjects)) fields.push({ tag: '650', ind1: ' ', ind2: '4', subfields: [{ code: 'a', value: subject }] });
-  for (const format of selectResourceFormats(book.formats)) fields.push({ tag: '856', ind1: '4', ind2: '0', subfields: [{ code: 'u', value: format.url }] });
+  for (const resource of mapResources(book.id, book.source).resources) fields.push({
+    tag: '856', ind1: '4', ind2: resource.role === 'cover' ? '2' : '0', subfields: [
+      ...(resource.role === 'cover' ? [{ code: '3', value: 'Cover image' }] : []),
+      { code: 'u', value: resource.url }, { code: 'q', value: resource.mediaType }, { code: 'y', value: resource.label },
+    ],
+  });
+  const edition = dates.find((date) => date.meaning === 'edition-publication');
+  if (edition) {
+    fields.splice(1, 0, { tag: '008', value: '||||||' + editionDateCode(edition.date) + 'xx ' + '|'.repeat(17) + '||| d' });
+    fields.push({ tag: '264', ind1: ' ', ind2: '1', subfields: [{ code: 'c', value: edition.date }] });
+  }
+  for (const date of dates) fields.push({ tag: '500', ind1: ' ', ind2: ' ', subfields: [{ code: 'a', value: dateNote(date) }] });
   return { leader: '00000nam a2200000 i 4500', fields };
 }
 
@@ -45,12 +58,6 @@ export function curatedSubjectsForRecord(curatedSubjects: string[]): string[] {
     return [normalized];
   });
 }
-
-function selectResourceFormats(formats: NormalizedBook['formats']): NormalizedBook['formats'] {
-    const html = formats.find((format) => format.mediaType.toLowerCase().split(';', 1)[0] === 'text/html');
-    const plainText = formats.find((format) => format.mediaType.toLowerCase().split(';', 1)[0] === 'text/plain');
-    return [html, plainText].filter((format): format is NormalizedBook['formats'][number] => format !== undefined);
-  }
 
 function nonFilingCharacterCount(title: string): string {
   if (/^the\s/iu.test(title)) return '4';
