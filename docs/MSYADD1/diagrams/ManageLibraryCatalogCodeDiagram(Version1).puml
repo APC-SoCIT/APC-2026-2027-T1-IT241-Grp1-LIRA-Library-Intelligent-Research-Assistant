@@ -1,0 +1,97 @@
+@startuml ManageLibraryCatalogCodeDiagram
+title LIRA Code Diagram - Manage Library Catalog Use Case
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam packageStyle rectangle
+skinparam componentStyle rectangle
+skinparam ArrowColor #2F4F6F
+skinparam NoteBorderColor #8A6D3B
+skinparam NoteBackgroundColor #FFF8DC
+
+actor "Student / Faculty" as Student
+actor "Librarian" as Librarian
+
+rectangle "LIRA Frontend\nReact / Vite" as Frontend {
+  component "CatalogAccessPage.jsx" as CatalogAccess
+  component "AuthPanel.jsx" as AuthPanel
+  component "OpacPage.jsx" as OpacPage
+  component "OpacSearchResults.jsx" as SearchResults
+  component "BookDetail.jsx" as BookDetail
+  component "catalogService.js" as CatalogServiceJs
+  component "authService.js" as AuthServiceJs
+  component "studentLibraryService.js" as StudentLibraryServiceJs
+  component "adaptCatalogBook()\ncatalogCategories.js" as AdaptCatalogBook
+}
+
+rectangle "Catalog Service API\nNestJS" as Backend {
+  component "CatalogController" as CatalogController
+  component "SearchCatalogDto" as SearchCatalogDto
+  component "PaginationDto" as PaginationDto
+  component "CatalogService" as CatalogService
+  component "SemanticSearchService" as SemanticSearch
+  component "KohaClient" as KohaClient
+  component "Book type mapper\nnormalize()" as NormalizeBook
+}
+
+database "Supabase\nAuth + student library tables" as Supabase
+database "Catalog Embeddings\nSupabase pgvector" as Embeddings
+cloud "Koha ILS\nCatalog database / staff module" as Koha
+cloud "DocuPulse\nExternal metadata sync" as DocuPulse
+
+rectangle "Planned / External Admin Flow\nfrom use-case description" as PlannedAdmin {
+  component "Koha Staff Login" as KohaStaffLogin
+  component "Catalog Management Dashboard" as CatalogAdminDashboard
+  component "Catalog Item CRUD\nAdd / Edit / Delete" as CatalogCrud
+  component "Validation + Status Conflict Checks" as CatalogValidation
+}
+
+Student --> CatalogAccess : opens catalog
+CatalogAccess --> AuthPanel : shows access form if no session
+AuthPanel --> AuthServiceJs : sign in / sign up / sign out
+AuthServiceJs --> Supabase : email-password auth
+CatalogAccess --> OpacPage : renders catalog after valid session
+
+OpacPage --> CatalogServiceJs : listCatalogBooks()\nsearchCatalogBooks(query, mode)
+CatalogServiceJs --> CatalogController : GET /api/catalog/books\nGET /api/catalog/search
+CatalogController --> SearchCatalogDto : validates search query and mode
+CatalogController --> PaginationDto : validates page and limit
+CatalogController --> CatalogService : delegates catalog request
+
+CatalogService --> KohaClient : keyword/list/detail lookup
+CatalogService --> SemanticSearch : semantic or hybrid search
+SemanticSearch --> Embeddings : match_catalog_books()
+KohaClient --> Koha : REST API catalog records
+CatalogService --> NormalizeBook : maps Koha record to Book DTO
+CatalogServiceJs --> AdaptCatalogBook : converts API DTO for UI filters/cards
+OpacPage --> SearchResults : displays matching records\nor no-results message
+SearchResults --> BookDetail : selected item
+BookDetail --> OpacPage : reserve / save / read actions
+OpacPage --> StudentLibraryServiceJs : record search/view\nsave bookmark\nadd reservation cart item
+StudentLibraryServiceJs --> Supabase : profiles, bookmarks,\nreading lists, reservations
+
+Librarian --> KohaStaffLogin : signs in to Koha
+KohaStaffLogin --> CatalogAdminDashboard : opens catalog management
+CatalogAdminDashboard --> CatalogCrud : submits new item,\nedits record,\nor confirms deletion
+CatalogCrud --> CatalogValidation : required fields,\nchecked-out item conflict
+CatalogValidation --> Koha : updates official catalog records
+CatalogValidation --> DocuPulse : synchronizes external metadata
+CatalogValidation --> PlannedAdmin : success/error confirmation
+
+note right of PlannedAdmin
+  These librarian CRUD components are described
+  in the Version 8 use-case PDF, but are not
+  implemented as LIRA repo modules yet.
+  Current repo support is strongest for
+  student/faculty catalog search and viewing.
+end note
+
+note bottom of CatalogService
+  Supports keyword, semantic, and hybrid search.
+  Existing tests cover normalization, no invented
+  metadata, invalid search rejection, Koha errors,
+  semantic pagination, and hybrid ranking.
+end note
+
+@enduml
