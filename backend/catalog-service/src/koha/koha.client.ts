@@ -85,6 +85,30 @@ export class KohaClient {
     });
   }
 
+  async createBiblio(record: Record<string, unknown>): Promise<KohaBiblio> {
+    const response = await this.writeRequest<KohaBiblio>('POST', '/api/v1/biblios', record);
+    return response.data;
+  }
+
+  async updateBiblio(id: number, record: Record<string, unknown>): Promise<KohaBiblio> {
+    const response = await this.writeRequest<KohaBiblio>('PUT', `/api/v1/biblios/${id}`, record);
+    return response.data;
+  }
+
+  async deleteBiblio(id: number): Promise<void> {
+    try {
+      const proxy = await getTailscaleProxy();
+      await firstValueFrom(this.http.delete(`${this.baseUrl}/api/v1/biblios/${id}`, {
+        ...(proxy ? { proxy } : {}),
+        auth: this.auth,
+        timeout: this.timeout,
+        headers: { Accept: 'application/json' },
+      }));
+    } catch (error: unknown) {
+      throw this.toIntegrationError(error);
+    }
+  }
+
   async checkConnectivity(): Promise<void> {
     await this.getBiblio(1);
   }
@@ -98,6 +122,23 @@ export class KohaClient {
         auth: this.auth,
         timeout: this.timeout,
         headers: { Accept: 'application/json', ...options.headers },
+      }));
+    } catch (error: unknown) {
+      throw this.toIntegrationError(error);
+    }
+  }
+
+  private async writeRequest<T>(method: 'POST' | 'PUT', path: string, data: Record<string, unknown>) {
+    try {
+      const proxy = await getTailscaleProxy();
+      return await firstValueFrom(this.http.request<T>({
+        method,
+        url: `${this.baseUrl}${path}`,
+        data,
+        ...(proxy ? { proxy } : {}),
+        auth: this.auth,
+        timeout: this.timeout,
+        headers: { Accept: 'application/json', 'Content-Type': 'application/marc-in-json' },
       }));
     } catch (error: unknown) {
       throw this.toIntegrationError(error);

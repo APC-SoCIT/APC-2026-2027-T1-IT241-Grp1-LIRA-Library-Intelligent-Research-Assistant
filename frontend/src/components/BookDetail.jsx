@@ -4,7 +4,6 @@ import {
   FiBookmark,
   FiExternalLink,
   FiPrinter,
-  FiShoppingCart,
 } from 'react-icons/fi'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -33,7 +32,7 @@ function Metadata({ label, value }) {
   )
 }
 
-export default function BookDetail({ book, language, onBack, onSaveBookmark, onReserveBook, isBookmarked }) {
+export default function BookDetail({ book, language, onBack, onSaveBookmark, isBookmarked }) {
   const navigate = useNavigate()
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false)
   const t = (key) => translate(language, key)
@@ -124,13 +123,6 @@ export default function BookDetail({ book, language, onBack, onSaveBookmark, onR
             <h2 className="mt-1 text-lg font-semibold text-[#342c24]">{t('bookActions')}</h2>
           </div>
           <div className="mt-4 grid gap-2">
-            <button
-              type="button"
-              onClick={() => onReserveBook(book)}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#73532f] px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#5b4126]"
-            >
-              <FiShoppingCart aria-hidden="true" /> {t('addToReservationCart')}
-            </button>
             {hasGutenbergResource && (
               <button
                 type="button"

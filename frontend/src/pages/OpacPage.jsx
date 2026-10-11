@@ -1,4 +1,4 @@
-import { FiSearch, FiShoppingCart, FiList, FiUser, FiChevronDown, FiGlobe, FiBookOpen, FiLogOut, FiSettings, FiHome } from 'react-icons/fi';
+import { FiSearch, FiList, FiUser, FiChevronDown, FiGlobe, FiBookOpen, FiLogOut, FiSettings, FiHome } from 'react-icons/fi';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OpacSearchResults from '../components/OpacSearchResults';
@@ -7,8 +7,8 @@ import CatalogRecommendations from '../components/CatalogRecommendations';
 import ChatbotPlaceholder from '../components/chatbot/ChatbotPlaceholder';
 import ReadingListPicker from '../components/ReadingListPicker';
 import ProfileSettingsDialog from '../components/ProfileSettingsDialog';
-import { addReservationCartItem, getCatalogRecommendationHistory, getStudentProfile, listBookmarks, listReservations, recordCatalogBookView, recordCatalogSearch, removeBookmark } from '../services/studentLibraryService';
-import { listCatalogBooks, searchCatalogBooks } from '../services/catalogService';
+import { getCatalogRecommendationHistory, getStudentProfile, listBookmarks, recordCatalogBookView, recordCatalogSearch, removeBookmark } from '../services/studentLibraryService';
+import { getCatalogProfileRole, listCatalogBooks, searchCatalogBooks } from '../services/catalogService';
 import { adaptCatalogBook } from '../utils/catalogCategories';
 import { catalogLanguages, translate } from '../i18n/catalogTranslations';
 import { signOut } from '../services/authService';
@@ -27,7 +27,6 @@ export default function OpacPage({ user, bookId }) {
   const [bookmarks, setBookmarks] = useState([]);
   const [bookmarkTarget, setBookmarkTarget] = useState(null);
   const [bookmarkMessage, setBookmarkMessage] = useState('');
-  const [reservationCart, setReservationCart] = useState([]);
   const [recommendationHistory, setRecommendationHistory] = useState({ views: [], readings: [], searches: [] });
   const [studentSchool, setStudentSchool] = useState(user?.user_metadata?.school || user?.user_metadata?.course || '');
   const [showRecommendations, setShowRecommendations] = useState(false);
@@ -35,6 +34,7 @@ export default function OpacPage({ user, bookId }) {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isLibrarian, setIsLibrarian] = useState(false);
   const accountMenuRef = useRef(null);
   const [language, setLanguage] = useState(() => {
     const savedLanguage = localStorage.getItem('lira_catalog_language');
@@ -113,6 +113,14 @@ export default function OpacPage({ user, bookId }) {
   }, [user]);
 
   useEffect(() => {
+    let isCurrent = true;
+    getCatalogProfileRole()
+      .then((role) => { if (isCurrent) setIsLibrarian(role === 'librarian'); })
+      .catch(() => { if (isCurrent) setIsLibrarian(false); });
+    return () => { isCurrent = false; };
+  }, [user]);
+
+  useEffect(() => {
     const selected = books.find((book) => String(book.id) === String(bookId));
     if (selected) handleSelectBook(selected);
   }, [bookId, books]);
@@ -121,12 +129,6 @@ export default function OpacPage({ user, bookId }) {
     listBookmarks()
       .then((items) => setBookmarks(items))
       .catch(() => setBookmarks([]));
-  }, []);
-
-  useEffect(() => {
-    listReservations()
-      .then((items) => setReservationCart(items))
-      .catch((error) => setBookmarkMessage(error.message || 'Could not load your reservation cart.'));
   }, []);
 
   useEffect(() => {
@@ -179,16 +181,6 @@ export default function OpacPage({ user, bookId }) {
     }
   };
 
-  const handleAddToCart = async (book) => {
-    try {
-      const item = await addReservationCartItem(book);
-      setReservationCart((current) => [item, ...current.filter((entry) => entry.book_id !== item.book_id)]);
-      setBookmarkMessage(`Added “${book.title}” to your reservation cart.`);
-    } catch (error) {
-      setBookmarkMessage(error.message || 'Could not add this book to your reservation cart.');
-    }
-  };
-
   const handleSearch = async (e) => {
     if (e) e.preventDefault();
     try {
@@ -228,9 +220,6 @@ export default function OpacPage({ user, bookId }) {
             <button type="button" onClick={() => navigate('/')} className="flex items-center gap-1 hover:text-blue-600 transition-colors">
               <FiHome className="w-4 h-4" aria-hidden="true" /> Home
             </button>
-            <button type="button" onClick={() => navigate('/catalog/reservations')} className="flex items-center gap-1 hover:text-blue-600 transition-colors relative">
-              <FiShoppingCart className="w-4 h-4" /> {t('reservationCart')} {reservationCart.length > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full absolute -top-2 -right-3">{reservationCart.length}</span>}
-            </button>
             <button type="button" onClick={() => { handleShowBookmarks(); }} className="flex items-center gap-1 hover:text-blue-600 transition-colors">
               <FiList className="w-4 h-4" /> {t('lists')} <FiChevronDown className="w-3 h-3" />
             </button>
@@ -243,6 +232,7 @@ export default function OpacPage({ user, bookId }) {
             </button>
             {showAccountMenu && <div className="account-menu" role="menu">
               <button type="button" role="menuitem" onClick={() => { setShowAccountMenu(false); setShowProfileSettings(true); }}><FiSettings aria-hidden="true" /> Profile settings</button>
+              {isLibrarian && <button type="button" role="menuitem" onClick={() => { setShowAccountMenu(false); navigate('/catalog/librarian'); }}><FiBookOpen aria-hidden="true" /> Librarian side</button>}
               <button type="button" role="menuitem" onClick={handleSignOut} disabled={isSigningOut}><FiLogOut aria-hidden="true" /> {isSigningOut ? 'Signing out...' : 'Sign out'}</button>
             </div>}
           </div>
@@ -351,9 +341,9 @@ export default function OpacPage({ user, bookId }) {
           <div className={`catalog-discovery-layout ${showRecommendations ? 'with-recommendations' : ''}`}>
             <div className="min-w-0">
               {selectedBook ? (
-                <BookDetail book={selectedBook} language={language} onBack={() => setSelectedBook(null)} onSaveBookmark={handleSaveBookmark} onReserveBook={handleAddToCart} isBookmarked={bookmarks.some((item) => item.book_id === selectedBook.id)} />
+                <BookDetail book={selectedBook} language={language} onBack={() => setSelectedBook(null)} onSaveBookmark={handleSaveBookmark} isBookmarked={bookmarks.some((item) => item.book_id === selectedBook.id)} />
               ) : (
-                <OpacSearchResults books={books} query={searchQuery} language={language} sourceFilter={sourceFilter} onSourceFilterChange={setSourceFilter} onSelectBook={handleSelectBook} onSaveBookmark={handleSaveBookmark} onReserveBook={handleAddToCart} isBookmarked={(book) => bookmarks.some((item) => item.book_id === book.id)} />
+                <OpacSearchResults books={books} query={searchQuery} language={language} sourceFilter={sourceFilter} onSourceFilterChange={setSourceFilter} onSelectBook={handleSelectBook} onSaveBookmark={handleSaveBookmark} isBookmarked={(book) => bookmarks.some((item) => item.book_id === book.id)} />
               )}
             </div>
             {!selectedBook && showRecommendations && <aside id="catalog-recommendations-panel" className="catalog-recommendations-rail" aria-label={t('recommendations')}>

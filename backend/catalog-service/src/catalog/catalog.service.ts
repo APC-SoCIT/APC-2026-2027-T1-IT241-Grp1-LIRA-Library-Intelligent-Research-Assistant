@@ -4,6 +4,7 @@ import { KohaIntegrationError } from '../koha/koha.exceptions';
 import { KohaClient } from '../koha/koha.client';
 import { KohaBiblio } from '../koha/koha.types';
 import { SemanticSearchService } from './semantic-search.service';
+import { CatalogWriteDto } from './dto/catalog-write.dto';
 
 @Injectable()
 export class CatalogService {
@@ -65,6 +66,30 @@ export class CatalogService {
     } catch {
       this.logger.warn(`Could not fetch reading resource for book ${id}`);
       throw new ServiceUnavailableException('Online reading resource is unavailable');
+    }
+  }
+
+  async createBook(record: CatalogWriteDto): Promise<Book> {
+    try {
+      return this.normalize(await this.koha.createBiblio(this.toKohaRecord(record)));
+    } catch (error: unknown) {
+      throw this.mapKohaError(error);
+    }
+  }
+
+  async updateBook(id: number, record: CatalogWriteDto): Promise<Book> {
+    try {
+      return this.normalize(await this.koha.updateBiblio(id, this.toKohaRecord(record)));
+    } catch (error: unknown) {
+      throw this.mapKohaError(error);
+    }
+  }
+
+  async deleteBook(id: number): Promise<void> {
+    try {
+      await this.koha.deleteBiblio(id);
+    } catch (error: unknown) {
+      throw this.mapKohaError(error);
     }
   }
 
@@ -187,6 +212,42 @@ export class CatalogService {
       series: this.stringOrNull(record.series_title ?? record.collection_title),
       url: this.stringOrNull(record.url),
     };
+  }
+
+  private toKohaRecord(record: CatalogWriteDto): Record<string, unknown> {
+    const fields: Array<Record<string, unknown>> = [
+      { '245': { ind1: '0', ind2: '0', subfields: [{ a: record.title }] } },
+    ];
+
+    this.addField(fields, '100', record.author, '1', ' ');
+    this.addField(fields, '020', record.isbn, ' ', ' ');
+    this.addField(fields, '264', [record.publicationPlace, record.publisher, record.publicationYear]
+      .filter((value) => value !== undefined && value !== '')
+      .join(' : '), ' ', '1');
+    this.addField(fields, '041', record.language, '0', ' ');
+    this.addField(fields, '520', record.description, ' ', ' ');
+    this.addField(fields, '856', record.url, '4', '0', 'u');
+    this.addField(fields, '942', record.itemType, ' ', ' ', 'c');
+
+    for (const category of record.categories ?? []) this.addField(fields, '650', category, ' ', '4');
+    for (const genre of record.genres ?? []) this.addField(fields, '655', genre, ' ', '7');
+
+    return {
+      leader: '00000nam a2200000 i 4500',
+      fields,
+    };
+  }
+
+  private addField(
+    fields: Array<Record<string, unknown>>,
+    tag: string,
+    value: string | number | undefined,
+    ind1: string,
+    ind2: string,
+    code = 'a',
+  ): void {
+    if (value === undefined || value === null || String(value).trim() === '') return;
+    fields.push({ [tag]: { ind1, ind2, subfields: [{ [code]: String(value) }] } });
   }
 
   private mapKohaError(error: unknown): Error {

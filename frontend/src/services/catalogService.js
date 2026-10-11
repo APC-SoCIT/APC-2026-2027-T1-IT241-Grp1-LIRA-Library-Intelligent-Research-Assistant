@@ -2,8 +2,10 @@ const catalogApiUrl = (
   import.meta.env.VITE_CATALOG_API_URL || 'http://localhost:3001/api/catalog'
 ).replace(/\/+$/, '')
 
-async function request(path) {
-  const response = await fetch(`${catalogApiUrl}${path}`)
+import { supabase } from './supabaseClient'
+
+async function request(path, options = {}) {
+  const response = await fetch(`${catalogApiUrl}${path}`, options)
   if (!response.ok) {
     let message = `Catalog request failed (${response.status})`
     try {
@@ -14,7 +16,21 @@ async function request(path) {
     }
     throw new Error(message)
   }
-  return response.json()
+  if (response.status === 204) return null
+  const body = await response.text()
+  return body ? JSON.parse(body) : null
+}
+
+async function authenticatedRequest(path, options = {}) {
+  if (!supabase) throw new Error('Supabase is not configured.')
+  const { data, error } = await supabase.auth.getSession()
+  if (error) throw error
+  const token = data.session?.access_token
+  if (!token) throw new Error('Please sign in again before managing the catalog.')
+  return request(path, {
+    ...options,
+    headers: { ...options.headers, Authorization: `Bearer ${token}` },
+  })
 }
 
 export async function listCatalogBooks() {
@@ -51,4 +67,34 @@ export async function getCatalogBook(id) {
 
 export async function getCatalogBookContent(id) {
   return request(`/books/${encodeURIComponent(id)}/content`)
+}
+
+export async function getCatalogProfileRole() {
+  if (!supabase) throw new Error('Supabase is not configured.')
+  const { data: userData, error: userError } = await supabase.auth.getUser()
+  if (userError) throw userError
+  if (!userData.user) return null
+  const { data, error } = await supabase.from('profiles').select('role').eq('id', userData.user.id).maybeSingle()
+  if (error) throw error
+  return data?.role || null
+}
+
+export async function createCatalogBook(record) {
+  return authenticatedRequest('/books', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(record),
+  })
+}
+
+export async function updateCatalogBook(id, record) {
+  return authenticatedRequest(`/books/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(record),
+  })
+}
+
+export async function deleteCatalogBook(id) {
+  return authenticatedRequest(`/books/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }

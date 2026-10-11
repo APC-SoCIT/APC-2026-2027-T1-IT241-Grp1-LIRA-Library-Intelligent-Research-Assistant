@@ -1306,6 +1306,60 @@ body {
 .catalog-list-error { max-width: 980px; margin: 0 auto 16px; padding: 12px; color: #9b2c2c; background: #fff1f1; }
 .catalog-list-error.success { color: #22633f; background: #edf9f1; }
 
+.librarian-page { min-height: 100vh; padding: 34px max(18px, 6vw) 60px; color: #172b4d; background: #f4f7fb; }
+.librarian-header { display: flex; justify-content: space-between; gap: 24px; max-width: 1180px; margin: 0 auto 22px; padding: 30px; color: #fff; background: linear-gradient(135deg, #092f63, #0b4b92); }
+.librarian-eyebrow { margin: 0 0 6px; color: #e5ac35; font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+.librarian-header h1 { margin: 0 0 8px; font-size: clamp(27px, 4vw, 42px); }
+.librarian-header p:last-child { margin: 0; color: #dbeafe; }
+.librarian-header-actions { display: flex; align-items: flex-start; gap: 8px; flex-shrink: 0; }
+.librarian-header-actions button, .librarian-message button { display: inline-flex; align-items: center; gap: 7px; padding: 10px 13px; border: 1px solid rgba(255,255,255,.35); color: #fff; background: rgba(255,255,255,.1); font-weight: 700; cursor: pointer; }
+.librarian-status { max-width: 1180px; margin: 0 auto 16px; padding: 12px 14px; background: #edf9f1; color: #22633f; }
+.librarian-status.error { background: #fff1f1; color: #9b2c2c; }
+.librarian-layout { display: grid; grid-template-columns: minmax(230px, .7fr) minmax(0, 1.5fr); gap: 18px; max-width: 1180px; margin: 0 auto; align-items: start; }
+.librarian-records, .librarian-editor, .librarian-message { border: 1px solid #dce3ec; background: #fff; }
+.librarian-records { padding: 16px; }
+.librarian-records-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.librarian-records h2, .librarian-editor h2 { margin: 0; color: #172b4d; }
+.librarian-records-heading small { color: #7890ad; font-size: 12px; font-weight: 500; }
+.librarian-records-heading button { display: grid; place-items: center; width: 34px; height: 34px; border: 0; color: #fff; background: #0b4b92; cursor: pointer; }
+.librarian-record-tools { display: grid; gap: 8px; margin-bottom: 10px; }
+.librarian-record-tools label { display: flex; align-items: center; gap: 6px; color: #607b9e; font-size: 11px; font-weight: 700; }
+.librarian-record-tools input, .librarian-record-tools select { min-width: 0; flex: 1; padding: 8px; border: 1px solid #cbd5e1; color: #172b4d; background: #fff; font: inherit; font-size: 12px; }
+.librarian-search { padding: 0; }
+.librarian-search svg { flex: 0 0 auto; color: #7890ad; }
+.librarian-record-list { max-height: 620px; overflow-y: auto; }
+.librarian-record { display: grid; gap: 4px; width: 100%; padding: 12px; border: 0; border-top: 1px solid #e2e8f0; color: #38536f; background: #fff; text-align: left; cursor: pointer; }
+.librarian-record:hover, .librarian-record.active { background: #eef5fb; }
+.librarian-record strong { overflow: hidden; color: #172b4d; text-overflow: ellipsis; white-space: nowrap; }
+.librarian-record span { color: #7890ad; font-size: 12px; }
+.librarian-editor { padding: 22px; }
+.librarian-editor-heading { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0; }
+.librarian-editor-heading p { margin: 0 0 5px; color: #7890ad; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.librarian-editor-heading svg { width: 28px; height: 28px; color: #d4a017; }
+.librarian-form { display: grid; gap: 14px; }
+.librarian-form label { display: grid; gap: 6px; color: #38536f; font-size: 13px; font-weight: 700; }
+.librarian-form label span { color: #7890ad; font-weight: 400; }
+.librarian-form input, .librarian-form textarea { width: 100%; box-sizing: border-box; padding: 10px 11px; border: 1px solid #cbd5e1; color: #172b4d; background: #fff; font: inherit; font-weight: 400; }
+.librarian-form input:focus, .librarian-form textarea:focus { border-color: #2c6bb3; outline: 2px solid rgba(44,107,179,.18); }
+.librarian-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.librarian-form-actions { display: flex; justify-content: flex-end; gap: 9px; padding-top: 4px; }
+.librarian-form-actions button { display: inline-flex; align-items: center; gap: 7px; padding: 10px 15px; border: 1px solid #cbd5e1; color: #38536f; background: #fff; font-weight: 700; cursor: pointer; }
+.librarian-form-actions button:last-child { border-color: #0b4b92; color: #fff; background: #0b4b92; }
+.librarian-form-actions .librarian-danger-button { border-color: #b42318; color: #b42318; background: #fff; }
+.librarian-form-actions button:disabled { cursor: wait; opacity: .6; }
+.librarian-loading, .librarian-message { max-width: 600px; margin: 80px auto; padding: 28px; text-align: center; }
+.librarian-empty { padding: 18px 8px; color: #7890ad; font-size: 13px; text-align: center; }
+.librarian-message h1 { margin-top: 0; color: #172b4d; }
+.librarian-message p { color: #607b9e; line-height: 1.6; }
+.librarian-message button { border: 0; color: #fff; background: #0b4b92; }
+
+@media (max-width: 760px) {
+  .librarian-header { flex-direction: column; padding: 22px; }
+  .librarian-header-actions { align-items: stretch; }
+  .librarian-layout { grid-template-columns: 1fr; }
+  .librarian-form-grid { grid-template-columns: 1fr; }
+}
+
 .catalog-discovery-layout { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 20px; }
 .catalog-recommendations-rail { min-width: 0; }
 .catalog-recommendations-compact { padding: 16px; border: 1px solid #e8dcc8; border-radius: 12px; background: #fffdf8; }

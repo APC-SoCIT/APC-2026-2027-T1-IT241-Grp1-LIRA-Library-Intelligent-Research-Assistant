@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { FiBookOpen, FiChevronDown, FiExternalLink, FiList, FiShoppingCart, FiX } from 'react-icons/fi'
+import { FiBookOpen, FiChevronDown, FiExternalLink, FiList, FiX } from 'react-icons/fi'
 import BookCover from './BookCover'
 import { translate } from '../i18n/catalogTranslations'
 
@@ -107,7 +107,6 @@ export default function OpacSearchResults({
   onSourceFilterChange,
   onSelectBook,
   onSaveBookmark,
-  onReserveBook,
   isBookmarked,
 }) {
   const t = (key) => translate(language, key)
@@ -298,9 +297,6 @@ export default function OpacSearchResults({
                     <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-[#79572f]">
                       <button type="button" onClick={() => onSaveBookmark(book)} className="inline-flex items-center gap-1 hover:underline">
                         <FiList aria-hidden="true" /> {isBookmarked(book) ? t('removeFromLists') : t('addToLists')}
-                      </button>
-                      <button type="button" onClick={() => onReserveBook(book)} className="inline-flex items-center gap-1 hover:underline">
-                        <FiShoppingCart aria-hidden="true" /> {t('addToReservationCart')}
                       </button>
                     </div>
                   </div>

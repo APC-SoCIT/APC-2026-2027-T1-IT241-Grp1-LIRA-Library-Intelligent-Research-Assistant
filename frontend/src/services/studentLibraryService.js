@@ -212,27 +212,3 @@ export async function listBookmarks(listId) {
   return data
 }
 
-export async function addReservationCartItem(book) {
-  const { client, user } = await requireUser()
-  const { data, error } = await client.from('reservations').upsert({
-    user_id: user.id,
-    book_id: book.id,
-    title: book.title,
-    author: book.author || null,
-  }, { onConflict: 'user_id,book_id' }).select().single()
-  if (error) throw error
-  return data
-}
-
-export async function removeReservationCartItem(bookId) {
-  const { client, user } = await requireUser()
-  const { error } = await client.from('reservations').delete().eq('user_id', user.id).eq('book_id', bookId)
-  if (error) throw error
-}
-
-export async function listReservations() {
-  const { client, user } = await requireUser()
-  const { data, error } = await client.from('reservations').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
-  if (error) throw error
-  return data
-}

@@ -4,8 +4,8 @@ import OpacPage from './pages/OpacPage'
 import CatalogAccessPage from './pages/CatalogAccessPage'
 import BookmarksPage from './pages/BookmarksPage'
 import ReaderPage from './pages/ReaderPage'
+import LibrarianCatalogPage from './pages/LibrarianCatalogPage'
 
-import ReservationsPage from './pages/ReservationsPage'
 
 function App() {
   return (
@@ -14,9 +14,9 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/catalog" element={<CatalogAccessPage />} />
         <Route path="/catalog/lists" element={<BookmarksPage />} />
-        <Route path="/catalog/reservations" element={<ReservationsPage />} />
-        <Route path="/catalog/cart" element={<Navigate replace to="/catalog/reservations" />} />
+        <Route path="/catalog/cart" element={<Navigate replace to="/catalog" />} />
         <Route path="/catalog/read/:bookId" element={<ReaderPage />} />
+        <Route path="/catalog/librarian" element={<LibrarianCatalogPage />} />
       </Routes>
     </Router>
   )

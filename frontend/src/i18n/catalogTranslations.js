@@ -8,7 +8,6 @@ export const catalogLanguages = [
 
 const messages = {
   en: {
-    reservationCart: 'Reservation cart',
     lists: 'Lists',
     welcome: 'Welcome',
     language: 'Language',
@@ -64,7 +63,6 @@ const messages = {
     viewBook: 'View',
     addToLists: 'Add to lists',
     removeFromLists: 'Remove from lists',
-    addToReservationCart: 'Add to reservation cart',
     backToResults: 'Back to results',
     printRecord: 'Print record',
     fromLibraryShelves: 'From the library shelves',
@@ -113,7 +111,6 @@ const messages = {
     itemTypeVM: 'Visual materials',
   },
   fil: {
-    reservationCart: 'Cart ng pagpapareserba',
     lists: 'Mga listahan',
     welcome: 'Maligayang pagdating',
     language: 'Wika',
@@ -169,7 +166,6 @@ const messages = {
     viewBook: 'Tingnan',
     addToLists: 'Idagdag sa mga listahan',
     removeFromLists: 'Alisin sa mga listahan',
-    addToReservationCart: 'Idagdag sa cart ng pagpapareserba',
     backToResults: 'Bumalik sa mga resulta',
     printRecord: 'I-print ang tala',
     fromLibraryShelves: 'Mula sa mga estante ng aklatan',
@@ -218,7 +214,6 @@ const messages = {
     itemTypeVM: 'Biswal na materyal',
   },
   zh: {
-    reservationCart: '预约购物车',
     lists: '书单',
     welcome: '欢迎',
     language: '语言',
@@ -274,7 +269,6 @@ const messages = {
     viewBook: '查看',
     addToLists: '加入书单',
     removeFromLists: '从书单移除',
-    addToReservationCart: '加入预约购物车',
     backToResults: '返回结果',
     printRecord: '打印记录',
     fromLibraryShelves: '来自图书馆馆藏',
@@ -323,7 +317,6 @@ const messages = {
     itemTypeVM: '视听资料',
   },
   ja: {
-    reservationCart: '予約カート',
     lists: 'リスト',
     welcome: 'ようこそ',
     language: '言語',
@@ -379,7 +372,6 @@ const messages = {
     viewBook: '詳細',
     addToLists: 'リストに追加',
     removeFromLists: 'リストから削除',
-    addToReservationCart: '予約カートに追加',
     backToResults: '検索結果に戻る',
     printRecord: '書誌を印刷',
     fromLibraryShelves: '図書館の蔵書',
@@ -428,7 +420,6 @@ const messages = {
     itemTypeVM: '視覚資料',
   },
   ko: {
-    reservationCart: '예약 장바구니',
     lists: '목록',
     welcome: '환영합니다',
     language: '언어',
@@ -484,7 +475,6 @@ const messages = {
     viewBook: '보기',
     addToLists: '목록에 추가',
     removeFromLists: '목록에서 삭제',
-    addToReservationCart: '예약 장바구니에 추가',
     backToResults: '검색 결과로 돌아가기',
     printRecord: '서지 정보 인쇄',
     fromLibraryShelves: '도서관 자료',

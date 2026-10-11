@@ -3,6 +3,8 @@ import { Test } from '@nestjs/testing';
 import request = require('supertest');
 import { CatalogController } from '../src/catalog/catalog.controller';
 import { CatalogService } from '../src/catalog/catalog.service';
+import { LibrarianGuard } from '../src/shared/librarian.guard';
+import { ConfigService } from '@nestjs/config';
 
 describe('CatalogController (HTTP)', () => {
   let app: INestApplication;
@@ -15,7 +17,11 @@ describe('CatalogController (HTTP)', () => {
   beforeAll(async () => {
     const module = await Test.createTestingModule({
       controllers: [CatalogController],
-      providers: [{ provide: CatalogService, useValue: catalog }],
+      providers: [
+        { provide: CatalogService, useValue: catalog },
+        { provide: LibrarianGuard, useValue: { canActivate: () => true } },
+        { provide: ConfigService, useValue: {} },
+      ],
     }).compile();
     app = module.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }));
