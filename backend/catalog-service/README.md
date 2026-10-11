@@ -96,10 +96,15 @@ npm run start:prod
 
 ## API
 
+Structured e-book resources, binary retrieval, mapping rules, transfer limits and
+PowerShell smoke checks are documented in [RESOURCE_API.md](RESOURCE_API.md).
+
 - `GET /health` returns `{ "status": "ok" }` for service health.
 - `GET /health/koha` performs an authenticated request to Koha. It returns HTTP 200 with `{ "status": "ok", "koha": "reachable" }`, or HTTP 503 with `{ "status": "error", "koha": "unreachable" }`.
 - `GET /api/catalog/books?page=1&limit=20` lists normalized books.
 - `GET /api/catalog/books/:id` returns one normalized book. Invalid IDs return HTTP 400; missing records return HTTP 404.
+- `GET /api/catalog/books/:id/resources/:resourceId/content` returns verified raw PDF/EPUB/HTML/text bytes for an approved resource from that book.
+- `GET /api/catalog/books/:id/content` returns the existing HTML/text reader JSON response.
 - `GET /api/catalog/search?q=programming&page=1&limit=20&mode=keyword` searches Koha by general title/author/ISBN query. `mode=semantic` searches the vector index; `mode=hybrid` combines both ranked lists. Keyword is the default.
 - `POST /api/catalog/semantic/reindex` refreshes all catalog embeddings. Requires the `x-semantic-index-key` header and complete semantic configuration.
 

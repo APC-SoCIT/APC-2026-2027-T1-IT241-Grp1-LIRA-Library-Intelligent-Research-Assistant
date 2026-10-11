@@ -1,3 +1,5 @@
+import { ResourceMetadata } from '../catalog/resource.types';
+
 export interface KohaBiblio {
   biblio_id?: number;
   id?: number;
@@ -26,6 +28,7 @@ export interface KohaBiblio {
   collection_title?: string | null;
   series_title?: string | null;
   url?: string | null;
+  resources?: ResourceMetadata[];
   [key: string]: unknown;
 }
 

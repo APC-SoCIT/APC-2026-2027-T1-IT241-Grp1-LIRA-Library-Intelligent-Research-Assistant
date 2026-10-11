@@ -58,4 +58,17 @@ describe('validateEnvironment', () => {
 
     expect(validateEnvironment(environment)).toEqual(environment);
   });
+
+  it('validates origins and separate streaming/reader limits with finite deadlines', () => {
+    expect(validateEnvironment({ ...baseEnvironment, KOHA_OPAC_BASE_URL: 'http://100.118.244.66:8080', EBOOK_TIMEOUT_MS: '15000', EBOOK_MAX_BYTES: '4000000' })).toMatchObject(baseEnvironment);
+    for (const EBOOK_ALLOWED_ORIGINS of ['file:///tmp', 'https://user:password@example.com', 'https://example.com/private']) {
+      expect(() => validateEnvironment({ ...baseEnvironment, EBOOK_ALLOWED_ORIGINS })).toThrow('HTTP(S) origin');
+    }
+    for (const EBOOK_MAX_BYTES of ['0', '512000001', 'NaN']) {
+      expect(() => validateEnvironment({ ...baseEnvironment, EBOOK_MAX_BYTES })).toThrow('EBOOK_MAX_BYTES');
+    }
+    expect(validateEnvironment({ ...baseEnvironment, EBOOK_MAX_BYTES: '64000000', EBOOK_TIMEOUT_MS: '60000' })).toMatchObject(baseEnvironment);
+    expect(() => validateEnvironment({ ...baseEnvironment, EBOOK_TIMEOUT_MS: '90001' })).toThrow('EBOOK_TIMEOUT_MS');
+    expect(() => validateEnvironment({ ...baseEnvironment, EBOOK_READER_MAX_BYTES: '4000001' })).toThrow('EBOOK_READER_MAX_BYTES');
+  });
 });

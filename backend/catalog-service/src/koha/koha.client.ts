@@ -7,6 +7,12 @@ import { firstValueFrom } from 'rxjs';
 import { getTailscaleProxy } from '../tailscale-vercel';
 import { KohaIntegrationError } from './koha.exceptions';
 import { KohaBiblio, KohaBiblioResponse } from './koha.types';
+import { ResourceMetadata } from '../catalog/resource.types';
+
+interface MarcEnrichment {
+  categories: string[];
+  resources: ResourceMetadata[];
+}
 
 const controlledCategories = new Map([
   'Psychology',
@@ -47,7 +53,7 @@ export class KohaClient {
   }
 
   async getBiblios(page: number, limit: number, orderBy?: string): Promise<KohaBiblio[]> {
-    return this.getBibliosWithCategories({
+    return this.getEnrichedBiblios({
       params: {
         _page: page,
         _per_page: limit,
@@ -57,20 +63,21 @@ export class KohaClient {
   }
 
   async getBiblio(id: number): Promise<KohaBiblio> {
-    const [jsonResponse, categoryMap] = await Promise.all([
+    const [jsonResponse, enrichment] = await Promise.all([
       this.request<KohaBiblio>(`/api/v1/biblios/${id}`),
-      this.getControlledCategories(`/api/v1/biblios/${id}`),
+      this.getMarcEnrichment(`/api/v1/biblios/${id}`),
     ]);
     if (!this.isRecord(jsonResponse.data) || (!this.hasNumber(jsonResponse.data, 'biblio_id') && !this.hasNumber(jsonResponse.data, 'id'))) {
       throw new KohaIntegrationError('unexpected', 'Koha returned an invalid bibliographic record');
     }
     const recordId = jsonResponse.data.biblio_id ?? jsonResponse.data.id;
-    return { ...jsonResponse.data, categories: categoryMap.get(recordId as number) ?? [] };
+    return { ...jsonResponse.data, categories: enrichment.get(recordId as number)?.categories ?? [],
+      resources: enrichment.get(recordId as number)?.resources ?? [] };
   }
 
   async searchBiblios(query: string, page: number, limit: number): Promise<KohaBiblio[]> {
     const searchTerm = `%${query}%`;
-    return this.getBibliosWithCategories({
+    return this.getEnrichedBiblios({
       params: {
         q: JSON.stringify({
           '-or': [
@@ -145,33 +152,34 @@ export class KohaClient {
     }
   }
 
-  private async getBibliosWithCategories(options: AxiosRequestConfig): Promise<KohaBiblio[]> {
+  private async getEnrichedBiblios(options: AxiosRequestConfig): Promise<KohaBiblio[]> {
     const [jsonResponse, marcResponse] = await Promise.all([
       this.request<KohaBiblioResponse>('/api/v1/biblios', options),
-      this.getControlledCategories('/api/v1/biblios', options),
+      this.getMarcEnrichment('/api/v1/biblios', options),
     ]);
     const records = this.extractBiblios(jsonResponse.data);
     return records.map((record) => {
       const id = record.biblio_id ?? record.id;
-      return { ...record, categories: typeof id === 'number' ? marcResponse.get(id) ?? [] : [] };
+      const enrichment = typeof id === 'number' ? marcResponse.get(id) : undefined;
+      return { ...record, categories: enrichment?.categories ?? [], resources: enrichment?.resources ?? [] };
     });
   }
 
-  private async getControlledCategories(path: string, options: AxiosRequestConfig = {}): Promise<Map<number, string[]>> {
+  private async getMarcEnrichment(path: string, options: AxiosRequestConfig = {}): Promise<Map<number, MarcEnrichment>> {
     try {
       const response = await this.request<string>(path, {
         ...options,
         responseType: 'text',
         headers: { ...options.headers, Accept: 'application/marcxml+xml' },
       });
-      return this.extractControlledCategories(response.data);
+      return this.extractMarcEnrichment(response.data);
     } catch {
-      this.logger.warn('Koha MARCXML category enrichment failed; returning catalog records without categories');
+      this.logger.warn('Koha MARCXML enrichment failed; returning JSON catalog metadata');
       return new Map();
     }
   }
 
-  private extractControlledCategories(marcXml: string): Map<number, string[]> {
+  private extractMarcEnrichment(marcXml: string): Map<number, MarcEnrichment> {
     const validation = XMLValidator.validate(marcXml);
     if (validation !== true) {
       throw new KohaIntegrationError('unexpected', 'Koha returned invalid MARCXML');
@@ -180,7 +188,7 @@ export class KohaClient {
     const parsed = marcXmlParser.parse(marcXml) as Record<string, unknown>;
     const collection = this.isRecord(parsed.collection) ? parsed.collection : parsed;
     const records = this.asArray(collection.record);
-    const categoriesByBiblioId = new Map<number, string[]>();
+    const enrichmentByBiblioId = new Map<number, MarcEnrichment>();
 
     for (const rawRecord of records) {
       if (!this.isRecord(rawRecord)) continue;
@@ -194,7 +202,25 @@ export class KohaClient {
       if (internalId === undefined) continue;
 
       const categories = new Set<string>();
+      const resources: ResourceMetadata[] = [];
       for (const field of fields) {
+        if (field['@_tag'] === '856') {
+          const subfields = this.asArray(field.subfield).filter((value): value is Record<string, unknown> => this.isRecord(value));
+          const values = (code: string) => subfields.filter((value) => value['@_code'] === code)
+            .map((value) => this.xmlText(value) ?? '');
+          const urls = values('u');
+          const formats = values('q');
+          const labels = values('y');
+          // Equal counts pair by position; otherwise metadata is shared only
+          // within this 856 field. Preserve blank slots before pairing.
+          urls.forEach((url, index) => {
+            if (!url) return;
+            resources.push({ url,
+              formats: (formats.length === urls.length ? [formats[index]] : formats).filter(Boolean),
+              labels: (labels.length === urls.length ? [labels[index]] : labels).filter(Boolean),
+            });
+          });
+        }
         if (field['@_tag'] !== '650' || field['@_ind2'] !== '4') continue;
         for (const subfield of this.asArray(field.subfield)) {
           if (!this.isRecord(subfield) || subfield['@_code'] !== 'a') continue;
@@ -203,10 +229,10 @@ export class KohaClient {
           if (category) categories.add(category);
         }
       }
-      if (categories.size > 0) categoriesByBiblioId.set(internalId, [...categories]);
+      enrichmentByBiblioId.set(internalId, { categories: [...categories], resources });
     }
 
-    return categoriesByBiblioId;
+    return enrichmentByBiblioId;
   }
 
   private asArray(value: unknown): unknown[] {

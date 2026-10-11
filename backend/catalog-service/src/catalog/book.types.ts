@@ -1,3 +1,5 @@
+import { BookResource } from './resource.types';
+
 export interface Book {
   id: number;
   title: string | null;
@@ -17,6 +19,7 @@ export interface Book {
   categories?: string[];
   series: string | null;
   url: string | null;
+  resources: BookResource[];
 }
 
 export interface BookListResponse {

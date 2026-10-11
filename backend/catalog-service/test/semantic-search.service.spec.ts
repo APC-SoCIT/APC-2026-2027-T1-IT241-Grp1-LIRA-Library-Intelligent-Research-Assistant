@@ -45,6 +45,7 @@ describe('SemanticSearchService', () => {
       categories: [],
       series: null,
       url: null,
+      resources: [],
     };
     const embedding = Array.from({ length: 1536 }, () => 0.1);
     fetchSpy
@@ -117,6 +118,7 @@ describe('SemanticSearchService', () => {
       categories: [],
       series: null,
       url: null,
+      resources: [],
     };
   }
 

@@ -1,4 +1,8 @@
-import { BadRequestException, Body, Controller, Delete, Get, Headers, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Headers, Param, ParseIntPipe, Post, Put, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Request, Response } from 'express';
+import { once } from 'node:events';
+import { finished } from 'node:stream/promises';
+import { ResourceStream } from './resource.types';
 import { CatalogService } from './catalog.service';
 import { CatalogWriteDto } from './dto/catalog-write.dto';
 import { PaginationDto } from './dto/pagination.dto';
@@ -29,6 +33,67 @@ export class CatalogController {
   getBookContent(@Param('id', new ParseIntPipe({ errorHttpStatusCode: 400 })) id: number) {
     if (id < 1) throw new BadRequestException('Book ID must be a positive integer');
     return this.catalog.getBookContent(id);
+  }
+
+  @Get('books/:id/resources/:resourceId/content')
+  async getResourceContent(
+    @Param('id', new ParseIntPipe({ errorHttpStatusCode: 400 })) id: number,
+    @Param('resourceId') resourceId: string,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    if (id < 1) throw new BadRequestException('Book ID must be a positive integer');
+    const abort = new AbortController();
+    const onAborted = () => abort.abort();
+    const onClose = () => { if (!response.writableFinished) abort.abort(); };
+    const onStreamError = () => {
+      // A timeout/error must also interrupt a wait for downstream drain.
+      if (response.headersSent && !response.destroyed) response.destroy();
+    };
+    const onTransferAbort = () => {
+      if (response.headersSent && !response.destroyed) response.destroy();
+    };
+    request.once('aborted', onAborted);
+    response.once('close', onClose);
+    let content: ResourceStream | undefined;
+    try {
+      if (request.aborted || response.destroyed) { abort.abort(); return; }
+      content = await this.catalog.getResourceContent(id, resourceId, abort.signal);
+      content.stream.once('error', onStreamError);
+      content.signal?.addEventListener('abort', onTransferAbort, { once: true });
+      response.setHeader('Content-Type', content.mediaType);
+      response.setHeader('Content-Disposition', `inline; filename="${content.filename}"`);
+      if (content.contentLength !== null) response.setHeader('Content-Length', content.contentLength);
+      response.setHeader('X-Content-Type-Options', 'nosniff');
+      response.setHeader('Cache-Control', 'private, no-store');
+      // Range headers are ignored; always return the complete body (200).
+      response.setHeader('Accept-Ranges', 'none');
+      if (content.mediaType === 'text/html') response.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
+      for await (const chunk of content.stream) {
+        if (abort.signal.aborted || response.destroyed) return;
+        // Waiting for drain bounds buffering when a client consumes slowly.
+        if (!response.write(chunk)) await once(response, 'drain', { signal: abort.signal });
+      }
+      const completed = finished(response, { cleanup: true });
+      response.end();
+      await completed;
+    } catch (error) {
+      if (response.headersSent || response.destroyed || abort.signal.aborted) {
+        // Never append JSON or a clean EOF to a failed binary transfer.
+        if (!response.destroyed) response.destroy();
+        return;
+      }
+      for (const header of ['Content-Type', 'Content-Disposition', 'Content-Length', 'Content-Security-Policy']) {
+        response.removeHeader(header);
+      }
+      throw error; // Nest still owns safe JSON errors before any bytes are sent.
+    } finally {
+      request.removeListener('aborted', onAborted);
+      response.removeListener('close', onClose);
+      content?.stream.removeListener('error', onStreamError);
+      content?.signal?.removeEventListener('abort', onTransferAbort);
+      content?.cancel();
+    }
   }
 
   @Post('books')

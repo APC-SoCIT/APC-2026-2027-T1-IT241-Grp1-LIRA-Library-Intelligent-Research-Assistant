@@ -5,6 +5,9 @@ import { KohaClient } from '../koha/koha.client';
 import { KohaBiblio } from '../koha/koha.types';
 import { SemanticSearchService } from './semantic-search.service';
 import { CatalogWriteDto } from './dto/catalog-write.dto';
+import { buildBookResources } from './book-resources';
+import { ResourceContentService } from './resource-content.service';
+import { ResourceStream } from './resource.types';
 
 @Injectable()
 export class CatalogService {
@@ -14,6 +17,7 @@ export class CatalogService {
   constructor(
     private readonly koha: KohaClient,
     private readonly semantic: SemanticSearchService,
+    private readonly resourceContent: ResourceContentService,
   ) {}
 
   async listBooks(page: number, limit: number): Promise<BookListResponse> {
@@ -45,28 +49,30 @@ export class CatalogService {
 
   async getBookContent(id: number): Promise<{ content: string; sourceUrl: string; resolvedUrl: string }> {
     const book = await this.getBook(id);
-    const sourceUrl = book.url?.split('|')[0]?.trim();
-    if (!sourceUrl) throw new NotFoundException('Book has no online reading resource');
-
-    let parsedUrl: URL;
-    try {
-      parsedUrl = new URL(sourceUrl);
-    } catch {
-      throw new BadRequestException('Book has an invalid online reading resource');
+    // Retain legacy URL order for reader consumers, skipping known binaries.
+    const legacy = buildBookResources([], book.url);
+    const ordered = [...legacy.map((entry) => book.resources.find((resource) => resource.id === entry.id))
+      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry)), ...book.resources];
+    const resource = ordered.find((entry) => entry.format === 'html' || entry.format === 'text')
+      ?? ordered.find((entry) => entry.format === 'unknown');
+    if (!resource) throw new NotFoundException('Book has no online reading resource');
+    const response = await this.resourceContent.retrieve(resource, book.title);
+    if (!['text/html', 'text/plain'].includes(response.mediaType)) {
+      throw new BadRequestException('Use the resource content endpoint for binary attachments');
     }
-
-    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-      throw new BadRequestException('Online reading resource is not supported');
+    const result = { content: response.bytes.toString('utf8'), sourceUrl: response.sourceUrl, resolvedUrl: response.resolvedUrl };
+    if (Buffer.byteLength(JSON.stringify(result)) > this.resourceContent.readerMaxBytes) {
+      throw new HttpException('Reading content exceeds the transfer limit', HttpStatus.PAYLOAD_TOO_LARGE);
     }
+    return result;
+  }
 
-    try {
-      const response = await fetch(parsedUrl);
-      if (!response.ok) throw new Error(`Reading resource returned HTTP ${response.status}`);
-      return { content: await response.text(), sourceUrl, resolvedUrl: response.url };
-    } catch {
-      this.logger.warn(`Could not fetch reading resource for book ${id}`);
-      throw new ServiceUnavailableException('Online reading resource is unavailable');
-    }
+  async getResourceContent(id: number, resourceId: string, signal?: AbortSignal): Promise<ResourceStream> {
+    if (!/^[a-f0-9]{64}$/.test(resourceId)) throw new BadRequestException('Invalid resource ID');
+    const book = await this.getBook(id);
+    const resource = book.resources.find((entry) => entry.id === resourceId);
+    if (!resource) throw new NotFoundException('Book resource not found');
+    return this.resourceContent.openStream(resource, book.title, signal);
   }
 
   async createBook(record: CatalogWriteDto): Promise<Book> {
@@ -102,7 +108,7 @@ export class CatalogService {
     if (mode === 'semantic') {
       const matches = await this.semantic.search(query.trim(), this.semantic.matchLimit);
       const start = (page - 1) * limit;
-      return { items: matches.slice(start, start + limit), pagination: { page, limit } };
+      return { items: matches.slice(start, start + limit).map((book) => this.withResources(book)), pagination: { page, limit } };
     }
 
     if (mode === 'hybrid') {
@@ -157,7 +163,7 @@ export class CatalogService {
 
       results = [...ranked.values()]
         .sort((left, right) => right.score - left.score || (left.book.title ?? '').localeCompare(right.book.title ?? ''))
-        .map(({ book }) => book);
+        .map(({ book }) => this.withResources(book));
       if (this.hybridCache.size >= 100) {
         const oldestKey = this.hybridCache.keys().next().value;
         if (oldestKey) this.hybridCache.delete(oldestKey);
@@ -211,7 +217,21 @@ export class CatalogService {
       categories: this.stringList(record.categories),
       series: this.stringOrNull(record.series_title ?? record.collection_title),
       url: this.stringOrNull(record.url),
+      resources: this.publicResources(id, buildBookResources(record.resources, record.url)),
     };
+  }
+
+  private withResources(book: Book): Book {
+    // Older semantic index rows have only the pipe-separated url. Derive a
+    // fallback without another Koha/MARC request; detail retrieval is authoritative.
+    return { ...book, resources: this.publicResources(book.id, book.resources ?? buildBookResources([], book.url)) };
+  }
+
+  private publicResources(id: number, resources: Book['resources']): Book['resources'] {
+    return resources.map((resource) => ({ ...resource,
+      contentUrl: this.resourceContent.canRetrieve(resource.sourceUrl, resource.mediaType)
+        ? `/api/catalog/books/${id}/resources/${resource.id}/content` : null,
+    }));
   }
 
   private toKohaRecord(record: CatalogWriteDto): Record<string, unknown> {

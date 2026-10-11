@@ -69,7 +69,7 @@ describe('KohaClient MARC categories', () => {
     const client = new KohaClient(http, config);
 
     await expect(client.getBiblios(4, 100)).resolves.toEqual([
-      { biblio_id: 301, title: 'Catalog record', categories: [] },
+      { biblio_id: 301, title: 'Catalog record', categories: [], resources: [] },
     ]);
   });
 });

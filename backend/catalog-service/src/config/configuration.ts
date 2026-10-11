@@ -1,4 +1,5 @@
 import { registerAs } from '@nestjs/config';
+import { defaultOpacUrl, DEFAULT_RESOURCE_ORIGINS, DEFAULT_RESOURCE_BYTES, MAX_RESOURCE_BYTES, MAX_READER_BYTES } from '../catalog/resource-policy';
 
 export interface AppConfiguration {
   port: number;
@@ -16,6 +17,13 @@ export interface AppConfiguration {
     supabaseServiceRoleKey: string;
     indexApiKey: string;
     matchLimit: number;
+  };
+  resources: {
+    opacBaseUrl: string;
+    allowedOrigins: string[];
+    timeoutMs: number;
+    maxBytes: number;
+    readerMaxBytes: number;
   };
 }
 
@@ -39,6 +47,14 @@ export const configuration = registerAs('app', (): AppConfiguration => ({
     indexApiKey: process.env.SEMANTIC_INDEX_API_KEY ?? '',
     matchLimit: Number(process.env.SEMANTIC_MATCH_LIMIT ?? 500),
   },
+  resources: {
+    opacBaseUrl: process.env.KOHA_OPAC_BASE_URL || defaultOpacUrl(process.env.KOHA_BASE_URL ?? ''),
+    allowedOrigins: process.env.EBOOK_ALLOWED_ORIGINS === undefined ? DEFAULT_RESOURCE_ORIGINS
+      : process.env.EBOOK_ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean),
+    timeoutMs: Number(process.env.EBOOK_TIMEOUT_MS ?? 60000),
+    maxBytes: Number(process.env.EBOOK_MAX_BYTES ?? DEFAULT_RESOURCE_BYTES),
+    readerMaxBytes: Number(process.env.EBOOK_READER_MAX_BYTES ?? MAX_READER_BYTES),
+  },
 }));
 
 export function validateEnvironment(environment: Record<string, unknown>): Record<string, unknown> {
@@ -47,6 +63,30 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
 
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+
+  const origin = (key: string, value: string) => {
+    let url: URL;
+    try { url = new URL(value); } catch { throw new Error(`${key} must be an HTTP(S) origin`); }
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password
+      || url.pathname !== '/' || url.search || url.hash) throw new Error(`${key} must be an HTTP(S) origin`);
+  };
+  origin('KOHA_BASE_URL', String(environment.KOHA_BASE_URL));
+  if (environment.KOHA_OPAC_BASE_URL) origin('KOHA_OPAC_BASE_URL', String(environment.KOHA_OPAC_BASE_URL));
+  for (const value of String(environment.EBOOK_ALLOWED_ORIGINS ?? '').split(',').map((value) => value.trim()).filter(Boolean)) {
+    origin('EBOOK_ALLOWED_ORIGINS', value);
+  }
+  const resourceTimeout = Number(environment.EBOOK_TIMEOUT_MS ?? 60000);
+  if (!Number.isInteger(resourceTimeout) || resourceTimeout < 100 || resourceTimeout > 90000) {
+    throw new Error('EBOOK_TIMEOUT_MS must be an integer between 100 and 90000');
+  }
+  const resourceMaxBytes = Number(environment.EBOOK_MAX_BYTES ?? DEFAULT_RESOURCE_BYTES);
+  if (!Number.isInteger(resourceMaxBytes) || resourceMaxBytes < 100 || resourceMaxBytes > MAX_RESOURCE_BYTES) {
+    throw new Error(`EBOOK_MAX_BYTES must be an integer between 100 and ${MAX_RESOURCE_BYTES}`);
+  }
+  const readerMaxBytes = Number(environment.EBOOK_READER_MAX_BYTES ?? MAX_READER_BYTES);
+  if (!Number.isInteger(readerMaxBytes) || readerMaxBytes < 100 || readerMaxBytes > MAX_READER_BYTES) {
+    throw new Error(`EBOOK_READER_MAX_BYTES must be an integer between 100 and ${MAX_READER_BYTES}`);
   }
 
   const timeout = Number(environment.KOHA_TIMEOUT_MS ?? 5000);
