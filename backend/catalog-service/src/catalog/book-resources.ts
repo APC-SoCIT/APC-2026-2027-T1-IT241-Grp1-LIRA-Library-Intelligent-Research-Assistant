@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { BookResource, ResourceFormat, ResourceMetadata } from './resource.types';
 
 export const resourceMediaTypes: Record<Exclude<ResourceFormat, 'unknown'>, string> = {
-  pdf: 'application/pdf', epub: 'application/epub+zip', html: 'text/html', text: 'text/plain',
+  pdf: 'application/pdf', epub: 'application/epub+zip', html: 'text/html', text: 'text/plain', image: 'image/*',
 };
 
 export function mediaTypeFormat(value: string): ResourceFormat {
@@ -12,6 +12,7 @@ export function mediaTypeFormat(value: string): ResourceFormat {
     case 'epub': case 'application/epub+zip': return 'epub';
     case 'html': case 'htm': case 'text/html': case 'application/xhtml+xml': return 'html';
     case 'txt': case 'text': case 'plain text': case 'text/plain': return 'text';
+    case 'image/jpeg': case 'image/png': case 'image/webp': case 'image/gif': return 'image';
     default: return 'unknown';
   }
 }
@@ -50,7 +51,7 @@ export function buildBookResources(metadata: ResourceMetadata[] = [], legacyUrl?
       if (recognized.size === 0 && mimeTypes.length === 1) mediaType = mimeTypes[0];
     } else {
       try {
-        const extension = new URL(url).pathname.match(/\.(pdf|epub|html?|txt|text)(?:\.(?:utf-8|images|noimages))?$/i)?.[1];
+      const extension = new URL(url).pathname.match(/\.(pdf|epub|html?|txt|text|jpe?g|png|webp|gif)(?:\.(?:utf-8|images|noimages))?$/i)?.[1];
         if (extension) format = mediaTypeFormat(extension);
       } catch { /* Invalid URLs remain visible but cannot be retrieved. */ }
     }

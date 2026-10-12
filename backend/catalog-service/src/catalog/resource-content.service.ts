@@ -266,13 +266,17 @@ export class ResourceContentService {
     const type = typeof upstreamType === 'string' ? upstreamType.split(';')[0].trim().toLowerCase() : '';
     const upstreamFormat = mediaTypeFormat(type);
     const generic = !type || type === 'application/octet-stream' || type === 'binary/octet-stream';
+    const detectedBinary = this.binaryFormat(bytes);
+    const detectedImage = this.imageMediaType(bytes);
     const format: ResourceFormat = resource.format === 'unknown'
-      ? (upstreamFormat !== 'unknown' ? upstreamFormat : this.binaryFormat(bytes)) : resource.format;
+      ? (upstreamFormat !== 'unknown' ? upstreamFormat : detectedBinary !== 'unknown' ? detectedBinary : detectedImage ? 'image' : 'unknown') : resource.format;
     if (!bytes.length || format === 'unknown' || (!generic && upstreamFormat !== format)) {
       throw new BadGatewayException('Resource returned an unexpected media type');
     }
     if (format === 'pdf' || format === 'epub') {
       if (this.binaryFormat(bytes) !== format) throw new BadGatewayException('Resource returned invalid binary content');
+    } else if (format === 'image') {
+      if (!this.imageMediaType(bytes)) throw new BadGatewayException('Resource returned invalid image content');
     } else {
       // An unclassified Koha attachment returning HTML often means an OPAC
       // login/error page. Only explicit HTML/text attachment metadata permits it.
@@ -281,6 +285,7 @@ export class ResourceContentService {
         throw new BadGatewayException('Resource returned unexpected text content');
       }
     }
+    if (format === 'image') return this.imageMediaType(bytes) ?? 'application/octet-stream';
     return resourceMediaTypes[format];
   }
 
@@ -295,6 +300,14 @@ export class ResourceContentService {
     return 'unknown';
   }
 
+  private imageMediaType(bytes: Buffer): string | undefined {
+    if (bytes.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))) return 'image/jpeg';
+    if (bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'image/png';
+    if (bytes.subarray(0, 6).toString('ascii') === 'GIF87a' || bytes.subarray(0, 6).toString('ascii') === 'GIF89a') return 'image/gif';
+    if (bytes.subarray(0, 4).toString('ascii') === 'RIFF' && bytes.subarray(8, 12).toString('ascii') === 'WEBP') return 'image/webp';
+    return undefined;
+  }
+
   private filename(disposition: unknown, fallback: string, mediaType: string): string {
     let name = '';
     if (typeof disposition === 'string') {
@@ -302,7 +315,7 @@ export class ResourceContentService {
       try { if (encoded) name = decodeURIComponent(encoded); } catch { /* Use the ordinary filename. */ }
       if (!name) name = disposition.match(/filename\s*=\s*(?:"([^"]*)"|([^;]*))/i)?.slice(1).find(Boolean)?.trim() ?? '';
     }
-    const extension = mediaType === 'text/plain' ? 'txt' : mediaTypeFormat(mediaType);
+    const extension = mediaType === 'text/plain' ? 'txt' : mediaTypeFormat(mediaType) === 'image' ? 'img' : mediaTypeFormat(mediaType);
     const clean = (name || fallback).split(/[/\\]/).pop()?.normalize('NFKD')
       .replace(/[^a-zA-Z0-9 ._-]/g, '_').replace(/^\.+|\.+$/g, '').trim().slice(0, 120) || 'resource';
     const stem = clean.replace(/\.(?:pdf|epub|html?|txt|text)$/i, '');

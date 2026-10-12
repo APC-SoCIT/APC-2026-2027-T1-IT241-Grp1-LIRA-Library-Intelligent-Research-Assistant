@@ -6,6 +6,12 @@ export interface AppConfiguration {
   corsOrigins: string[];
   koha: {
     baseUrl: string;
+    uploadUrl: string;
+    uploadCategory: string;
+    uploadCookie: string;
+    uploadCsrfToken: string;
+    uploadUser: string;
+    uploadPassword: string;
     user: string;
     password: string;
     timeoutMs: number;
@@ -35,6 +41,12 @@ export const configuration = registerAs('app', (): AppConfiguration => ({
     .filter(Boolean),
   koha: {
     baseUrl: (process.env.KOHA_BASE_URL ?? '').replace(/\/$/, ''),
+    uploadUrl: (process.env.KOHA_UPLOAD_URL ?? '').replace(/\/$/, ''),
+    uploadCategory: process.env.KOHA_UPLOAD_CATEGORY ?? 'LIRA',
+    uploadCookie: process.env.KOHA_UPLOAD_COOKIE ?? '',
+    uploadCsrfToken: process.env.KOHA_UPLOAD_CSRF_TOKEN ?? '',
+    uploadUser: process.env.KOHA_UPLOAD_USER ?? '',
+    uploadPassword: process.env.KOHA_UPLOAD_PASSWORD ?? '',
     user: process.env.KOHA_API_USER ?? '',
     password: process.env.KOHA_API_PASSWORD ?? '',
     timeoutMs: Number(process.env.KOHA_TIMEOUT_MS ?? 5000),

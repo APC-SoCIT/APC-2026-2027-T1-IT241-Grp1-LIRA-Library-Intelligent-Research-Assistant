@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { FiBookOpen } from 'react-icons/fi'
+import { resolveCatalogAssetUrl } from '../services/catalogService'
 
 function getCoverSources(book) {
   const sources = []
+  if (book.coverUrl) sources.push(resolveCatalogAssetUrl(book.coverUrl))
   const isbn = book.isbn?.match(/\b(?:97[89])?\d{9}[\dX]\b/i)?.[0]
   if (isbn) {
     sources.push(`https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg?default=false`)
@@ -21,7 +23,7 @@ export default function BookCover({ book, className = '' }) {
 
   useEffect(() => {
     setSourceIndex(0)
-  }, [book.id, book.isbn, book.url])
+  }, [book.id, book.isbn, book.url, book.coverUrl])
 
   if (sources.length === 0 || sourceIndex >= sources.length) {
     return (

@@ -2,6 +2,15 @@ const catalogApiUrl = (
   import.meta.env.VITE_CATALOG_API_URL || 'http://localhost:3001/api/catalog'
 ).replace(/\/+$/, '')
 
+export function resolveCatalogAssetUrl(value) {
+  if (!value) return ''
+  try {
+    return new URL(value, `${catalogApiUrl}/`).href
+  } catch {
+    return value
+  }
+}
+
 import { supabase } from './supabaseClient'
 
 async function request(path, options = {}) {
@@ -93,6 +102,18 @@ export async function updateCatalogBook(id, record) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(record),
   })
+}
+
+export async function uploadCatalogResource(id, file) {
+  const form = new FormData()
+  form.append('file', file)
+  return authenticatedRequest(`/books/${encodeURIComponent(id)}/resources/upload`, { method: 'POST', body: form })
+}
+
+export async function uploadCatalogCover(id, file) {
+  const form = new FormData()
+  form.append('file', file)
+  return authenticatedRequest(`/books/${encodeURIComponent(id)}/cover/upload`, { method: 'POST', body: form })
 }
 
 export async function deleteCatalogBook(id) {

@@ -19,6 +19,9 @@ export interface Book {
   categories?: string[];
   series: string | null;
   url: string | null;
+  coverUrl?: string | null;
+  /** Original Koha URL retained for MARC writes; coverUrl is the browser proxy. */
+  coverSourceUrl?: string | null;
   resources: BookResource[];
 }
 

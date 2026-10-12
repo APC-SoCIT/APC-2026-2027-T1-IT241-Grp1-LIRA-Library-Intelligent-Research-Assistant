@@ -104,11 +104,16 @@ PowerShell smoke checks are documented in [RESOURCE_API.md](RESOURCE_API.md).
 - `GET /api/catalog/books?page=1&limit=20` lists normalized books.
 - `GET /api/catalog/books/:id` returns one normalized book. Invalid IDs return HTTP 400; missing records return HTTP 404.
 - `GET /api/catalog/books/:id/resources/:resourceId/content` returns verified raw PDF/EPUB/HTML/text bytes for an approved resource from that book.
+- `POST /api/catalog/books/:id/resources/upload` uploads a PDF/EPUB to Koha for a librarian and returns its public OPAC URL. Send `multipart/form-data` with a `file` field; the librarian client immediately saves the returned resource to the record.
 - `GET /api/catalog/books/:id/content` returns the existing HTML/text reader JSON response.
 - `GET /api/catalog/search?q=programming&page=1&limit=20&mode=keyword` searches Koha by general title/author/ISBN query. `mode=semantic` searches the vector index; `mode=hybrid` combines both ranked lists. Keyword is the default.
 - `POST /api/catalog/semantic/reindex` refreshes all catalog embeddings. Requires the `x-semantic-index-key` header and complete semantic configuration.
 
 Missing Koha fields remain `null`. The service does not guess or generate metadata.
+
+### PDF/EPUB uploads
+
+The upload route logs into Koha's staff interface, obtains a short-lived session and CSRF token, then posts the exact multipart request used by Koha's own `file-upload.js` (`uploadfile`, `public=1`, and `category=KOHA_UPLOAD_CATEGORY`). It converts the returned file hash into the OPAC `opac-retrieve-file.pl?id=...` URL. REST catalog edits use `KOHA_API_USER`/`KOHA_API_PASSWORD`; uploads use those values by default, or `KOHA_UPLOAD_USER`/`KOHA_UPLOAD_PASSWORD` when the REST password is an API key rather than the staff user's password. `KOHA_UPLOAD_COOKIE` and `KOHA_UPLOAD_CSRF_TOKEN` are optional overrides for a pre-existing staff session; do not commit them. The Koha account must be permitted to upload general files, and the configured upload category must exist in Koha's `UPLOAD` authorized-value category.
 
 ## Testing
 

@@ -1,20 +1,27 @@
 import {
   FiArrowLeft, FiBookOpen, FiChevronLeft, FiChevronRight,
-  FiChevronsLeft, FiChevronsRight, FiExternalLink, FiMaximize,
+  FiChevronsLeft, FiChevronsRight, FiMaximize,
   FiMinimize, FiSearch, FiList, FiBookmark, FiZoomIn, FiZoomOut,
   FiVolume2, FiVolumeX, FiPlay, FiPause, FiSquare, FiMonitor
 } from 'react-icons/fi'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import ReadingListPicker from '../components/ReadingListPicker'
-import { getCatalogBook, getCatalogBookContent } from '../services/catalogService'
+import { getCatalogBook, getCatalogBookContent, resolveCatalogAssetUrl } from '../services/catalogService'
 import { listBookmarks, recordCatalogBookView, recordReading, removeBookmark } from '../services/studentLibraryService'
 import { adaptCatalogBook } from '../utils/catalogCategories'
 
 function getReadingUrl(book) {
+  const attached = book?.resources?.find((resource) => resource.contentUrl && ['html', 'text', 'pdf', 'epub'].includes(resource.format))
+  if (attached) return resolveCatalogAssetUrl(attached.contentUrl)
   const value = book?.url || book?.online
   if (!value || value === 'No digital copy available') return null
   return value.split('|')[0].trim()
+}
+
+function getReadingFormat(book) {
+  return book?.resources?.find((resource) => resolveCatalogAssetUrl(resource.contentUrl) === getReadingUrl(book))?.format || 'html'
 }
 
 function parseBookElements(html, baseUrl) {
@@ -176,6 +183,7 @@ export default function ReaderPage() {
   const [book, setBook] = useState(null)
   const [parsedElements, setParsedElements] = useState(null)
   const [pages, setPages] = useState([])
+  const [pdfPageCount, setPdfPageCount] = useState(0)
   const [pageIndex, setPageIndex] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [error, setError] = useState('')
@@ -236,9 +244,17 @@ export default function ReaderPage() {
   }
 
   const readingUrl = getReadingUrl(book)
+  const readingFormat = getReadingFormat(book)
+  const totalPages = readingFormat === 'pdf' ? pdfPageCount : pages.length
 
   useEffect(() => {
     if (!readingUrl) return undefined
+    if (readingFormat === 'pdf' || readingFormat === 'epub') {
+      setParsedElements([])
+      setPdfPageCount(0)
+      if (book) Promise.allSettled([recordCatalogBookView(book), recordReading(book)])
+      return undefined
+    }
     let active = true
     getCatalogBookContent(bookId)
       .then(async ({ content, resolvedUrl }) => {
@@ -261,7 +277,7 @@ export default function ReaderPage() {
         console.error('Could not load book content:', requestError)
       })
     return () => { active = false }
-  }, [readingUrl, bookId, book])
+  }, [readingUrl, readingFormat, bookId, book])
 
   // DOM-based pagination: measure real pixel heights
   useEffect(() => {
@@ -405,16 +421,17 @@ export default function ReaderPage() {
     if (isFlipping) return
     setFlipDirection(direction)
     setIsFlipping(true)
-    setTimeout(() => {
+    const flipDuration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 520
+    window.setTimeout(() => {
       if (direction === 'right') {
-        setPageIndex((v) => Math.min(Math.max(0, pages.length - 2), v + 2))
+        setPageIndex((v) => Math.min(Math.max(0, totalPages - 2), v + 2))
       } else {
         setPageIndex((v) => Math.max(0, v - 2))
       }
       setIsFlipping(false)
       setFlipDirection(null)
-    }, 800)
-  }, [isFlipping, pages.length])
+    }, flipDuration)
+  }, [isFlipping, totalPages])
 
   // Focus search input when opened
   useEffect(() => {
@@ -484,11 +501,6 @@ export default function ReaderPage() {
           </div>
         </div>
         <div className="rdr-header-actions">
-          {readingUrl && (
-            <a className="rdr-icon-btn" href={readingUrl} target="_blank" rel="noreferrer" title="Open in new tab" aria-label="Open in new tab">
-              <FiExternalLink />
-            </a>
-          )}
           <button type="button" className="rdr-icon-btn" onClick={toggleFullscreen} title="Toggle fullscreen" aria-label="Toggle fullscreen">
             {isFullscreen ? <FiMinimize /> : <FiMaximize />}
           </button>
@@ -585,6 +597,20 @@ export default function ReaderPage() {
             <div className="rdr-loading-spinner" />
             <p>Preparing the book pages...</p>
           </div>
+        ) : readingFormat === 'pdf' ? (
+          <PdfBookSpread
+            key={readingUrl}
+            url={readingUrl}
+            title={book?.title || 'PDF book'}
+            pageIndex={pageIndex}
+            bookHeight={bookHeight}
+            bookSize={bookSize}
+            onPageCount={setPdfPageCount}
+            onError={setError}
+            onTurnPage={animatedTurn}
+          />
+        ) : readingFormat === 'epub' ? (
+          <iframe className="rdr-binary-viewer" src={readingUrl} title={`${book.title} EPUB`} />
         ) : viewMode === 'scroll' ? (
           <div className="rdr-scroll-view" style={{ fontSize: `${fontSize}px` }}>
             <PageContent blocks={parsedElements} searchQuery={searchQuery} />
@@ -665,14 +691,18 @@ export default function ReaderPage() {
             <FiChevronLeft />
           </button>
           <span className="rdr-page-indicator">
-            {pages.length > 0
-              ? `${pageIndex + 1}–${Math.min(pageIndex + 2, pages.length)} / ${pages.length}`
+            {readingFormat === 'epub'
+              ? 'EPUB document'
+              : readingFormat === 'pdf'
+              ? (totalPages > 0 ? `${pageIndex + 1}–${Math.min(pageIndex + 2, totalPages)} / ${totalPages}` : 'Loading PDF pages...')
+              : totalPages > 0
+              ? `${pageIndex + 1}–${Math.min(pageIndex + 2, totalPages)} / ${totalPages}`
               : parsedElements ? 'Preparing pages...' : 'Loading pages...'}
           </span>
-          <button type="button" className="rdr-nav-btn" onClick={() => animatedTurn('right')} disabled={pageIndex + 2 >= pages.length} title="Next page">
+          <button type="button" className="rdr-nav-btn" onClick={() => animatedTurn('right')} disabled={pageIndex + 2 >= totalPages} title="Next page">
             <FiChevronRight />
           </button>
-          <button type="button" className="rdr-nav-btn" onClick={() => setPageIndex(Math.max(0, pages.length - 2))} disabled={pageIndex + 2 >= pages.length} title="Last page">
+          <button type="button" className="rdr-nav-btn" onClick={() => setPageIndex(Math.max(0, totalPages - 2))} disabled={pageIndex + 2 >= totalPages} title="Last page">
             <FiChevronsRight />
           </button>
         </div>
@@ -737,6 +767,122 @@ export default function ReaderPage() {
       />}
     </main>
   )
+}
+
+function PdfBookSpread({ url, title, pageIndex, bookHeight, bookSize, onPageCount, onError, onTurnPage }) {
+  const [document, setDocument] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    let task
+    setLoading(true)
+    setLoadError('')
+    import('pdfjs-dist').then((pdfjsLib) => {
+      if (!active) return
+      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
+      task = pdfjsLib.getDocument({ url, withCredentials: false })
+      return task.promise
+    }).then((loaded) => {
+      if (!loaded || !active) { loaded?.destroy(); return }
+      setDocument(loaded)
+      onPageCount(loaded.numPages)
+      setLoading(false)
+    }).catch((error) => {
+      if (!active) return
+      const message = 'This PDF could not be opened. Please try uploading it again or contact a librarian.'
+      setLoadError(message)
+      setLoading(false)
+      onPageCount(0)
+      console.error('Could not open PDF in book reader:', error)
+    })
+    return () => {
+      active = false
+      setDocument(null)
+      task?.destroy()
+    }
+  }, [onPageCount, url])
+
+  return (
+    <div className="rdr-book-wrapper">
+      <div className={`rdr-book-container rdr-size-${bookSize}`} style={{ height: `${bookHeight}vh` }}>
+        <div className="rdr-book-spine" />
+        <div className="rdr-book-spread">
+          {[pageIndex + 1, pageIndex + 2].map((pageNumber, index) => (
+            <div
+              key={pageNumber}
+              className={`rdr-paper ${index === 0 ? 'rdr-paper-left' : 'rdr-paper-right'} rdr-pdf-paper`}
+              role="group"
+              aria-label={`${title}, page ${pageNumber}`}
+              onClick={() => onTurnPage(index === 0 ? 'left' : 'right')}
+            >
+              {document && pageNumber <= document.numPages && (
+                <PdfPageCanvas pdf={document} pageNumber={pageNumber} onError={onError} />
+              )}
+              {document && pageNumber <= document.numPages && <span className="rdr-page-number">{pageNumber}</span>}
+            </div>
+          ))}
+        </div>
+        {(loading || loadError) && (
+          <div className="rdr-pdf-status" role={loadError ? 'alert' : 'status'}>
+            {loading ? <><div className="rdr-loading-spinner" /><span>Loading PDF pages…</span></> : loadError}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function PdfPageCanvas({ pdf, pageNumber, onError }) {
+  const containerRef = useRef(null)
+  const canvasRef = useRef(null)
+  const [size, setSize] = useState({ width: 0, height: 0 })
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return undefined
+    const observer = new ResizeObserver(([entry]) => {
+      setSize({ width: entry.contentRect.width, height: entry.contentRect.height })
+    })
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas || !size.width || !size.height) return undefined
+    let active = true
+    let renderTask
+    pdf.getPage(pageNumber).then((page) => {
+      if (!active) return
+      const baseViewport = page.getViewport({ scale: 1 })
+      const scale = Math.min(size.width / baseViewport.width, size.height / baseViewport.height)
+      const viewport = page.getViewport({ scale })
+      const ratio = Math.min(window.devicePixelRatio || 1, 2)
+      canvas.width = Math.max(1, Math.floor(viewport.width * ratio))
+      canvas.height = Math.max(1, Math.floor(viewport.height * ratio))
+      canvas.style.width = `${viewport.width}px`
+      canvas.style.height = `${viewport.height}px`
+      const context = canvas.getContext('2d', { alpha: false })
+      if (!context) throw new Error('Canvas is unavailable')
+      renderTask = page.render({
+        canvasContext: context,
+        viewport,
+        transform: ratio === 1 ? null : [ratio, 0, 0, ratio, 0, 0],
+        background: '#fffdf7',
+      })
+      return renderTask.promise
+    }).catch((error) => {
+      if (active && error?.name !== 'RenderingCancelledException') onError('A PDF page could not be rendered.')
+    })
+    return () => {
+      active = false
+      renderTask?.cancel()
+    }
+  }, [onError, pageNumber, pdf, size.height, size.width])
+
+  return <div ref={containerRef} className="rdr-pdf-page-content"><canvas ref={canvasRef} className="rdr-pdf-canvas" aria-label={`PDF page ${pageNumber}`} /></div>
 }
 
 function PageContent({ blocks = [], searchQuery = '' }) {

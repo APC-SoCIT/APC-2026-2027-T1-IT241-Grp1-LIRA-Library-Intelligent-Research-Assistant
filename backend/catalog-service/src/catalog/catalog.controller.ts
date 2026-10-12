@@ -1,4 +1,5 @@
-import { BadRequestException, Body, Controller, Delete, Get, Headers, Param, ParseIntPipe, Post, Put, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Headers, Param, ParseIntPipe, Post, Put, Query, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import { once } from 'node:events';
 import { finished } from 'node:stream/promises';
@@ -100,6 +101,28 @@ export class CatalogController {
   @UseGuards(LibrarianGuard)
   createBook(@Body() record: CatalogWriteDto) {
     return this.catalog.createBook(record);
+  }
+
+  @Post('books/:id/resources/upload')
+  @UseGuards(LibrarianGuard)
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 512_000_000 } }))
+  uploadResource(
+    @Param('id', new ParseIntPipe({ errorHttpStatusCode: 400 })) id: number,
+    @UploadedFile() file?: { buffer: Buffer; originalname: string; mimetype: string },
+  ) {
+    if (id < 1) throw new BadRequestException('Book ID must be a positive integer');
+    return this.catalog.uploadResource(id, file as { buffer: Buffer; originalname: string; mimetype: string });
+  }
+
+  @Post('books/:id/cover/upload')
+  @UseGuards(LibrarianGuard)
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 20_000_000 } }))
+  uploadCover(
+    @Param('id', new ParseIntPipe({ errorHttpStatusCode: 400 })) id: number,
+    @UploadedFile() file?: { buffer: Buffer; originalname: string; mimetype: string },
+  ) {
+    if (id < 1) throw new BadRequestException('Book ID must be a positive integer');
+    return this.catalog.uploadCover(id, file as { buffer: Buffer; originalname: string; mimetype: string });
   }
 
   @Put('books/:id')

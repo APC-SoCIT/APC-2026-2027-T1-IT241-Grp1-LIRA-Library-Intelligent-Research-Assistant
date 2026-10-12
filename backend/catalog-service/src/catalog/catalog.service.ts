@@ -8,6 +8,8 @@ import { CatalogWriteDto } from './dto/catalog-write.dto';
 import { buildBookResources } from './book-resources';
 import { ResourceContentService } from './resource-content.service';
 import { ResourceStream } from './resource.types';
+import { ConfigService } from '@nestjs/config';
+import { defaultOpacUrl } from './resource-policy';
 
 @Injectable()
 export class CatalogService {
@@ -18,6 +20,7 @@ export class CatalogService {
     private readonly koha: KohaClient,
     private readonly semantic: SemanticSearchService,
     private readonly resourceContent: ResourceContentService,
+    private readonly config?: ConfigService,
   ) {}
 
   async listBooks(page: number, limit: number): Promise<BookListResponse> {
@@ -75,6 +78,42 @@ export class CatalogService {
     return this.resourceContent.openStream(resource, book.title, signal);
   }
 
+  async uploadResource(id: number, file: { buffer: Buffer; originalname: string; mimetype: string }): Promise<{ url: string; format: 'pdf' | 'epub'; mediaType: string; label: string }> {
+    try {
+      await this.getBook(id);
+      if (!file?.buffer?.length) throw new BadRequestException('A PDF or EPUB file is required');
+      if (file.buffer.length > this.resourceContent.maxBytes) throw new HttpException('File exceeds the transfer limit', HttpStatus.PAYLOAD_TOO_LARGE);
+      const format = this.binaryFormat(file.buffer);
+      if (format === 'unknown') throw new BadRequestException('The uploaded file is not a valid PDF or EPUB');
+      const mediaType = format === 'pdf' ? 'application/pdf' : 'application/epub+zip';
+      const hash = await this.koha.uploadFile(file.buffer, file.originalname || `resource.${format}`, mediaType);
+      const opacBase = this.config?.get<string>('app.resources.opacBaseUrl')
+        ?? defaultOpacUrl(this.config?.get<string>('app.koha.baseUrl') ?? 'http://localhost:8081');
+      const url = new URL('/cgi-bin/koha/opac-retrieve-file.pl', opacBase);
+      url.searchParams.set('id', hash);
+      const stem = (file.originalname || format.toUpperCase()).replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9 ._-]/g, '_').trim();
+      return { url: url.href, format, mediaType, label: stem || `${format.toUpperCase()} resource` };
+    } catch (error: unknown) {
+      if (error instanceof HttpException) throw error;
+      throw this.mapKohaError(error);
+    }
+  }
+
+  async uploadCover(id: number, file: { buffer: Buffer; originalname: string; mimetype: string }): Promise<{ url: string; mediaType: string; label: string }> {
+    try {
+      await this.getBook(id);
+      const mediaType = this.imageType(file.buffer);
+      if (!mediaType) throw new BadRequestException('The uploaded cover must be a valid JPEG, PNG, or WebP image');
+      const hash = await this.koha.uploadFile(file.buffer, file.originalname || 'cover', mediaType);
+      const opacBase = this.config?.get<string>('app.resources.opacBaseUrl') ?? defaultOpacUrl(this.config?.get<string>('app.koha.baseUrl') ?? 'http://localhost:8081');
+      const url = new URL('/cgi-bin/koha/opac-retrieve-file.pl', opacBase); url.searchParams.set('id', hash);
+      return { url: url.href, mediaType, label: 'Cover image' };
+    } catch (error: unknown) {
+      if (error instanceof HttpException) throw error;
+      throw this.mapKohaError(error);
+    }
+  }
+
   async createBook(record: CatalogWriteDto): Promise<Book> {
     try {
       return this.normalize(await this.koha.createBiblio(this.toKohaRecord(record)));
@@ -85,7 +124,10 @@ export class CatalogService {
 
   async updateBook(id: number, record: CatalogWriteDto): Promise<Book> {
     try {
-      return this.normalize(await this.koha.updateBiblio(id, this.toKohaRecord(record)));
+      await this.koha.updateBiblio(id, this.toKohaRecord(record));
+      // Koha's write response may omit MARC 856 fields. Re-read the record so
+      // newly attached PDF/EPUB/cover URLs are immediately reflected in LIRA.
+      return this.normalize(await this.koha.getBiblio(id));
     } catch (error: unknown) {
       throw this.mapKohaError(error);
     }
@@ -198,6 +240,9 @@ export class CatalogService {
       throw new ServiceUnavailableException('Catalog service received an invalid book record');
     }
 
+    const resources = this.publicResources(id, buildBookResources(record.resources, record.url));
+    const coverSource = this.stringOrNull(record.cover_url);
+    const coverResource = coverSource ? resources.find((resource) => resource.sourceUrl === coverSource) : undefined;
     return {
       id,
       title: this.stringOrNull(record.title),
@@ -217,7 +262,9 @@ export class CatalogService {
       categories: this.stringList(record.categories),
       series: this.stringOrNull(record.series_title ?? record.collection_title),
       url: this.stringOrNull(record.url),
-      resources: this.publicResources(id, buildBookResources(record.resources, record.url)),
+      resources,
+      ...(coverSource ? { coverUrl: coverResource?.contentUrl ?? coverSource } : {}),
+      ...(coverSource ? { coverSourceUrl: coverSource } : {}),
     };
   }
 
@@ -246,7 +293,14 @@ export class CatalogService {
       .join(' : '), ' ', '1');
     this.addField(fields, '041', record.language, '0', ' ');
     this.addField(fields, '520', record.description, ' ', ' ');
-    this.addField(fields, '856', record.url, '4', '0', 'u');
+    const resources = record.resources?.length ? record.resources : (record.url ? [{ url: record.url }] : []);
+    for (const resource of resources) {
+      const field: Record<string, unknown> = { ind1: '4', ind2: '0', subfields: [{ u: resource.url }] };
+      if ('format' in resource && resource.format) (field.subfields as Array<Record<string, string>>).push({ q: resource.format });
+      if ('label' in resource && resource.label) (field.subfields as Array<Record<string, string>>).push({ y: resource.label });
+      fields.push({ '856': field });
+    }
+    if (record.coverUrl) fields.push({ '856': { ind1: '4', ind2: '2', subfields: [{ '3': 'Cover image' }, { u: record.coverUrl }, { y: 'Cover image' }] } });
     this.addField(fields, '942', record.itemType, ' ', ' ', 'c');
 
     for (const category of record.categories ?? []) this.addField(fields, '650', category, ' ', '4');
@@ -256,6 +310,23 @@ export class CatalogService {
       leader: '00000nam a2200000 i 4500',
       fields,
     };
+  }
+
+  private binaryFormat(bytes: Buffer): 'pdf' | 'epub' | 'unknown' {
+    if (bytes.subarray(0, 5).equals(Buffer.from('%PDF-'))) return 'pdf';
+    if (bytes.length >= 58 && bytes.readUInt32LE(0) === 0x04034b50 && bytes.readUInt16LE(8) === 0
+      && (bytes.readUInt16LE(6) & 1) === 0 && bytes.readUInt32LE(18) === 20 && bytes.readUInt32LE(22) === 20
+      && bytes.readUInt16LE(26) === 8 && bytes.readUInt16LE(28) === 0
+      && bytes.subarray(30, 38).toString('ascii') === 'mimetype'
+      && bytes.subarray(38, 58).toString('ascii') === 'application/epub+zip') return 'epub';
+    return 'unknown';
+  }
+
+  private imageType(bytes: Buffer): string | null {
+    if (bytes.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))) return 'image/jpeg';
+    if (bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) return 'image/png';
+    if (bytes.subarray(0, 4).toString('ascii') === 'RIFF' && bytes.subarray(8, 12).toString('ascii') === 'WEBP') return 'image/webp';
+    return null;
   }
 
   private addField(
@@ -278,11 +349,12 @@ export class CatalogService {
 
     switch (error.kind) {
       case 'not-found': return new NotFoundException('Book not found');
-      case 'bad-request': return new BadRequestException('Catalog request was rejected');
-      case 'unauthorized': return new UnauthorizedException('Catalog integration is not authorized');
-      case 'forbidden': return new UnauthorizedException('Catalog integration is not authorized');
+      case 'bad-request': return new BadRequestException(error.message);
+      case 'unauthorized': return new UnauthorizedException(error.message);
+      case 'forbidden': return new UnauthorizedException(error.message);
       case 'rate-limit': return new HttpException('Catalog service rate limit exceeded', HttpStatus.TOO_MANY_REQUESTS);
-      default: return new ServiceUnavailableException('Catalog service temporarily unavailable');
+      case 'unavailable': return new ServiceUnavailableException(error.message);
+      default: return new ServiceUnavailableException(error.message || 'Catalog service temporarily unavailable');
     }
   }
 

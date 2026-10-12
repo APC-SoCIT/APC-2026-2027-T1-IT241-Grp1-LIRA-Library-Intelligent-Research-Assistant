@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream';
 
-export type ResourceFormat = 'pdf' | 'epub' | 'html' | 'text' | 'unknown';
+export type ResourceFormat = 'pdf' | 'epub' | 'html' | 'text' | 'image' | 'unknown';
 
 /** Metadata for one 856 $u; $q/$y remain associated with their own field. */
 export interface ResourceMetadata {
