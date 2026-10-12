@@ -1,0 +1,88 @@
+{
+  "/patrons/{patron_id}/lists": {
+    "get": {
+      "x-mojo-to": "Com::Lira::ReadingLists::Controller#list_lists",
+      "operationId": "liraListPatronLists",
+      "tags": ["LIRA Reading Lists"],
+      "parameters": [{"name":"patron_id","in":"path","required":true,"type":"integer","description":"Koha patron ID"}],
+      "x-koha-authorization": {"permissions":{"borrowers":"edit_borrowers"}},
+      "produces": ["application/json"],
+      "responses": {"200":{"description":"Patron private lists"},"400":{"description":"Invalid patron ID"},"404":{"description":"Patron not found"},"403":{"description":"Access forbidden"}}
+    },
+    "post": {
+      "x-mojo-to": "Com::Lira::ReadingLists::Controller#create_list",
+      "operationId": "liraCreatePatronList",
+      "tags": ["LIRA Reading Lists"],
+      "parameters": [{"name":"patron_id","in":"path","required":true,"type":"integer","description":"Koha patron ID"},{"name":"body","in":"body","required":true,"schema":{"type":"object","required":["name"],"properties":{"name":{"type":"string","maxLength":60}}}}],
+      "x-koha-authorization": {"permissions":{"borrowers":"edit_borrowers"}},
+      "consumes": ["application/json"],"produces": ["application/json"],
+      "responses": {"201":{"description":"List created"},"400":{"description":"Invalid request"},"403":{"description":"Access forbidden"},"404":{"description":"Patron not found"},"409":{"description":"List name already exists"}}
+    }
+  },
+  "/patrons/{patron_id}/lists/{list_id}": {
+    "put": {
+      "x-mojo-to": "Com::Lira::ReadingLists::Controller#rename_list",
+      "operationId": "liraRenamePatronList",
+      "tags": ["LIRA Reading Lists"],
+      "parameters": [{"name":"patron_id","in":"path","required":true,"type":"integer","description":"Koha patron ID"},{"name":"list_id","in":"path","required":true,"type":"integer","description":"Koha list ID"},{"name":"body","in":"body","required":true,"schema":{"type":"object","required":["name"],"properties":{"name":{"type":"string","maxLength":60}}}}],
+      "x-koha-authorization": {"permissions":{"borrowers":"edit_borrowers"}},"consumes":["application/json"],"produces":["application/json"],
+      "responses":{"200":{"description":"List renamed"},"400":{"description":"Invalid request"},"403":{"description":"Access forbidden"},"404":{"description":"List not found"},"409":{"description":"List name already exists"}}
+    },
+    "delete": {
+      "x-mojo-to": "Com::Lira::ReadingLists::Controller#delete_list",
+      "operationId": "liraDeletePatronList",
+      "tags": ["LIRA Reading Lists"],
+      "parameters": [{"name":"patron_id","in":"path","required":true,"type":"integer","description":"Koha patron ID"},{"name":"list_id","in":"path","required":true,"type":"integer","description":"Koha list ID"}],
+      "x-koha-authorization": {"permissions":{"borrowers":"edit_borrowers"}},
+      "responses":{"204":{"description":"List deleted"},"403":{"description":"Access forbidden"},"404":{"description":"List not found"}}
+    }
+  },
+  "/patrons/{patron_id}/lists/{list_id}/items": {
+    "get": {
+      "x-mojo-to": "Com::Lira::ReadingLists::Controller#list_items",
+      "operationId": "liraListPatronListItems",
+      "tags": ["LIRA Reading Lists"],
+      "parameters": [{"name":"patron_id","in":"path","required":true,"type":"integer","description":"Koha patron ID"},{"name":"list_id","in":"path","required":true,"type":"integer","description":"Koha list ID"}],
+      "x-koha-authorization": {"permissions":{"borrowers":"edit_borrowers"}},"produces":["application/json"],
+      "responses":{"200":{"description":"List items"},"403":{"description":"Access forbidden"},"404":{"description":"List not found"}}
+    }
+  },
+  "/patrons/{patron_id}/bookmarks": {
+    "get": {
+      "x-mojo-to": "Com::Lira::ReadingLists::Controller#list_all_bookmarks",
+      "operationId": "liraListPatronBookmarks",
+      "tags": ["LIRA Reading Lists"],
+      "parameters": [{"name":"patron_id","in":"path","required":true,"type":"integer","description":"Koha patron ID"}],
+      "x-koha-authorization": {"permissions":{"borrowers":"edit_borrowers"}},"produces":["application/json"],
+      "responses":{"200":{"description":"All patron bookmarks"},"400":{"description":"Invalid patron ID"},"403":{"description":"Access forbidden"},"404":{"description":"Patron not found"}}
+    }
+  },
+  "/patrons/{patron_id}/lists/{list_id}/items/{biblio_id}": {
+    "put": {
+      "x-mojo-to": "Com::Lira::ReadingLists::Controller#add_item",
+      "operationId": "liraAddBookToPatronList",
+      "tags": ["LIRA Reading Lists"],
+      "parameters": [{"name":"patron_id","in":"path","required":true,"type":"integer","description":"Koha patron ID"},{"name":"list_id","in":"path","required":true,"type":"integer","description":"Koha list ID"},{"name":"biblio_id","in":"path","required":true,"type":"integer","description":"Koha bibliographic record ID"}],
+      "x-koha-authorization": {"permissions":{"borrowers":"edit_borrowers"}},"produces":["application/json"],
+      "responses":{"200":{"description":"Book saved"},"400":{"description":"Invalid ID"},"403":{"description":"Access forbidden"},"404":{"description":"List or book not found"}}
+    },
+    "delete": {
+      "x-mojo-to": "Com::Lira::ReadingLists::Controller#remove_item",
+      "operationId": "liraRemoveBookFromPatronList",
+      "tags": ["LIRA Reading Lists"],
+      "parameters": [{"name":"patron_id","in":"path","required":true,"type":"integer","description":"Koha patron ID"},{"name":"list_id","in":"path","required":true,"type":"integer","description":"Koha list ID"},{"name":"biblio_id","in":"path","required":true,"type":"integer","description":"Koha bibliographic record ID"}],
+      "x-koha-authorization": {"permissions":{"borrowers":"edit_borrowers"}},
+      "responses":{"204":{"description":"Book removed"},"400":{"description":"Invalid ID"},"403":{"description":"Access forbidden"},"404":{"description":"List not found"}}
+    }
+  },
+  "/patrons/{patron_id}/bookmarks/{biblio_id}": {
+    "put": {
+      "x-mojo-to": "Com::Lira::ReadingLists::Controller#move_item",
+      "operationId": "liraMovePatronBookmark",
+      "tags": ["LIRA Reading Lists"],
+      "parameters": [{"name":"patron_id","in":"path","required":true,"type":"integer","description":"Koha patron ID"},{"name":"biblio_id","in":"path","required":true,"type":"integer","description":"Koha bibliographic record ID"},{"name":"body","in":"body","required":true,"schema":{"type":"object","required":["list_id"],"properties":{"list_id":{"type":"integer"}}}}],
+      "x-koha-authorization": {"permissions":{"borrowers":"edit_borrowers"}},"consumes":["application/json"],"produces":["application/json"],
+      "responses":{"200":{"description":"Book moved"},"400":{"description":"Invalid request"},"403":{"description":"Access forbidden"},"404":{"description":"Book or list not found"}}
+    }
+  }
+}

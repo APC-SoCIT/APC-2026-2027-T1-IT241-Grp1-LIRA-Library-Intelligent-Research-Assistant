@@ -1,0 +1,279 @@
+@startuml LIRA_Use_Case_Diagram
+title APC Library Intelligent Research Assistant (LIRA)\nUse Case Diagram
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultFontName Arial
+skinparam defaultFontColor black
+skinparam defaultFontSize 16
+skinparam dpi 160
+skinparam ArrowColor black
+skinparam ActorBorderColor black
+skinparam UsecaseBorderColor black
+skinparam UsecaseBackgroundColor white
+skinparam PackageBorderColor black
+skinparam PackageBackgroundColor white
+skinparam linetype ortho
+
+actor Librarian as Librarian
+actor "Student / Faculty" as User
+actor "AI Service" as AI
+actor "External System\n(Koha ILS)" as Koha
+
+rectangle "APC Library Intelligent Research Assistant (LIRA)" {
+  usecase "UC-01\nManage E-Books\nLibrary Catalog" as UC01
+  usecase "UC-02\nView E-Books\nLibrary Catalog" as UC02
+  usecase "UC-03\nManage Chatbot" as UC03
+  usecase "UC-04\nAsk Chatbot" as UC04
+  usecase "UC-05\nManage Reports" as UC05
+  usecase "UC-06\nE-Book Recommendations" as UC06
+  usecase "UC-07\nGenerate Citation" as UC07
+  usecase "UC-08\nRetrieve E-book Summary" as UC08
+  usecase "UC-09\nSave and Organize a\nPersonal Reading List" as UC09
+  usecase "UC-10\nRead an Available\nDigital Book" as UC10
+}
+
+Librarian -- UC01
+Librarian -- UC03
+Librarian -- UC05
+User -- UC02
+User -- UC04
+User -- UC06
+User -- UC07
+User -- UC08
+User -- UC09
+User -- UC10
+Koha -- UC01
+Koha -- UC02
+AI -- UC04
+AI -- UC06
+AI -- UC07
+AI -- UC08
+
+note bottom of UC06
+Microsoft 365 sign-in and the proper role are preconditions.
+Recommendations currently use deterministic scoring;
+AI chatbot, citation, and summary features are planned.
+end note
+@enduml
+
+@startuml LIRA_Manage_Catalog_Lower_Level
+title LOW-LEVEL USE CASE: MANAGE E-BOOKS LIBRARY CATALOG\nAPC Library Intelligent Research Assistant
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultFontName Arial
+skinparam defaultFontColor black
+skinparam defaultFontSize 16
+skinparam dpi 160
+skinparam ArrowColor black
+skinparam ActorBorderColor black
+skinparam UsecaseBorderColor black
+skinparam UsecaseBackgroundColor white
+skinparam PackageBorderColor black
+skinparam PackageBackgroundColor white
+skinparam linetype ortho
+
+actor Librarian as Librarian
+actor "External System\n(Koha ILS)" as Koha
+rectangle "APC Library Intelligent Research Assistant (LIRA)" {
+  usecase "UC-01\nManage E-Books\nLibrary Catalog" as Manage
+  usecase "Create E-Book Record" as Create
+  usecase "Read / Find E-Book Record" as Read
+  usecase "Update E-Book Record" as Update
+  usecase "Delete E-Book Record" as Delete
+  usecase "Upload Cover Image" as Cover
+  usecase "Upload PDF or EPUB\nDigital Resource" as Resource
+}
+Librarian -- Manage
+Koha -- Manage
+Create ..> Manage : <<extend>>\n[Add a record]
+Read ..> Manage : <<extend>>\n[Find or inspect a record]
+Update ..> Manage : <<extend>>\n[Edit a record]
+Delete ..> Manage : <<extend>>\n[Remove a record]
+Cover ..> Create : <<extend>>\n[Optional cover]
+Cover ..> Update : <<extend>>\n[Replace cover]
+Resource ..> Create : <<extend>>\n[Optional digital file]
+Resource ..> Update : <<extend>>\n[Attach or replace file]
+note bottom of Manage
+Precondition: librarian has an eligible Microsoft 365 account,
+an authorized librarian role, and Koha permissions.
+end note
+@enduml
+
+@startuml LIRA_View_Catalog_Lower_Level
+title LOW-LEVEL USE CASE: VIEW E-BOOKS LIBRARY CATALOG\nAPC Library Intelligent Research Assistant
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultFontName Arial
+skinparam defaultFontColor black
+skinparam defaultFontSize 16
+skinparam dpi 160
+skinparam ArrowColor black
+skinparam ActorBorderColor black
+skinparam UsecaseBorderColor black
+skinparam UsecaseBackgroundColor white
+skinparam PackageBorderColor black
+skinparam PackageBackgroundColor white
+skinparam linetype ortho
+
+actor "Student / Faculty" as User
+actor "External System\n(Koha ILS)" as Koha
+actor "AI Service" as AI
+rectangle "APC Library Intelligent Research Assistant (LIRA)" {
+  usecase "UC-02\nView E-Books\nLibrary Catalog" as View
+  usecase "Search Catalog" as Search
+  usecase "Semantic Search" as Semantic
+  usecase "View E-Book Details" as Details
+  usecase "UC-06\nE-Book Recommendations" as Recommend
+  usecase "UC-07\nGenerate Citation" as Citation
+}
+User -- View
+Koha -- View
+AI -- Recommend
+AI -- Semantic
+Search ..> View : <<include>>
+Details ..> View : <<extend>>\n[Select a result]
+Recommend ..> View : <<extend>>\n[Request suggestions]
+Citation ..> Details : <<extend>>\n[Request citation]
+Semantic ..> Search : <<extend>>\n[Select semantic mode]
+note bottom of AI
+Recommendations currently use deterministic scoring.
+AI-assisted recommendation behavior is a target capability.
+Semantic search requires an indexed catalog configuration.
+end note
+@enduml
+
+@startuml LIRA_Manage_Chatbot_Lower_Level
+title LOW-LEVEL USE CASE: MANAGE CHATBOT\nAPC Library Intelligent Research Assistant
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultFontName Arial
+skinparam defaultFontColor black
+skinparam defaultFontSize 16
+skinparam dpi 160
+skinparam ArrowColor black
+skinparam ActorBorderColor black
+skinparam UsecaseBorderColor black
+skinparam UsecaseBackgroundColor white
+skinparam PackageBorderColor black
+skinparam PackageBackgroundColor white
+skinparam linetype ortho
+
+actor Librarian as Librarian
+actor "AI Service" as AI
+rectangle "APC Library Intelligent Research Assistant (LIRA)" {
+  usecase "UC-03\nManage Chatbot" as Manage
+  usecase "Maintain FAQ Answers" as FAQ
+  usecase "Manage Approved Knowledge Sources" as Sources
+  usecase "Edit Assistant Rules" as Rules
+  usecase "Preview Changes" as Preview
+  usecase "Submit for Review / Activate" as Publish
+}
+Librarian -- Manage
+AI -- Manage
+FAQ ..> Manage : <<extend>>\n[Update FAQ]
+Sources ..> Manage : <<extend>>\n[Add or update source]
+Rules ..> Manage : <<extend>>\n[Change behavior]
+Preview ..> Manage : <<extend>>\n[Check draft]
+Publish ..> Manage : <<extend>>\n[Release approved version]
+note bottom of Manage
+Planned capability. Librarian needs an authorized role;
+changes should be versioned, reviewed, and auditable.
+Microsoft 365 access is a precondition, not a use case.
+end note
+@enduml
+
+@startuml LIRA_Ask_Chatbot_Lower_Level
+title LOW-LEVEL USE CASE: ASK CHATBOT\nAPC Library Intelligent Research Assistant
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultFontName Arial
+skinparam defaultFontColor black
+skinparam defaultFontSize 16
+skinparam dpi 160
+skinparam ArrowColor black
+skinparam ActorBorderColor black
+skinparam UsecaseBorderColor black
+skinparam UsecaseBackgroundColor white
+skinparam PackageBorderColor black
+skinparam PackageBackgroundColor white
+skinparam linetype ortho
+
+actor "Student / Faculty" as User
+actor "AI Service" as AI
+actor "External System\n(Koha ILS)" as Koha
+rectangle "APC Library Intelligent Research Assistant (LIRA)" {
+  usecase "UC-04\nAsk Chatbot" as Ask
+  usecase "Answer FAQ" as FAQ
+  usecase "Retrieve E-book Summary" as Summary
+  usecase "Search Approved Sources" as Retrieve
+  usecase "Show Answer and Sources" as Show
+}
+User -- Ask
+AI -- Ask
+Koha -- Summary
+FAQ ..> Ask : <<extend>>\n[Ask a library question]
+Summary ..> Ask : <<extend>>\n[Request book summary]
+Retrieve ..> FAQ : <<include>>
+Retrieve ..> Summary : <<include>>
+Show ..> Ask : <<include>>
+note bottom of Ask
+Planned capability. The assistant UI currently indicates
+that the feature is not yet available. Microsoft 365 access
+is required where the deployed policy requires sign-in.
+end note
+@enduml
+
+@startuml LIRA_Manage_Reports_Lower_Level
+title LOW-LEVEL USE CASE: MANAGE REPORTS\nAPC Library Intelligent Research Assistant
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultFontName Arial
+skinparam defaultFontColor black
+skinparam defaultFontSize 16
+skinparam dpi 160
+skinparam ArrowColor black
+skinparam ActorBorderColor black
+skinparam UsecaseBorderColor black
+skinparam UsecaseBackgroundColor white
+skinparam PackageBorderColor black
+skinparam PackageBackgroundColor white
+skinparam linetype ortho
+
+actor Librarian as Librarian
+actor "External System\n(Koha ILS)" as Koha
+actor "Analytics Service" as Analytics
+rectangle "APC Library Intelligent Research Assistant (LIRA)" {
+  usecase "UC-05\nManage Reports" as Manage
+  usecase "Generate E-Book\nCataloging Reports" as CatalogReports
+  usecase "Generate E-Book\nUsage Report" as UsageReport
+  usecase "Set Date Range and Filters" as Filters
+  usecase "Review and Export Report" as Export
+}
+Librarian -- Manage
+Koha -- CatalogReports
+Analytics -- CatalogReports
+Analytics -- UsageReport
+CatalogReports ..> Manage : <<extend>>\n[Choose cataloging report]
+UsageReport ..> Manage : <<extend>>\n[Choose usage report]
+Filters ..> CatalogReports : <<include>>
+Filters ..> UsageReport : <<include>>
+Export ..> CatalogReports : <<extend>>\n[Export result]
+Export ..> UsageReport : <<extend>>\n[Export result]
+note bottom of Manage
+Planned capability. Requires an authorized reporting role,
+configured data sources, metric definitions, and privacy rules.
+Microsoft 365 access is a precondition, not a use case.
+end note
+@enduml

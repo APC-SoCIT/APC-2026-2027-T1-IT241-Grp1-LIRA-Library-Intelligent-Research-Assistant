@@ -36,7 +36,7 @@ function isReadingFile(resource) {
 export default function LibrarianCatalogPage() {
   const navigate = useNavigate()
   const { session, loading: authLoading, configured } = useAuth()
-  const [role, setRole] = useState(null)
+  const [role, setRole] = useState(undefined)
   const [books, setBooks] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [form, setForm] = useState(emptyBook)
@@ -64,9 +64,13 @@ export default function LibrarianCatalogPage() {
   useEffect(() => {
     if (!session) {
       setLoading(false)
+      setRole(undefined)
+      setBooks([])
       return undefined
     }
     let active = true
+    setLoading(true)
+    setRole(undefined)
     getCatalogProfileRole()
       .then((nextRole) => {
         if (!active) return
@@ -74,7 +78,11 @@ export default function LibrarianCatalogPage() {
         if (nextRole !== 'librarian') return null
         return listCatalogBooks().then((nextBooks) => { if (active) setBooks(nextBooks) })
       })
-      .catch((error) => active && setStatus({ type: 'error', message: error.message || 'Could not load the catalog.' }))
+      .catch((error) => {
+        if (!active) return
+        setRole(null)
+        setStatus({ type: 'error', message: error.message || 'Could not load the catalog.' })
+      })
       .finally(() => active && setLoading(false))
     return () => { active = false }
   }, [session])
@@ -157,13 +165,13 @@ export default function LibrarianCatalogPage() {
     catch (error) { setStatus({ type: 'error', message: error.message || 'Could not delete the catalog record.' }) } finally { setBusy(false) }
   }
 
-  if (authLoading || loading) return <main className="librarian-page"><p className="librarian-loading">Loading librarian workspace...</p></main>
+  if (authLoading || loading || (session && role === undefined)) return <main className="librarian-page librarian-loading-page"><section className="catalog-page-loader librarian-page-loader" role="status" aria-live="polite"><span className="catalog-page-spinner" aria-hidden="true" /><strong>{authLoading ? 'Checking your account' : 'Connecting to Koha'}</strong><span>{authLoading ? 'Getting your librarian workspace ready...' : 'Loading catalog records and cover details...'}</span><div className="librarian-loading-skeleton" aria-hidden="true"><i /><i /><i /></div></section></main>
   if (!configured) return <main className="librarian-page"><section className="librarian-message"><h1>Catalog management unavailable</h1><p>Configure Supabase authentication before opening the librarian workspace.</p></section></main>
   if (!session) return <main className="librarian-page"><section className="librarian-message"><h1>Sign in required</h1><p>Sign in through the catalog first, then open the librarian workspace.</p><button type="button" onClick={() => navigate('/catalog')}>Go to catalog sign in</button></section></main>
   if (role !== 'librarian') return <main className="librarian-page"><section className="librarian-message"><h1>Librarian access required</h1><p>Your account is signed in, but it does not have the librarian role.</p><button type="button" onClick={() => navigate('/catalog')}>Back to catalog</button></section></main>
 
   return <main className="librarian-page">
-    <header className="librarian-header"><div><p className="librarian-eyebrow">LIRA catalog administration</p><h1>Manage library catalog</h1><p>Create and update authoritative Koha bibliographic records.</p></div><div className="librarian-header-actions"><button type="button" onClick={() => navigate('/catalog')}><FiArrowLeft /> OPAC</button><button type="button" onClick={signOut}><FiLogOut /> Sign out</button></div></header>
+    <header className="librarian-header"><div className="librarian-header-content"><p className="librarian-eyebrow">LIRA catalog administration</p><h1>Manage library catalog</h1><p>Create and update authoritative Koha bibliographic records.</p><div className="librarian-header-stat"><FiBookOpen aria-hidden="true" /> {books.length} catalog {books.length === 1 ? 'record' : 'records'}</div></div><div className="librarian-header-art" aria-hidden="true"><FiBookOpen /></div><div className="librarian-header-actions"><button type="button" onClick={() => navigate('/catalog')}><FiArrowLeft /> OPAC</button><button type="button" onClick={signOut}><FiLogOut /> Sign out</button></div></header>
     {status.message && <p className={`librarian-status ${status.type}`}>{status.message}</p>}
     <div className="librarian-layout">
       <aside className="librarian-records"><div className="librarian-records-heading"><h2>Records <small>{filteredBooks.length}/{books.length}</small></h2><button type="button" onClick={startNew} title="New record"><FiPlus /></button></div><div className="librarian-record-tools"><label className="librarian-search"><FiSearch /><input aria-label="Search records" placeholder="Search title, author, ISBN..." value={listQuery} onChange={(event) => setListQuery(event.target.value)} /></label><label><FiFilter /> Author<select value={authorFilter} onChange={(event) => setAuthorFilter(event.target.value)}><option value="">All authors</option>{suggestions.authors.map((value) => <option key={value}>{value}</option>)}</select></label><label><FiFilter /> Language<select value={languageFilter} onChange={(event) => setLanguageFilter(event.target.value)}><option value="">All languages</option>{suggestions.languages.map((value) => <option key={value}>{value}</option>)}</select></label><label><FiFilter /> Item type<select value={itemTypeFilter} onChange={(event) => setItemTypeFilter(event.target.value)}><option value="">All item types</option>{suggestions.itemTypes.map((value) => <option key={value}>{value}</option>)}</select></label></div><div className="librarian-record-list">{filteredBooks.map((book) => <button type="button" key={book.id} className={`librarian-record ${book.id === selectedId ? 'active' : ''}`} onClick={() => selectBook(book)}><strong>{book.title || 'Untitled record'}</strong><span>{book.author || 'Unknown author'} · #{book.id}</span></button>)}{filteredBooks.length === 0 && <p className="librarian-empty">No matching records.</p>}</div></aside>

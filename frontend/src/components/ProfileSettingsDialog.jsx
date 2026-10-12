@@ -8,6 +8,7 @@ const emptyProfile = {
   last_name: '',
   suffix: '',
   school: '',
+  koha_patron_id: '',
 }
 
 const schools = [
@@ -35,6 +36,7 @@ export default function ProfileSettingsDialog({ user, onClose, onUpdated }) {
           last_name: profile.last_name || user.user_metadata?.last_name || '',
           suffix: profile.suffix || user.user_metadata?.suffix || '',
           school: profile.school || user.user_metadata?.school || '',
+          koha_patron_id: profile.koha_patron_id == null ? '' : String(profile.koha_patron_id),
         })
       })
       .catch((loadError) => {
@@ -82,6 +84,7 @@ export default function ProfileSettingsDialog({ user, onClose, onUpdated }) {
             <option value="" disabled>Select your school</option>
             {schools.map((school) => <option key={school} value={school}>{school}</option>)}
           </select></label>
+          <label>Koha patron ID <span>(optional)</span><input name="koha_patron_id" value={form.koha_patron_id} onChange={updateField} inputMode="numeric" pattern="[0-9]*" maxLength={10} placeholder="Enter your library patron ID" /></label>
           {error && <p className="reading-list-picker-error" role="alert">{error}</p>}
           <footer className="reading-list-picker-actions">
             <button type="button" className="reading-list-picker-cancel" onClick={onClose}>Cancel</button>

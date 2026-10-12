@@ -15,6 +15,9 @@ export interface AppConfiguration {
     user: string;
     password: string;
     timeoutMs: number;
+    patronCategoryId: string;
+    librarianPatronCategoryId: string;
+    patronLibraryId: string;
   };
   semantic: {
     openRouterApiKey: string;
@@ -50,6 +53,9 @@ export const configuration = registerAs('app', (): AppConfiguration => ({
     user: process.env.KOHA_API_USER ?? '',
     password: process.env.KOHA_API_PASSWORD ?? '',
     timeoutMs: Number(process.env.KOHA_TIMEOUT_MS ?? 5000),
+    patronCategoryId: process.env.KOHA_STUDENT_CATEGORY_ID ?? 'ST',
+    librarianPatronCategoryId: process.env.KOHA_LIBRARIAN_CATEGORY_ID || 'S',
+    patronLibraryId: process.env.KOHA_STUDENT_LIBRARY_ID ?? 'APC',
   },
   semantic: {
     openRouterApiKey: process.env.OPENROUTER_API_KEY ?? '',

@@ -1,6 +1,10 @@
 const catalogApiUrl = (
   import.meta.env.VITE_CATALOG_API_URL || 'http://localhost:3001/api/catalog'
 ).replace(/\/+$/, '')
+const patronsApiUrl = catalogApiUrl.replace(/\/api\/catalog$/, '/api/patrons')
+const liraApiUrl = catalogApiUrl.replace(/\/api\/catalog$/, '/api')
+const patronProvisioningByUser = new Map()
+const patronProvisionedUsers = new Set()
 
 export function resolveCatalogAssetUrl(value) {
   if (!value) return ''
@@ -13,8 +17,8 @@ export function resolveCatalogAssetUrl(value) {
 
 import { supabase } from './supabaseClient'
 
-async function request(path, options = {}) {
-  const response = await fetch(`${catalogApiUrl}${path}`, options)
+async function request(path, options = {}, baseUrl = catalogApiUrl) {
+  const response = await fetch(`${baseUrl}${path}`, options)
   if (!response.ok) {
     let message = `Catalog request failed (${response.status})`
     try {
@@ -30,7 +34,7 @@ async function request(path, options = {}) {
   return body ? JSON.parse(body) : null
 }
 
-async function authenticatedRequest(path, options = {}) {
+async function authenticatedRequest(path, options = {}, baseUrl = catalogApiUrl) {
   if (!supabase) throw new Error('Supabase is not configured.')
   const { data, error } = await supabase.auth.getSession()
   if (error) throw error
@@ -39,7 +43,7 @@ async function authenticatedRequest(path, options = {}) {
   return request(path, {
     ...options,
     headers: { ...options.headers, Authorization: `Bearer ${token}` },
-  })
+  }, baseUrl)
 }
 
 export async function listCatalogBooks() {
@@ -102,6 +106,57 @@ export async function updateCatalogBook(id, record) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(record),
   })
+}
+
+export function ensureKohaPatronAccount() {
+  if (!supabase) return Promise.reject(new Error('Supabase is not configured.'))
+  return supabase.auth.getSession().then(({ data, error }) => {
+    if (error) throw error
+    const userId = data.session?.user?.id
+    if (!userId) throw new Error('Please sign in before setting up your Koha account.')
+    if (patronProvisionedUsers.has(userId)) return { created: false }
+    if (patronProvisioningByUser.has(userId)) return patronProvisioningByUser.get(userId)
+    const request = authenticatedRequest('/ensure-koha-account', { method: 'POST' }, patronsApiUrl)
+      .then((result) => {
+        patronProvisionedUsers.add(userId)
+        return result
+      })
+      .finally(() => patronProvisioningByUser.delete(userId))
+    patronProvisioningByUser.set(userId, request)
+    return request
+  })
+}
+
+export function listKohaReadingLists() {
+  return authenticatedRequest('/lists', {}, liraApiUrl)
+}
+
+export function createKohaReadingList(name) {
+  return authenticatedRequest('/lists', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) }, liraApiUrl)
+}
+
+export function renameKohaReadingList(listId, name) {
+  return authenticatedRequest(`/lists/${encodeURIComponent(listId)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) }, liraApiUrl)
+}
+
+export function deleteKohaReadingList(listId) {
+  return authenticatedRequest(`/lists/${encodeURIComponent(listId)}`, { method: 'DELETE' }, liraApiUrl)
+}
+
+export function listKohaBookmarks() {
+  return authenticatedRequest('/lists/bookmarks', {}, liraApiUrl)
+}
+
+export function saveKohaBookmark(book, listId) {
+  return authenticatedRequest(`/lists/${encodeURIComponent(listId)}/items/${encodeURIComponent(book.id)}`, { method: 'POST' }, liraApiUrl)
+}
+
+export function moveKohaBookmark(bookId, listId) {
+  return authenticatedRequest(`/lists/bookmarks/${encodeURIComponent(bookId)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ list_id: Number(listId) }) }, liraApiUrl)
+}
+
+export function removeKohaBookmark(bookId) {
+  return authenticatedRequest(`/lists/bookmarks/${encodeURIComponent(bookId)}`, { method: 'DELETE' }, liraApiUrl)
 }
 
 export async function uploadCatalogResource(id, file) {

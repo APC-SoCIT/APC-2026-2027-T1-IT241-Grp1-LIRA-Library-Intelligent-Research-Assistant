@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { FiAlertCircle, FiCheckCircle, FiLogIn, FiLogOut, FiUserPlus } from 'react-icons/fi'
 import { signIn, signOut, signUp } from '../../services/authService'
+import { ensureKohaPatronAccount } from '../../services/catalogService'
 
 export default function AuthPanel({ session, configured, onAccessCatalog }) {
   const [mode, setMode] = useState('sign-in')
@@ -19,12 +20,26 @@ export default function AuthPanel({ session, configured, onAccessCatalog }) {
 
     try {
       if (mode === 'sign-up') {
-        await signUp(form)
-        setStatus({ type: 'success', message: 'Account created. You can sign in now.' })
+        const result = await signUp(form)
+        if (result.session) {
+          try {
+            await ensureKohaPatronAccount()
+            setStatus({ type: 'success', message: 'Account created and linked to your Koha library account.' })
+          } catch (provisionError) {
+            setStatus({ type: 'error', message: `LIRA account created, but Koha account setup is pending: ${provisionError.message}` })
+          }
+        } else {
+          setStatus({ type: 'success', message: 'Account created. Verify your email, then sign in to finish Koha account setup.' })
+        }
         setMode('sign-in')
       } else {
         await signIn(form)
-        setStatus({ type: 'success', message: 'Signed in successfully.' })
+        try {
+          await ensureKohaPatronAccount()
+          setStatus({ type: 'success', message: 'Signed in and your Koha library account is linked.' })
+        } catch (provisionError) {
+          setStatus({ type: 'error', message: `Signed in, but Koha account setup is pending: ${provisionError.message}` })
+        }
       }
     } catch (error) {
       setStatus({ type: 'error', message: error.message || 'Authentication failed. Please try again.' })

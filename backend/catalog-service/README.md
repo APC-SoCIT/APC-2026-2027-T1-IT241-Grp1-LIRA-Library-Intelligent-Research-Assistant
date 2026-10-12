@@ -41,6 +41,9 @@ Required:
 - `KOHA_BASE_URL`: Koha host, for example `http://192.168.100.63:8081`
 - `KOHA_API_USER`: Koha API username
 - `KOHA_API_PASSWORD`: Koha API password
+- `KOHA_STUDENT_CATEGORY_ID`: Koha category code for new LIRA patrons (defaults to `ST`)
+- `KOHA_LIBRARIAN_CATEGORY_ID`: Koha category code for librarian accounts (defaults to `S`)
+- `KOHA_STUDENT_LIBRARY_ID`: Koha library code for new LIRA patrons (defaults to `APC`)
 
 Optional:
 

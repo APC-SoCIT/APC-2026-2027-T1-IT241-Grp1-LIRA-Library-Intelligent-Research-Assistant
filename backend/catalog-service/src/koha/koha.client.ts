@@ -132,6 +132,50 @@ export class KohaClient {
     }
   }
 
+  async findPatronByCardnumber(cardnumber: string): Promise<Record<string, unknown> | null> {
+    const response = await this.request<unknown>('/api/v1/patrons', {
+      params: { q: JSON.stringify({ cardnumber }), _per_page: 1 },
+    });
+    const records = Array.isArray(response.data) ? response.data : [];
+    const patron = records.find((entry): entry is Record<string, unknown> =>
+      this.isRecord(entry) && String(entry.cardnumber ?? '') === cardnumber,
+    );
+    return patron ?? null;
+  }
+
+  async createPatron(record: Record<string, unknown>): Promise<Record<string, unknown>> {
+    try {
+      const proxy = await getTailscaleProxy();
+      const response = await firstValueFrom(this.http.post<Record<string, unknown>>(
+        `${this.baseUrl}/api/v1/patrons`, record, {
+          ...(proxy ? { proxy } : {}), auth: this.auth, timeout: this.timeout,
+          headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        },
+      ));
+      return response.data;
+    } catch (error: unknown) {
+      throw this.toIntegrationError(error);
+    }
+  }
+
+  async requestLiraLists<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, data?: Record<string, unknown>): Promise<T> {
+    try {
+      const proxy = await getTailscaleProxy();
+      const response = await firstValueFrom(this.http.request<T>({
+        method,
+        url: `${this.baseUrl}/api/v1/contrib/lira-lists${path}`,
+        ...(data ? { data } : {}),
+        ...(proxy ? { proxy } : {}),
+        auth: this.auth,
+        timeout: this.timeout,
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      }));
+      return response.data;
+    } catch (error: unknown) {
+      throw this.toIntegrationError(error);
+    }
+  }
+
   async uploadFile(file: Buffer, filename: string, contentType: string): Promise<string> {
     const session = await this.getUploadSession();
     const boundary = `----LIRA-${Math.random().toString(16).slice(2)}`;
@@ -474,7 +518,14 @@ export class KohaClient {
       const detail = this.safeKohaErrorDetail(axiosError.response?.data);
       return new KohaIntegrationError('forbidden', detail ? `Koha denied the request: ${detail}` : 'Koha denied the request; check editcatalogue and upload permissions', status);
     }
-    if (status === 404) return new KohaIntegrationError('not-found', 'Koha record not found', status);
+    if (status === 404) {
+      const detail = this.safeKohaErrorDetail(axiosError.response?.data);
+      const requestPath = axiosError.config?.url?.replace(this.baseUrl, '') ?? '';
+      const context = requestPath ? ` at ${requestPath}` : '';
+      return new KohaIntegrationError('not-found', detail
+        ? `Koha returned 404${context}: ${detail}`
+        : `Koha returned 404${context}; the plugin route or patron record was not found`, status);
+    }
     if (status === 429) return new KohaIntegrationError('rate-limit', 'Koha rate limit exceeded', status);
     if (typeof status === 'number' && status >= 500) {
       const detail = this.safeKohaErrorDetail(axiosError.response?.data);

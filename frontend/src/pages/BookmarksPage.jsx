@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FiArrowLeft, FiBookmark, FiCheck, FiEdit2, FiPlus, FiTrash2, FiX } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { createReadingList, deleteReadingList, listBookmarks, listReadingLists, moveBookmark, removeBookmark, renameReadingList } from '../services/studentLibraryService'
+import { getCatalogBook } from '../services/catalogService'
+import BookCover from '../components/BookCover'
 import { useAuth } from '../hooks/useAuth'
 
 export default function BookmarksPage() {
@@ -11,6 +13,7 @@ export default function BookmarksPage() {
   const [bookmarks, setBookmarks] = useState([])
   const [activeListId, setActiveListId] = useState(null)
   const [newListName, setNewListName] = useState('')
+  const newListInputRef = useRef(null)
   const [renameListId, setRenameListId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
   const [isLoadingLists, setIsLoadingLists] = useState(true)
@@ -18,16 +21,34 @@ export default function BookmarksPage() {
 
   useEffect(() => {
     if (!session) {
-      setIsLoadingLists(false)
+      setIsLoadingLists(true)
       return undefined
     }
     let active = true
+    setIsLoadingLists(true)
     Promise.all([listReadingLists(), listBookmarks()])
-      .then(([readingLists, savedBooks]) => {
+      .then(async ([readingLists, savedBooks]) => {
         if (!active) return
         setLists(readingLists)
         setBookmarks(savedBooks)
         setActiveListId((current) => current ?? readingLists[0]?.id ?? null)
+
+        const booksWithDetails = await Promise.all(savedBooks.map(async (bookmark) => {
+          try {
+            const book = await getCatalogBook(bookmark.book_id)
+            return {
+              ...bookmark,
+              ...book,
+              id: bookmark.book_id,
+              list_id: bookmark.list_id,
+              created_at: bookmark.created_at,
+            }
+          } catch {
+            return bookmark
+          }
+        }))
+        if (!active) return
+        setBookmarks(booksWithDetails)
       })
       .catch((error) => {
         if (active) setStatus({ type: 'error', message: error.message || 'Could not load your lists.' })
@@ -41,6 +62,11 @@ export default function BookmarksPage() {
 
   const handleCreateList = async (event) => {
     event.preventDefault()
+    if (!newListName.trim()) {
+      setStatus({ type: 'error', message: 'Add a list name.' })
+      newListInputRef.current?.focus()
+      return
+    }
     try {
       const list = await createReadingList(newListName)
       setLists((current) => [...current, list])
@@ -97,7 +123,7 @@ export default function BookmarksPage() {
     }
   }
 
-  if (loading) return <div className="catalog-list-page"><p>Loading your list...</p></div>
+  if (loading) return <main className="catalog-list-page catalog-list-loading-page"><section className="catalog-page-loader" role="status" aria-live="polite"><span className="catalog-page-spinner" aria-hidden="true" /><strong>Checking your account</strong><span>Getting your library ready...</span></section></main>
   if (!session) return <div className="catalog-list-page"><p>Please sign in to view your list.</p><button type="button" onClick={() => navigate('/catalog')}>Go to sign in</button></div>
 
   const firstName = session.user.user_metadata?.first_name || session.user.user_metadata?.full_name?.split(' ')[0] || 'Student'
@@ -106,11 +132,13 @@ export default function BookmarksPage() {
     <main className="catalog-list-page">
       <div className="catalog-list-header">
         <button type="button" className="catalog-list-back" onClick={() => navigate('/catalog')}><FiArrowLeft aria-hidden="true" /> Back to catalog</button>
-        <div>
+        <div className="catalog-list-header-content">
           <p className="catalog-list-eyebrow">{firstName}'s library</p>
           <h1><FiBookmark aria-hidden="true" /> Your lists</h1>
           <p>Organize the books you want to keep.</p>
         </div>
+        <div className="catalog-list-header-mark" aria-hidden="true"><FiBookmark /></div>
+        <div className="catalog-list-header-stats"><span>{lists.length} {lists.length === 1 ? 'list' : 'lists'}</span><i /><span>{bookmarks.length} saved {bookmarks.length === 1 ? 'book' : 'books'}</span></div>
       </div>
 
       {status.message && <p className={`catalog-list-error ${status.type}`} role="status">{status.message}</p>}
@@ -118,8 +146,8 @@ export default function BookmarksPage() {
       <section className="catalog-list-management" aria-label="Manage reading lists">
         <form className="catalog-list-create" onSubmit={handleCreateList}>
           <label htmlFor="new-reading-list">New list</label>
-          <input id="new-reading-list" value={newListName} onChange={(event) => setNewListName(event.target.value)} maxLength={60} placeholder="e.g. Course reading" required />
-          <button type="submit" disabled={!newListName.trim()}><FiPlus aria-hidden="true" /> Create list</button>
+          <input ref={newListInputRef} id="new-reading-list" value={newListName} onChange={(event) => setNewListName(event.target.value)} maxLength={60} placeholder="e.g. Course reading" />
+          <button type="submit"><FiPlus aria-hidden="true" /> Create list</button>
         </form>
 
         {lists.length > 0 && <nav className="catalog-list-tabs" aria-label="Your reading lists" role="tablist">
@@ -146,10 +174,12 @@ export default function BookmarksPage() {
         </div>}
       </section>
 
-      {isLoadingLists ? <p className="catalog-list-empty">Loading your lists...</p> : activeBookmarks.length === 0 ? <section className="catalog-list-empty"><FiBookmark aria-hidden="true" /><h2>{activeList ? 'This list is empty' : 'No lists yet'}</h2><p>Save a book from the catalog or reader, or move a saved book here.</p><button type="button" onClick={() => navigate('/catalog')}>Browse catalog</button></section> : <section className="catalog-list-grid">
+      {isLoadingLists ? <section className="catalog-page-loader catalog-lists-loader" role="status" aria-live="polite"><span className="catalog-page-spinner" aria-hidden="true" /><strong>Loading your lists from Koha</strong><span>Your lists will appear here shortly.</span><div className="catalog-list-skeletons" aria-hidden="true"><i /><i /></div></section> : activeBookmarks.length === 0 ? <section className="catalog-list-empty"><FiBookmark aria-hidden="true" /><h2>{activeList ? 'This list is empty' : 'No lists yet'}</h2><p>Save a book from the catalog or reader, or move a saved book here.</p><button type="button" onClick={() => navigate('/catalog')}>Browse catalog</button></section> : <section className="catalog-list-grid">
         {activeBookmarks.map((bookmark) => <article key={bookmark.book_id} className="catalog-list-book">
-          <div className="catalog-list-book-icon"><FiBookmark aria-hidden="true" /></div>
-          <div className="catalog-list-book-copy"><button type="button" onClick={() => navigate(`/catalog?book=${bookmark.book_id}`)} className="text-left hover:underline"><h2>{bookmark.title}</h2><p>{bookmark.author || 'Unknown author'}</p></button><small>Saved {new Date(bookmark.created_at).toLocaleDateString()}</small></div>
+          <button type="button" className="catalog-list-cover-link" onClick={() => navigate(`/catalog?book=${bookmark.book_id}`)} aria-label={`Open ${bookmark.title}`}>
+            <BookCover book={bookmark} className="catalog-list-cover" />
+          </button>
+          <div className="catalog-list-book-copy"><button type="button" onClick={() => navigate(`/catalog?book=${bookmark.book_id}`)} className="catalog-list-book-title"><h2>{bookmark.title}</h2><p>{bookmark.author || 'Unknown author'}</p></button><small>Saved {new Date(bookmark.created_at).toLocaleDateString()}</small></div>
           <div className="catalog-list-book-actions">
             <label className="sr-only" htmlFor={`move-book-${bookmark.book_id}`}>Move {bookmark.title} to another list</label>
             <select id={`move-book-${bookmark.book_id}`} value={bookmark.list_id} onChange={(event) => handleMoveBookmark(bookmark, event.target.value)} aria-label={`Move ${bookmark.title} to another list`}>
