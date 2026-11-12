@@ -38,7 +38,7 @@ export default function HeroSection() {
           <div className="flex flex-wrap gap-4">
             <Link
               to="/catalog"
-              className="group inline-flex items-center gap-2 px-6 py-3.5 bg-gold-500 hover:bg-gold-600 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-xl hover:shadow-gold-500/25 hover:-translate-y-0.5"
+              className="group inline-flex items-center gap-2 px-6 py-3.5 bg-gold-500 hover:bg-gold-400 text-navy-900 font-semibold rounded-lg transition-all duration-300 hover:shadow-xl hover:shadow-gold-500/25 hover:-translate-y-0.5"
             >
               Access Library Catalogue
               <FiArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />

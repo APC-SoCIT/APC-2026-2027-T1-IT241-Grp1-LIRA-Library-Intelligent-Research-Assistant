@@ -212,22 +212,22 @@ export default function OpacPage({ user, bookId }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] font-sans">
+    <div className="min-h-screen bg-[#F4F7FB] font-sans">
       {/* Top Navbar */}
-      <nav className="bg-white border-b border-gray-200 px-4 py-2 flex justify-between items-center text-sm text-[#1b2a4a]">
+      <nav className="bg-white border-b border-gray-200 px-4 py-2 flex justify-between items-center text-sm text-[#003A70]">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-4">
-            <button type="button" onClick={() => navigate('/')} className="flex items-center gap-1 hover:text-blue-600 transition-colors">
+            <button type="button" onClick={() => navigate('/')} className="flex items-center gap-1 hover:text-navy-600 transition-colors">
               <FiHome className="w-4 h-4" aria-hidden="true" /> Home
             </button>
-            <button type="button" onClick={() => { handleShowBookmarks(); }} className="flex items-center gap-1 hover:text-blue-600 transition-colors">
+            <button type="button" onClick={() => { handleShowBookmarks(); }} className="flex items-center gap-1 hover:text-navy-600 transition-colors">
               <FiList className="w-4 h-4" /> {t('lists')} <FiChevronDown className="w-3 h-3" />
             </button>
           </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="relative" ref={accountMenuRef}>
-            <button type="button" onClick={() => setShowAccountMenu((visible) => !visible)} aria-haspopup="menu" aria-expanded={showAccountMenu} className="flex items-center gap-1 font-semibold text-[#1b2a4a] transition-colors hover:text-blue-700">
+            <button type="button" onClick={() => setShowAccountMenu((visible) => !visible)} aria-haspopup="menu" aria-expanded={showAccountMenu} className="flex items-center gap-1 font-semibold text-[#003A70] transition-colors hover:text-navy-700">
               <FiUser className="w-4 h-4" aria-hidden="true" /> {t('welcome')}, {displayFirstName} <FiChevronDown className={`h-3 w-3 transition-transform ${showAccountMenu ? 'rotate-180' : ''}`} aria-hidden="true" />
             </button>
             {showAccountMenu && <div className="account-menu" role="menu">
@@ -236,7 +236,7 @@ export default function OpacPage({ user, bookId }) {
               <button type="button" role="menuitem" onClick={handleSignOut} disabled={isSigningOut}><FiLogOut aria-hidden="true" /> {isSigningOut ? 'Signing out...' : 'Sign out'}</button>
             </div>}
           </div>
-          <label className="flex items-center gap-1.5 rounded-md border border-slate-200 px-2 py-1 hover:border-blue-400">
+          <label className="flex items-center gap-1.5 rounded-md border border-slate-200 px-2 py-1 hover:border-navy-400">
             <FiGlobe className="h-4 w-4" aria-hidden="true" />
             <span className="sr-only">{t('language')}</span>
             <select
@@ -256,16 +256,16 @@ export default function OpacPage({ user, bookId }) {
       {showBookmarks && (
         <aside className="catalog-bookmarks-dropdown fixed left-20 top-14 z-50 w-80 max-w-[calc(100%-2rem)] border border-gray-200 bg-white p-4 shadow-xl">
           <div className="mb-3 flex items-center justify-between border-b border-gray-200 pb-2">
-            <h2 className="text-sm font-bold text-[#1b2a4a]">My list</h2>
+            <h2 className="text-sm font-bold text-[#003A70]">My list</h2>
             <span className="text-xs text-gray-500">{bookmarks.length} saved</span>
           </div>
           {bookmarks.length === 0 ? <p className="text-sm text-gray-500">No saved books yet.</p> : <ul className="space-y-3">
-            {bookmarks.slice(0, 5).map((bookmark) => <li key={bookmark.book_id} className="text-sm"><button type="button" onClick={() => navigate(`/catalog?book=${bookmark.book_id}`)} className="text-left hover:underline"><strong className="block text-[#1b2a4a]">{bookmark.title}</strong><span className="text-xs text-gray-500">{bookmark.author || 'Unknown author'}</span></button></li>)}
+            {bookmarks.slice(0, 5).map((bookmark) => <li key={bookmark.book_id} className="text-sm"><button type="button" onClick={() => navigate(`/catalog?book=${bookmark.book_id}`)} className="text-left hover:underline"><strong className="block text-[#003A70]">{bookmark.title}</strong><span className="text-xs text-gray-500">{bookmark.author || 'Unknown author'}</span></button></li>)}
           </ul>}
-          <button type="button" onClick={() => navigate('/catalog/lists')} className="mt-4 w-full border-t border-gray-200 pt-3 text-left text-sm font-semibold text-blue-700 hover:underline">View all {bookmarks.length} saved books</button>
+          <button type="button" onClick={() => navigate('/catalog/lists')} className="mt-4 w-full border-t border-gray-200 pt-3 text-left text-sm font-semibold text-navy-700 hover:underline">View all {bookmarks.length} saved books</button>
         </aside>
       )}
-      {bookmarkMessage && <div className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 bg-[#1b2a4a] px-4 py-2 text-sm text-white shadow-lg">{bookmarkMessage}</div>}
+      {bookmarkMessage && <div className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 bg-[#003A70] px-4 py-2 text-sm text-white shadow-lg">{bookmarkMessage}</div>}
       {bookmarkTarget && <ReadingListPicker
         book={bookmarkTarget}
         onClose={() => setBookmarkTarget(null)}
@@ -287,7 +287,7 @@ export default function OpacPage({ user, bookId }) {
       />}
 
       {/* Hero Banner */}
-      <div className="overflow-hidden bg-[#0b3978] text-white">
+      <div className="overflow-hidden bg-[#004B87] text-white">
         <img src="/opac-banner.png" alt={t('bannerAlt')} className="block h-auto w-full" />
       </div>
 
@@ -296,7 +296,7 @@ export default function OpacPage({ user, bookId }) {
         
         {/* Search Header */}
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-[#1b2a4a] mb-2">{t('exploreCollection')}</h2>
+          <h2 className="text-2xl font-bold text-[#003A70] mb-2">{t('exploreCollection')}</h2>
           <p className="text-gray-500 text-sm">{t('searchDescription')}</p>
         </div>
 
@@ -323,10 +323,10 @@ export default function OpacPage({ user, bookId }) {
               <option value="hybrid">{t('hybridSearch')}</option>
             </select>
           </label>
-          {!selectedBook && <button type="button" onClick={() => setShowRecommendations((visible) => !visible)} aria-pressed={showRecommendations} aria-label={t('recommendations')} aria-controls="catalog-recommendations-panel" title={t('recommendations')} className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border transition-colors ${showRecommendations ? 'border-[#73532f] bg-[#faf5eb] text-[#5b4126]' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+          {!selectedBook && <button type="button" onClick={() => setShowRecommendations((visible) => !visible)} aria-pressed={showRecommendations} aria-label={t('recommendations')} aria-controls="catalog-recommendations-panel" title={t('recommendations')} className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border transition-colors ${showRecommendations ? 'border-[#003A70] bg-[var(--apc-blue-light)] text-[#004B87]' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
             <FiBookOpen className="h-4 w-4" aria-hidden="true" />
           </button>}
-          <button type="submit" disabled={isSearching} className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#1b2a4a] px-5 font-semibold text-white transition-colors hover:bg-blue-900 disabled:cursor-wait disabled:opacity-60">
+          <button type="submit" disabled={isSearching} className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#003A70] px-5 font-semibold text-white transition-colors hover:bg-navy-900 disabled:cursor-wait disabled:opacity-60">
              <FiSearch className="w-5 h-5" />
              {isSearching ? t('searching') : t('search')}
           </button>

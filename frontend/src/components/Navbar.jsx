@@ -115,7 +115,7 @@ export default function Navbar() {
                       <a
                         key={child.label}
                         href={child.href}
-                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gold-50 hover:text-gold-700 transition-colors"
+                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-navy-50 hover:text-navy-700 transition-colors"
                       >
                         {child.label}
                       </a>
@@ -142,7 +142,7 @@ export default function Navbar() {
               href="https://bookings.cloud.microsoft/book/BookALibrarian@apc.edu.ph/"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 px-4 py-2 bg-gold-500 hover:bg-gold-600 text-white text-sm font-semibold rounded-lg transition-all hover:shadow-lg hover:shadow-gold-500/25"
+              className="flex items-center gap-1 px-4 py-2 bg-gold-500 hover:bg-gold-400 text-navy-900 text-sm font-semibold rounded-lg transition-all hover:shadow-lg hover:shadow-gold-500/25"
             >
               Book a Librarian <FiExternalLink className="w-3 h-3" />
             </a>
@@ -170,7 +170,7 @@ export default function Navbar() {
               <a href="https://www.apc.edu.ph" className="block text-sm text-gray-300 hover:text-white py-2">APC Website</a>
               <a
                 href="https://bookings.cloud.microsoft/book/BookALibrarian@apc.edu.ph/"
-                className="block w-full text-center px-4 py-2.5 bg-gold-500 text-white text-sm font-semibold rounded-lg"
+                className="block w-full text-center px-4 py-2.5 bg-gold-500 text-navy-900 text-sm font-semibold rounded-lg"
               >
                 Book a Librarian
               </a>

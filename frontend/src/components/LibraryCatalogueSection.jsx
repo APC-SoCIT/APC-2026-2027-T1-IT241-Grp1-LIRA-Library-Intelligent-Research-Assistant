@@ -26,7 +26,7 @@ export default function LibraryCatalogueSection() {
           <div className="flex flex-wrap gap-4 shrink-0">
             <Link
               to="/catalog"
-              className="group inline-flex items-center gap-2 px-6 py-3 bg-gold-500 hover:bg-gold-600 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-gold-500/25"
+              className="group inline-flex items-center gap-2 px-6 py-3 bg-gold-500 hover:bg-gold-400 text-navy-900 font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-gold-500/25"
             >
               Search Catalogue
               <FiArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />

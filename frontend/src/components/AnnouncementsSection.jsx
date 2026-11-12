@@ -90,7 +90,7 @@ export default function AnnouncementsSection() {
                   </p>
                   <a
                     href={item.link}
-                    className="inline-flex items-center gap-2 text-gold-600 hover:text-gold-700 font-semibold transition-colors group"
+                    className="inline-flex items-center gap-2 text-navy-500 hover:text-navy-700 font-semibold transition-colors group"
                   >
                     Read full details
                     <FiArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />

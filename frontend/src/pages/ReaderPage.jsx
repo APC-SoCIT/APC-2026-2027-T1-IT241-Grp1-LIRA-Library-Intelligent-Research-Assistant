@@ -484,7 +484,7 @@ export default function ReaderPage() {
   return (
     <main className={`rdr-page ${isFullscreen ? 'rdr-page-fullscreen' : ''}`}>
       {activityError && (
-        <p className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-900" role="status">
+        <p className="border-b border-[#D3E2F0] bg-[#EAF2FA] px-4 py-2 text-center text-sm text-[#003A70]" role="status">
           {activityError}
         </p>
       )}
@@ -870,7 +870,7 @@ function PdfPageCanvas({ pdf, pageNumber, onError }) {
         canvasContext: context,
         viewport,
         transform: ratio === 1 ? null : [ratio, 0, 0, ratio, 0, 0],
-        background: '#fffdf7',
+        background: '#ffffff',
       })
       return renderTask.promise
     }).catch((error) => {

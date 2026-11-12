@@ -113,7 +113,7 @@ export default function UtilizationSection() {
                     </span>
                     <div className="flex-1 h-5 bg-gray-100 rounded-sm overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-sm transition-all duration-1000 flex items-center justify-end pr-1"
+                        className="h-full bg-gradient-to-r from-navy-500 to-navy-400 rounded-sm transition-all duration-1000 flex items-center justify-end pr-1"
                         style={{ width: `${(borrower.count / maxCount) * 100}%` }}
                       >
                         <span className="text-[10px] text-white font-semibold">{borrower.count}</span>
@@ -136,7 +136,7 @@ export default function UtilizationSection() {
                 <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
                   <circle cx="50" cy="50" r="40" fill="none" stroke="#E5E7EB" strokeWidth="20" />
                   <circle
-                    cx="50" cy="50" r="40" fill="none" stroke="#1B2A4A" strokeWidth="20"
+                    cx="50" cy="50" r="40" fill="none" stroke="#003A70" strokeWidth="20"
                     strokeDasharray="251.2" strokeDashoffset="0"
                     className="transition-all duration-1000"
                   />
@@ -180,7 +180,7 @@ export default function UtilizationSection() {
         <div className="text-center mt-8">
           <a
             href="https://library.apc.edu.ph/about/utilization-report"
-            className="inline-flex items-center gap-2 text-gold-600 hover:text-gold-700 font-semibold transition-colors group"
+            className="inline-flex items-center gap-2 text-navy-500 hover:text-navy-700 font-semibold transition-colors group"
           >
             View full utilization report
             <FiExternalLink className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />

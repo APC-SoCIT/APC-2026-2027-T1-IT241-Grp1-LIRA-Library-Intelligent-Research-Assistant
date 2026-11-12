@@ -27,8 +27,8 @@ export default function BookCover({ book, className = '' }) {
 
   if (sources.length === 0 || sourceIndex >= sources.length) {
     return (
-      <div className={`relative flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#f7edda] to-[#e9d5b5] px-2 text-center text-[#806747] ${className}`}>
-        <div className="absolute inset-y-0 left-0 w-2 bg-[#806747]/15" aria-hidden="true" />
+      <div className={`relative flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#EAF2FA] to-[#D3E2F0] px-2 text-center text-[#003A70] ${className}`}>
+        <div className="absolute inset-y-0 left-0 w-2 bg-[#004B87]/25" aria-hidden="true" />
         <FiBookOpen className="mb-2 h-7 w-7 shrink-0" aria-hidden="true" />
         <span className="line-clamp-3 text-[0.6rem] font-semibold leading-tight">{book.title}</span>
         <span className="mt-1 line-clamp-2 text-[0.52rem]">{book.author || 'Author not listed'}</span>
@@ -43,7 +43,7 @@ export default function BookCover({ book, className = '' }) {
       alt={`Cover of ${book.title}`}
       loading="eager"
       onError={() => setSourceIndex((index) => index + 1)}
-      className={`bg-gradient-to-br from-[#f7edda] to-[#e9d5b5] object-cover ${className}`}
+      className={`bg-gradient-to-br from-[#EAF2FA] to-[#D3E2F0] object-cover ${className}`}
     />
   )
 }

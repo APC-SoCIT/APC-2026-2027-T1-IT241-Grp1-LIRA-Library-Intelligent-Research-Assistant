@@ -20,7 +20,7 @@ const forms = [
 
 export default function OnlineFormsSection() {
   return (
-    <section className="py-16 lg:py-24 bg-gold-500">
+    <section className="py-16 lg:py-24 bg-navy-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-14">
@@ -44,7 +44,7 @@ export default function OnlineFormsSection() {
               className="group bg-white rounded-2xl p-8 text-center hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
               {/* Icon */}
-              <div className="w-16 h-16 rounded-full bg-gold-50 border-2 border-gold-200 flex items-center justify-center mx-auto mb-5 text-gold-600 group-hover:bg-gold-500 group-hover:text-white group-hover:border-gold-500 transition-all duration-300">
+              <div className="w-16 h-16 rounded-full bg-gold-50 border-2 border-gold-200 flex items-center justify-center mx-auto mb-5 text-gold-600 group-hover:bg-gold-400 group-hover:text-navy-900 group-hover:border-gold-500 transition-all duration-300">
                 {form.icon}
               </div>
 

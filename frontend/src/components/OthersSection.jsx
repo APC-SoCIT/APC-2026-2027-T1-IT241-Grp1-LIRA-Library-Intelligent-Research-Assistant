@@ -51,7 +51,7 @@ export default function OthersSection() {
               className="group bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-gold-200 transition-all duration-300 hover:-translate-y-1 text-center"
             >
               {/* Icon */}
-              <div className="w-14 h-14 rounded-xl bg-gold-50 flex items-center justify-center mx-auto mb-4 text-gold-600 group-hover:bg-gold-500 group-hover:text-white transition-all duration-300">
+              <div className="w-14 h-14 rounded-xl bg-gold-50 flex items-center justify-center mx-auto mb-4 text-gold-600 group-hover:bg-gold-400 group-hover:text-navy-900 transition-all duration-300">
                 {resource.icon}
               </div>
 

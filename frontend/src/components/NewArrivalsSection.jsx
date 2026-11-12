@@ -60,7 +60,7 @@ export default function NewArrivalsSection({ books = [] }) {
                     <a
                       href={`/catalog?book=${book.id}`}
                       onClick={(event) => { event.preventDefault(); navigate(`/catalog?book=${book.id}`) }}
-                      className="inline-flex items-center gap-1 text-gold-600 hover:text-gold-700 text-xs font-semibold transition-colors group"
+                      className="inline-flex items-center gap-1 text-navy-500 hover:text-navy-700 text-xs font-semibold transition-colors group"
                     >
                       View details
                       <FiArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />

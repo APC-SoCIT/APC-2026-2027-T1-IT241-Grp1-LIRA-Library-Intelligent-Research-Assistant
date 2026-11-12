@@ -65,11 +65,11 @@ export default function BookDetail({ book, language, onBack, onSaveBookmark, isB
 
   return (
     <section className="mt-6 overflow-hidden rounded-3xl border border-[#d4e0ef] bg-white text-[#172b4d] shadow-[0_22px_60px_rgba(9,47,105,0.14)]">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-gradient-to-r from-[#092f69] via-[#0b3978] to-[#123f7b] px-5 py-4 text-white sm:px-8">
-        <button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-sm font-semibold text-white/90 transition-colors hover:text-[#f3c969]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-gradient-to-r from-[#003A70] via-[#004B87] to-[#145A96] px-5 py-4 text-white sm:px-8">
+        <button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-sm font-semibold text-white/90 transition-colors hover:text-[#F2B51A]">
           <FiArrowLeft aria-hidden="true" /> {t('backToResults')}
         </button>
-        <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 text-sm text-white/80 transition-colors hover:text-[#f3c969]">
+        <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 text-sm text-white/80 transition-colors hover:text-[#F2B51A]">
           <FiPrinter aria-hidden="true" /> {t('printRecord')}
         </button>
       </div>
@@ -77,20 +77,20 @@ export default function BookDetail({ book, language, onBack, onSaveBookmark, isB
       <div className="grid gap-7 p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="min-w-0">
           <div className="relative overflow-hidden rounded-2xl border border-[#c8d9ed] bg-gradient-to-br from-[#f4f8fd] via-white to-[#e8f0fa] p-5 sm:p-7">
-            <div className="absolute -right-7 -top-10 h-36 w-36 rounded-full bg-[#e5b94f]/20" aria-hidden="true" />
+            <div className="absolute -right-7 -top-10 h-36 w-36 rounded-full bg-[#F2B51A]/20" aria-hidden="true" />
             <div className="relative flex items-start gap-4 sm:gap-5">
-              <div className="h-32 w-[5.25rem] shrink-0 overflow-hidden rounded-lg shadow-lg ring-1 ring-[#d6c19d] sm:h-40 sm:w-28">
+              <div className="h-32 w-[5.25rem] shrink-0 overflow-hidden rounded-lg shadow-lg ring-1 ring-[var(--apc-border)] sm:h-40 sm:w-28">
                 <BookCover book={book} className="h-full w-full" />
               </div>
               <div className="min-w-0">
-                <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#a77c16]">{t('fromLibraryShelves')}</p>
-                <h1 className="mt-2 text-2xl font-bold leading-tight text-[#092f69] sm:text-3xl">{book.title}</h1>
+                <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[var(--apc-navy)]">{t('fromLibraryShelves')}</p>
+                <h1 className="mt-2 text-2xl font-bold leading-tight text-[#003A70] sm:text-3xl">{book.title}</h1>
                 {book.subtitle && <p className="mt-2 text-base leading-relaxed text-[#526783]">{book.subtitle}</p>}
                 {book.author && <p className="mt-4 text-sm font-semibold text-[#334d6e]">{t('by')} {book.author}</p>}
-                {book.description && <div className="mt-4 border-t border-[#e8dcc8] pt-3">
-                  <h2 className="text-sm font-semibold text-[#49351f]">{t('summary')}</h2>
-                  <p className={`mt-1 text-sm leading-6 text-[#675b4a] ${isSummaryExpanded ? 'whitespace-pre-line' : 'line-clamp-3'}`}>{book.description}</p>
-                  {book.description.length > 220 && <button type="button" onClick={() => setIsSummaryExpanded((expanded) => !expanded)} className="mt-1 text-xs font-semibold text-[#79572f] hover:underline">
+                {book.description && <div className="mt-4 border-t border-[var(--apc-border)] pt-3">
+                  <h2 className="text-sm font-semibold text-[#172B4D]">{t('summary')}</h2>
+                  <p className={`mt-1 text-sm leading-6 text-[#526783] ${isSummaryExpanded ? 'whitespace-pre-line' : 'line-clamp-3'}`}>{book.description}</p>
+                  {book.description.length > 220 && <button type="button" onClick={() => setIsSummaryExpanded((expanded) => !expanded)} className="mt-1 text-xs font-semibold text-[#003A70] hover:underline">
                     {t(isSummaryExpanded ? 'showLess' : 'readMore')}
                   </button>}
                 </div>}
@@ -99,7 +99,7 @@ export default function BookDetail({ book, language, onBack, onSaveBookmark, isB
           </div>
 
           <section className="mt-7 overflow-hidden rounded-2xl border border-[#d4e0ef] bg-white">
-            <div className="border-b border-white/10 bg-[#0b3978] px-4 py-4 text-white sm:px-5">
+            <div className="border-b border-white/10 bg-[#004B87] px-4 py-4 text-white sm:px-5">
               <h2 className="text-lg font-semibold">{t('bibliographicInformation')}</h2>
             </div>
             <dl className="grid sm:grid-cols-2">
@@ -111,11 +111,11 @@ export default function BookDetail({ book, language, onBack, onSaveBookmark, isB
 
           {resources.length > 0 && (
             <section className="mt-7 rounded-2xl border border-[#c8d9ed] bg-[#f4f8fd] p-5">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#a77c16]">{t('exploreFurther')}</p>
-              <h2 className="mt-1 text-lg font-semibold text-[#092f69]">{t('onlineResources')}</h2>
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[var(--apc-navy)]">{t('exploreFurther')}</p>
+              <h2 className="mt-1 text-lg font-semibold text-[#003A70]">{t('onlineResources')}</h2>
               <ul className="mt-4 space-y-3">
                 {resources.map((resource) => (
-                  <li key={resource}><button type="button" onClick={() => navigate(`/catalog/read/${book.id}`)} className="inline-flex max-w-full items-start gap-2 break-all text-left text-sm font-medium text-[#0b4b92] hover:underline"><FiBookOpen className="mt-0.5 shrink-0" aria-hidden="true" /> Open resource in book reader</button></li>
+                  <li key={resource}><button type="button" onClick={() => navigate(`/catalog/read/${book.id}`)} className="inline-flex max-w-full items-start gap-2 break-all text-left text-sm font-medium text-[#004B87] hover:underline"><FiBookOpen className="mt-0.5 shrink-0" aria-hidden="true" /> Open resource in book reader</button></li>
                 ))}
               </ul>
             </section>
@@ -124,15 +124,15 @@ export default function BookDetail({ book, language, onBack, onSaveBookmark, isB
 
         <aside className="h-fit min-w-0 rounded-2xl border border-[#c8d9ed] bg-[#f4f8fd] p-5 sm:p-6">
           <div className="mb-4 border-b border-[#c8d9ed] pb-4">
-            <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#a77c16]">{t('makeYourselfAtHome')}</p>
-            <h2 className="mt-1 text-lg font-semibold text-[#092f69]">{t('bookActions')}</h2>
+            <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[var(--apc-navy)]">{t('makeYourselfAtHome')}</p>
+            <h2 className="mt-1 text-lg font-semibold text-[#003A70]">{t('bookActions')}</h2>
           </div>
           <div className="mt-4 grid gap-2">
             {hasReaderResource && (
               <button
                 type="button"
                 onClick={() => navigate(`/catalog/read/${book.id}`)}
-                className="inline-flex w-full min-w-0 items-center justify-center gap-2 whitespace-normal break-words rounded-xl border border-[#e5b94f] bg-[#0b3978] px-4 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-[#092f69] [&>svg]:shrink-0"
+                className="inline-flex w-full min-w-0 items-center justify-center gap-2 whitespace-normal break-words rounded-xl border border-[#F2B51A] bg-[#004B87] px-4 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-[#003A70] [&>svg]:shrink-0"
               >
                 <FiBookOpen aria-hidden="true" /> {t('readOnline')}
               </button>
@@ -141,7 +141,7 @@ export default function BookDetail({ book, language, onBack, onSaveBookmark, isB
             <button
               type="button"
               onClick={() => onSaveBookmark(book)}
-              className="inline-flex w-full min-w-0 items-center justify-center gap-2 whitespace-normal break-words rounded-xl border border-[#c8d9ed] bg-white px-4 py-3 text-center text-sm font-semibold text-[#0b3978] transition-colors hover:bg-[#e8f0fa] [&>svg]:shrink-0"
+              className="inline-flex w-full min-w-0 items-center justify-center gap-2 whitespace-normal break-words rounded-xl border border-[#c8d9ed] bg-white px-4 py-3 text-center text-sm font-semibold text-[#004B87] transition-colors hover:bg-[#e8f0fa] [&>svg]:shrink-0"
             >
               <FiBookmark aria-hidden="true" /> {isBookmarked ? t('removeFromLists') : t('addToLists')}
             </button>

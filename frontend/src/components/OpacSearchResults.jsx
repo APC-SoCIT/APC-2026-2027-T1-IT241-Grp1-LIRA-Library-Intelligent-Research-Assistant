@@ -68,32 +68,32 @@ function matchesFacets(book, selectedFacets, exceptKey) {
 
 function FacetSection({ facetKey, label, options, selected, onToggle, emptyMessage, t }) {
   return (
-    <details open className="border-b border-[#eee5d7] py-3 last:border-b-0">
-      <summary className="cursor-pointer list-none text-sm font-semibold text-[#463b2e] marker:hidden">
+    <details open className="border-b border-[var(--apc-border)] py-3 last:border-b-0">
+      <summary className="cursor-pointer list-none text-sm font-semibold text-[#334E68] marker:hidden">
         <span className="flex items-center justify-between">
           {label}
-          <span className="rounded-full bg-[#f4ead9] px-2 py-0.5 text-[0.68rem] font-medium text-[#806747]">{options.length}</span>
+          <span className="rounded-full bg-[var(--apc-blue-light)] px-2 py-0.5 text-[0.68rem] font-medium text-[var(--apc-navy)]">{options.length}</span>
         </span>
       </summary>
       {options.length ? (
         <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto pr-1">
           {options.map(({ value, count }) => (
             <li key={value}>
-              <label className="flex cursor-pointer items-start gap-2 rounded-md px-1 py-1 text-xs text-[#675b4a] hover:bg-[#faf5eb]">
+              <label className="flex cursor-pointer items-start gap-2 rounded-md px-1 py-1 text-xs text-[#526783] hover:bg-[var(--apc-blue-light)]">
                 <input
                   type="checkbox"
                   checked={selected.includes(value)}
                   onChange={() => onToggle(value)}
-                  className="mt-0.5 accent-[#73532f]"
+                  className="mt-0.5 accent-[#003A70]"
                 />
                 <span className="min-w-0 flex-1 break-words">{getFacetLabel(facetKey, value, t)}</span>
-                <span className="text-[#a3947e]">{count}</span>
+                <span className="text-[var(--apc-muted)]">{count}</span>
               </label>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="mt-2 text-xs leading-5 text-[#978873]">{emptyMessage}</p>
+        <p className="mt-2 text-xs leading-5 text-[#607B9E]">{emptyMessage}</p>
       )}
     </details>
   )
@@ -156,15 +156,15 @@ export default function OpacSearchResults({
 
   return (
     <section className={`mt-6 grid gap-5 ${filtersExpanded ? 'lg:grid-cols-[250px_minmax(0,1fr)]' : 'grid-cols-1'}`}>
-      <aside className="h-fit rounded-2xl border border-[#e8dcc8] bg-[#fffdf8] p-4 shadow-sm">
-        <div className="flex items-center justify-between border-b border-[#eee5d7] pb-3">
+      <aside className="h-fit rounded-2xl border border-[var(--apc-border)] bg-[var(--apc-surface)] p-4 shadow-sm">
+        <div className="flex items-center justify-between border-b border-[var(--apc-border)] pb-3">
           <div>
-            <p className="text-[0.65rem] font-bold uppercase tracking-[0.15em] text-[#9a784a]">{t('refineSearch')}</p>
-            <h2 className="mt-1 font-semibold text-[#342c24]">{t('refineSearch')}</h2>
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.15em] text-[var(--apc-navy)]">{t('refineSearch')}</p>
+            <h2 className="mt-1 font-semibold text-[#172B4D]">{t('refineSearch')}</h2>
           </div>
           <div className="flex items-center gap-2">
-            {selectedFacetCount > 0 && <button type="button" onClick={() => setSelectedFacets({})} className="text-xs font-semibold text-[#79572f] hover:underline">{t('clear')}</button>}
-            {selectedFacetCount > 0 && !filtersExpanded && <span className="rounded-full bg-[#f4ead9] px-2 py-0.5 text-xs text-[#806747]">{selectedFacetCount}</span>}
+            {selectedFacetCount > 0 && <button type="button" onClick={() => setSelectedFacets({})} className="text-xs font-semibold text-[#003A70] hover:underline">{t('clear')}</button>}
+            {selectedFacetCount > 0 && !filtersExpanded && <span className="rounded-full bg-[var(--apc-blue-light)] px-2 py-0.5 text-xs text-[var(--apc-navy)]">{selectedFacetCount}</span>}
             <button
               type="button"
               onClick={toggleFilters}
@@ -172,7 +172,7 @@ export default function OpacSearchResults({
               aria-controls="catalog-refine-controls"
               aria-label={filtersExpanded ? 'Collapse search filters' : 'Expand search filters'}
               title={filtersExpanded ? 'Collapse filters' : 'Expand filters'}
-              className="grid h-8 w-8 place-items-center rounded-md border border-[#e8dcc8] text-[#79572f] hover:bg-[#faf5eb]"
+              className="grid h-8 w-8 place-items-center rounded-md border border-[var(--apc-border)] text-[#003A70] hover:bg-[var(--apc-blue-light)]"
             >
               <FiChevronDown className={`transition-transform ${filtersExpanded ? 'rotate-180' : ''}`} aria-hidden="true" />
             </button>
@@ -180,12 +180,12 @@ export default function OpacSearchResults({
         </div>
 
         {filtersExpanded && <div id="catalog-refine-controls">
-        <label className="mt-4 block text-xs font-semibold text-[#675b4a]">
+        <label className="mt-4 block text-xs font-semibold text-[#526783]">
           {t('onlineResource')}
           <select
             value={sourceFilter}
             onChange={(event) => onSourceFilterChange(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-[#ddd1bf] bg-white px-3 py-2 text-sm font-normal text-[#463b2e]"
+            className="mt-1 w-full rounded-lg border border-[#D5DCE5] bg-white px-3 py-2 text-sm font-normal text-[#334E68]"
           >
             <option value="all">{t('allRecords')} ({books.length})</option>
             <option value="gutenberg">{t('gutenbergOnly')} ({gutenbergCount})</option>
@@ -207,7 +207,7 @@ export default function OpacSearchResults({
           ))}
         </div>
 
-        <p className="mt-3 border-t border-[#eee5d7] pt-3 text-[0.68rem] leading-5 text-[#978873]">
+        <p className="mt-3 border-t border-[var(--apc-border)] pt-3 text-[0.68rem] leading-5 text-[#607B9E]">
           {t('availabilityNotProvided')}
         </p>
         </div>}
@@ -216,10 +216,10 @@ export default function OpacSearchResults({
       <div className="min-w-0">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-xl font-semibold text-[#342c24]">
+            <h2 className="text-xl font-semibold text-[#172B4D]">
               {query.trim() ? t('searchResults') : t('libraryCatalog')}
             </h2>
-            <p className="mt-1 text-sm text-[#81725f]">
+            <p className="mt-1 text-sm text-[#607B9E]">
               {t('showing')} {filteredBooks.length} {filteredBooks.length === 1 ? t('record') : t('records')}
               {sourceFilter === 'gutenberg' ? ` ${t('withGutenberg')}` : ` ${t('fromKohaSuffix')}`}
             </p>
@@ -231,7 +231,7 @@ export default function OpacSearchResults({
                   key={`${key}:${value}`}
                   type="button"
                   onClick={() => toggleFacet(key, value)}
-                  className="inline-flex items-center gap-1 rounded-full bg-[#f4ead9] px-3 py-1 text-xs font-medium text-[#674a29]"
+                  className="inline-flex items-center gap-1 rounded-full bg-[var(--apc-blue-light)] px-3 py-1 text-xs font-medium text-[#003A70]"
                 >
                   {getFacetLabel(key, value, t)}<FiX aria-hidden="true" />
                 </button>
@@ -241,10 +241,10 @@ export default function OpacSearchResults({
         </div>
 
         {filteredBooks.length === 0 ? (
-          <div className="rounded-2xl border border-[#e8dcc8] bg-[#fffdf8] px-6 py-12 text-center">
-            <FiBookOpen className="mx-auto mb-3 h-8 w-8 text-[#a38b66]" aria-hidden="true" />
-            <h3 className="font-semibold text-[#342c24]">{t('noMatchingRecords')}</h3>
-            <p className="mt-1 text-sm text-[#81725f]">
+          <div className="rounded-2xl border border-[var(--apc-border)] bg-[var(--apc-surface)] px-6 py-12 text-center">
+            <FiBookOpen className="mx-auto mb-3 h-8 w-8 text-[var(--apc-blue)]" aria-hidden="true" />
+            <h3 className="font-semibold text-[#172B4D]">{t('noMatchingRecords')}</h3>
+            <p className="mt-1 text-sm text-[#607B9E]">
               {t('tryRemovingFilter')}
             </p>
           </div>
@@ -253,7 +253,7 @@ export default function OpacSearchResults({
             {pageBooks.map((book) => {
               const resources = getOnlineResources(book)
               return (
-                <article key={book.id} className="flex gap-4 rounded-2xl border border-[#e8dcc8] bg-[#fffdf8] p-4 shadow-sm transition-shadow hover:shadow-md sm:gap-5 sm:p-5">
+                <article key={book.id} className="flex gap-4 rounded-2xl border border-[var(--apc-border)] bg-[var(--apc-surface)] p-4 shadow-sm transition-shadow hover:shadow-md sm:gap-5 sm:p-5">
                   <button
                     type="button"
                     onClick={() => onSelectBook(book)}
@@ -267,14 +267,14 @@ export default function OpacSearchResults({
                     <button
                       type="button"
                       onClick={() => onSelectBook(book)}
-                      className="text-left text-lg font-semibold leading-snug text-[#49351f] hover:text-[#79572f] hover:underline"
+                      className="text-left text-lg font-semibold leading-snug text-[#172B4D] hover:text-[#003A70] hover:underline"
                     >
                       {book.title}
                     </button>
-                    <p className="mt-1 text-sm text-[#675b4a]">{book.author || t('authorNotListed')}</p>
-                    {book.description && <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#81725f]">{book.description}</p>}
+                    <p className="mt-1 text-sm text-[#526783]">{book.author || t('authorNotListed')}</p>
+                    {book.description && <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#607B9E]">{book.description}</p>}
 
-                    <dl className="mt-3 grid gap-x-5 gap-y-1 text-xs text-[#81725f] sm:grid-cols-2">
+                    <dl className="mt-3 grid gap-x-5 gap-y-1 text-xs text-[#607B9E] sm:grid-cols-2">
                       {book.publisher && <div><dt className="inline font-semibold">{t('publisher')}: </dt><dd className="inline">{book.publisher}</dd></div>}
                       {book.publicationYear && <div><dt className="inline font-semibold">{t('year')}: </dt><dd className="inline">{book.publicationYear}</dd></div>}
                       {book.isbn && <div><dt className="inline font-semibold">{t('isbn')}: </dt><dd className="inline">{book.isbn}</dd></div>}
@@ -286,7 +286,7 @@ export default function OpacSearchResults({
                       <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs">
                         {resources.map((resource) => (
                           <li key={resource}>
-                            <a href={resource} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#79572f] hover:underline">
+                            <a href={resource} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#003A70] hover:underline">
                               <FiExternalLink aria-hidden="true" /> {t('onlineResource')}
                             </a>
                           </li>
@@ -294,7 +294,7 @@ export default function OpacSearchResults({
                       </ul>
                     )}
 
-                    <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-[#79572f]">
+                    <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-[#003A70]">
                       <button type="button" onClick={() => onSaveBookmark(book)} className="inline-flex items-center gap-1 hover:underline">
                         <FiList aria-hidden="true" /> {isBookmarked(book) ? t('removeFromLists') : t('addToLists')}
                       </button>
@@ -312,7 +312,7 @@ export default function OpacSearchResults({
               type="button"
               onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
               disabled={visiblePage === 1}
-              className="rounded-lg border border-[#ddd1bf] bg-[#fffdf8] px-3 py-2 text-sm text-[#674a29] disabled:opacity-40"
+              className="rounded-lg border border-[#D5DCE5] bg-[var(--apc-surface)] px-3 py-2 text-sm text-[#003A70] disabled:opacity-40"
             >
               {t('previous')}
             </button>
@@ -322,7 +322,7 @@ export default function OpacSearchResults({
                 type="button"
                 aria-current={page === visiblePage ? 'page' : undefined}
                 onClick={() => setCurrentPage(page)}
-                className={`rounded-lg border px-3 py-2 text-sm ${page === visiblePage ? 'border-[#73532f] bg-[#73532f] text-white' : 'border-[#ddd1bf] bg-[#fffdf8] text-[#674a29]'}`}
+                className={`rounded-lg border px-3 py-2 text-sm ${page === visiblePage ? 'border-[#003A70] bg-[#003A70] text-white' : 'border-[#D5DCE5] bg-[var(--apc-surface)] text-[#003A70]'}`}
               >
                 {page}
               </button>
@@ -331,7 +331,7 @@ export default function OpacSearchResults({
               type="button"
               onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
               disabled={visiblePage === totalPages}
-              className="rounded-lg border border-[#ddd1bf] bg-[#fffdf8] px-3 py-2 text-sm text-[#674a29] disabled:opacity-40"
+              className="rounded-lg border border-[#D5DCE5] bg-[var(--apc-surface)] px-3 py-2 text-sm text-[#003A70] disabled:opacity-40"
             >
               {t('next')}
             </button>

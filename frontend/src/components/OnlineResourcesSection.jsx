@@ -8,7 +8,7 @@ const resources = [
   {
     name: 'SOMA Verge',
     category: 'Digital Library',
-    categoryColor: 'bg-blue-100 text-blue-700',
+    categoryColor: 'bg-navy-100 text-navy-700',
     description: 'Digital media and academic content platform for research and learning from the School of Multimedia and Arts.',
     url: 'https://somaverge.apc.edu.ph/',
     icon: '🌐',
@@ -16,7 +16,7 @@ const resources = [
   {
     name: 'ADB',
     category: 'Research',
-    categoryColor: 'bg-green-100 text-green-700',
+    categoryColor: 'bg-navy-50 text-navy-700',
     description: 'Asian Development Bank — publications, data, and research on Asia-Pacific development.',
     url: 'https://www.adb.org',
     icon: '🏦',
@@ -24,7 +24,7 @@ const resources = [
   {
     name: 'DOST SciNET - PHIL',
     category: 'Science',
-    categoryColor: 'bg-purple-100 text-purple-700',
+    categoryColor: 'bg-navy-50 text-navy-700',
     description: 'Department of Science and Technology — Philippine Science and Technology information network.',
     url: 'https://scinet.dost.gov.ph',
     icon: '🔬',
@@ -32,7 +32,7 @@ const resources = [
   {
     name: 'Starbooks',
     category: 'Science',
-    categoryColor: 'bg-purple-100 text-purple-700',
+    categoryColor: 'bg-navy-50 text-navy-700',
     description: 'Science and Technology Academic and Research-Based Openly Operated KioskS — offline science library.',
     url: 'https://www.starbooks.ph',
     icon: '⭐',
@@ -40,7 +40,7 @@ const resources = [
   {
     name: 'AJOL',
     category: 'Journals',
-    categoryColor: 'bg-amber-100 text-amber-700',
+    categoryColor: 'bg-navy-50 text-navy-700',
     description: 'Ateneo Journals Online — scholarly journals and publications from the Ateneo network.',
     url: 'https://archium.ateneo.edu/ateneo-journals/',
     icon: '📚',
@@ -48,7 +48,7 @@ const resources = [
   {
     name: 'JSTOR',
     category: 'Journals',
-    categoryColor: 'bg-amber-100 text-amber-700',
+    categoryColor: 'bg-navy-50 text-navy-700',
     description: 'Digital library of academic journals, books, and primary sources.',
     url: 'https://www.jstor.org',
     icon: '📖',
@@ -56,7 +56,7 @@ const resources = [
   {
     name: 'HighWire',
     category: 'Journals',
-    categoryColor: 'bg-amber-100 text-amber-700',
+    categoryColor: 'bg-navy-50 text-navy-700',
     description: 'HighWire Press — hosted scholarly journals and publications from leading publishers.',
     url: 'https://www.highwirepress.com',
     icon: '📄',
@@ -64,7 +64,7 @@ const resources = [
   {
     name: 'CCCOER',
     category: 'OER',
-    categoryColor: 'bg-teal-100 text-teal-700',
+    categoryColor: 'bg-navy-50 text-navy-700',
     description: 'Community College Consortium for Open Educational Resources (CCCOER) — free and open teaching materials.',
     url: 'https://www.cccoer.org',
     icon: '🎓',
@@ -72,7 +72,7 @@ const resources = [
   {
     name: 'Obooko',
     category: 'eBooks',
-    categoryColor: 'bg-rose-100 text-rose-700',
+    categoryColor: 'bg-navy-50 text-navy-700',
     description: 'Free ebooks by contemporary authors across fiction and non-fiction genres.',
     url: 'https://www.obooko.com',
     icon: '📱',
@@ -88,7 +88,7 @@ const resources = [
   {
     name: 'Project Gutenberg',
     category: 'eBooks',
-    categoryColor: 'bg-rose-100 text-rose-700',
+    categoryColor: 'bg-navy-50 text-navy-700',
     description: 'Library of over 70,000 free ebooks, including classic literature and reference works.',
     url: 'https://www.gutenberg.org',
     icon: '📕',
@@ -176,7 +176,7 @@ export default function OnlineResourcesSection() {
                   href={resource.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-gold-600 hover:text-gold-700 text-sm font-semibold transition-colors group"
+                  className="inline-flex items-center gap-1.5 text-navy-500 hover:text-navy-700 text-sm font-semibold transition-colors group"
                 >
                   Visit site
                   <FiExternalLink className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
