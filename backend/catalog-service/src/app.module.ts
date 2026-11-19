@@ -5,6 +5,7 @@ import { configuration, validateEnvironment } from './config/configuration';
 import { HealthModule } from './health/health.module';
 import { PatronsModule } from './patrons/patrons.module';
 import { KnowledgeModule } from './knowledge/knowledge.module';
+import { ChatbotModule } from './chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { KnowledgeModule } from './knowledge/knowledge.module';
     HealthModule,
     PatronsModule,
     KnowledgeModule,
+    ChatbotModule,
   ],
 })
 export class AppModule {}
