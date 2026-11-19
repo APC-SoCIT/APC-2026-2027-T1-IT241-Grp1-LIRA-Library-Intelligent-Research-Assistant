@@ -11,6 +11,11 @@ describe('validateEnvironment', () => {
     expect(validateEnvironment(baseEnvironment)).toEqual(baseEnvironment);
   });
 
+  it('allows the OpenRouter key to enable the FAQ chatbot without semantic search settings', () => {
+    const environment = { ...baseEnvironment, OPENROUTER_API_KEY: 'test-openrouter-api-key' };
+    expect(validateEnvironment(environment)).toEqual(environment);
+  });
+
   it('requires a Tailscale key only when the deployment integration is enabled', () => {
     expect(() => validateEnvironment({
       ...baseEnvironment,
@@ -57,6 +62,13 @@ describe('validateEnvironment', () => {
     };
 
     expect(validateEnvironment(environment)).toEqual(environment);
+  });
+
+  it('rejects an empty OpenRouter chat model override', () => {
+    expect(() => validateEnvironment({
+      ...baseEnvironment,
+      OPENROUTER_CHAT_MODEL: ' ',
+    })).toThrow('OPENROUTER_CHAT_MODEL must not be empty');
   });
 
   it('validates origins and separate streaming/reader limits with finite deadlines', () => {

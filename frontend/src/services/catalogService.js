@@ -74,6 +74,14 @@ export async function searchCatalogBooks(query, mode = 'keyword') {
   return books
 }
 
+export async function askLibraryFaq(question, history, language) {
+  return request('/chatbot/faq', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question, history, language }),
+  }, liraApiUrl)
+}
+
 export async function getCatalogBook(id) {
   return request(`/books/${encodeURIComponent(id)}`)
 }

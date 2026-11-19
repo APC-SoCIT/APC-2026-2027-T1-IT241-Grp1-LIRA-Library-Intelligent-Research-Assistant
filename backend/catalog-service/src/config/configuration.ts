@@ -27,6 +27,10 @@ export interface AppConfiguration {
     indexApiKey: string;
     matchLimit: number;
   };
+  chatbot: {
+    openRouterApiKey: string;
+    model: string;
+  };
   resources: {
     opacBaseUrl: string;
     allowedOrigins: string[];
@@ -64,6 +68,10 @@ export const configuration = registerAs('app', (): AppConfiguration => ({
     supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
     indexApiKey: process.env.SEMANTIC_INDEX_API_KEY ?? '',
     matchLimit: Number(process.env.SEMANTIC_MATCH_LIMIT ?? 500),
+  },
+  chatbot: {
+    openRouterApiKey: process.env.OPENROUTER_API_KEY ?? '',
+    model: process.env.OPENROUTER_CHAT_MODEL ?? 'openai/gpt-4o-mini',
   },
   resources: {
     opacBaseUrl: process.env.KOHA_OPAC_BASE_URL || defaultOpacUrl(process.env.KOHA_BASE_URL ?? ''),
@@ -121,14 +129,17 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
   }
 
   const semanticKeys = [
-    'OPENROUTER_API_KEY',
     'SUPABASE_URL',
     'SUPABASE_SERVICE_ROLE_KEY',
     'SEMANTIC_INDEX_API_KEY',
   ];
   const semanticConfigured = semanticKeys.filter((key) => String(environment[key] ?? '').trim());
-  if (semanticConfigured.length > 0 && semanticConfigured.length < semanticKeys.length) {
-    const missingSemanticKeys = semanticKeys.filter((key) => !String(environment[key] ?? '').trim());
+  if (semanticConfigured.length > 0 && (semanticConfigured.length < semanticKeys.length
+    || !String(environment.OPENROUTER_API_KEY ?? '').trim())) {
+    const missingSemanticKeys = [
+      ...semanticKeys.filter((key) => !String(environment[key] ?? '').trim()),
+      ...(!String(environment.OPENROUTER_API_KEY ?? '').trim() ? ['OPENROUTER_API_KEY'] : []),
+    ];
     throw new Error(`Semantic search requires these environment variables: ${missingSemanticKeys.join(', ')}`);
   }
 
@@ -152,6 +163,9 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
 
   if (environment.OPENROUTER_EMBEDDING_MODEL !== undefined && !String(environment.OPENROUTER_EMBEDDING_MODEL).trim()) {
     throw new Error('OPENROUTER_EMBEDDING_MODEL must not be empty');
+  }
+  if (environment.OPENROUTER_CHAT_MODEL !== undefined && !String(environment.OPENROUTER_CHAT_MODEL).trim()) {
+    throw new Error('OPENROUTER_CHAT_MODEL must not be empty');
   }
 
   return environment;
