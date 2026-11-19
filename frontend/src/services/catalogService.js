@@ -24,10 +24,13 @@ async function request(path, options = {}, baseUrl = catalogApiUrl) {
     try {
       const payload = await response.json()
       if (typeof payload.message === 'string') message = payload.message
+      else if (Array.isArray(payload.message)) message = payload.message.filter((item) => typeof item === 'string').join(' ') || message
     } catch {
       // Keep the HTTP status message when a proxy returns a non-JSON error response.
     }
-    throw new Error(message)
+    const error = new Error(message)
+    error.status = response.status
+    throw error
   }
   if (response.status === 204) return null
   const body = await response.text()
@@ -39,11 +42,15 @@ async function authenticatedRequest(path, options = {}, baseUrl = catalogApiUrl)
   const { data, error } = await supabase.auth.getSession()
   if (error) throw error
   const token = data.session?.access_token
-  if (!token) throw new Error('Please sign in again before managing the catalog.')
+  if (!token) throw new Error('Please sign in again before managing library content.')
   return request(path, {
     ...options,
     headers: { ...options.headers, Authorization: `Bearer ${token}` },
   }, baseUrl)
+}
+
+export function authenticatedLiraRequest(path, options = {}) {
+  return authenticatedRequest(path, options, liraApiUrl)
 }
 
 export async function listCatalogBooks() {

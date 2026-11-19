@@ -1,0 +1,4 @@
+.librarian-workspace-nav { display: flex; flex-wrap: wrap; gap: 8px; max-width: 1180px; margin: 0 auto 24px; padding-bottom: 14px; border-bottom: 1px solid var(--apc-border); }
+.librarian-workspace-nav a { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid var(--apc-border); border-radius: 8px; color: var(--apc-muted); background: var(--apc-surface); font-size: 13px; font-weight: 700; text-decoration: none; }
+.librarian-workspace-nav a:hover { color: var(--apc-navy); background: var(--apc-blue-light); }
+.librarian-workspace-nav a.active { border-color: var(--apc-navy); color: white; background: var(--apc-navy); }

@@ -11,7 +11,8 @@
     "lint": "eslint \"{src,test}/**/*.ts\"",
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
-    "test:cov": "jest --coverage"
+    "test:cov": "jest --coverage",
+    "smoke:knowledge": "npm run build && node --env-file=.env scripts/smoke-knowledge.mjs"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.0",

@@ -5,6 +5,7 @@ import CatalogAccessPage from './pages/CatalogAccessPage'
 import BookmarksPage from './pages/BookmarksPage'
 import ReaderPage from './pages/ReaderPage'
 import LibrarianCatalogPage from './pages/LibrarianCatalogPage'
+import LibrarianKnowledgePage from './pages/LibrarianKnowledgePage'
 
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
         <Route path="/catalog/cart" element={<Navigate replace to="/catalog" />} />
         <Route path="/catalog/read/:bookId" element={<ReaderPage />} />
         <Route path="/catalog/librarian" element={<LibrarianCatalogPage />} />
+        <Route path="/catalog/librarian/knowledge" element={<LibrarianKnowledgePage />} />
       </Routes>
     </Router>
   )

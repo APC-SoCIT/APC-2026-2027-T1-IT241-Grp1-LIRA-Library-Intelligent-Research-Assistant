@@ -3,13 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 
 interface SupabaseUser { id: string }
+export type LibrarianRequest = Request & { librarianUser: SupabaseUser };
 
 @Injectable()
 export class LibrarianGuard implements CanActivate {
   constructor(private readonly config: ConfigService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
+    const request = context.switchToHttp().getRequest<LibrarianRequest>();
     const authorization = request.headers.authorization;
     const token = authorization?.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
     if (!token) throw new UnauthorizedException('A signed-in librarian account is required');
@@ -17,6 +18,7 @@ export class LibrarianGuard implements CanActivate {
     const user = await this.getSupabaseUser(token);
     const role = await this.getProfileRole(user.id);
     if (role !== 'librarian') throw new ForbiddenException('Librarian access is required');
+    request.librarianUser = user;
     return true;
   }
 
