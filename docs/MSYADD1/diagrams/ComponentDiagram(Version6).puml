@@ -1,0 +1,53 @@
+@startuml C4_Component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Component Diagram for AI Processing Service (LIRA)
+
+Container(api_gateway, "API Gateway", "API Framework", "Routes incoming traffic to the appropriate processing component.")
+
+Container_Boundary(ai_service_boundary, "AI Processing Service") {
+    Component(main_controller, "Main AI Controller", "Router / Delegate", "Central controller that receives requests from the API Gateway and delegates them to internal AI engines.")
+    
+    Component(catalog_ingestion, "Catalog Ingestion Engine", "Background Worker", "Periodically fetches catalog updates from Koha and triggers sample data indexing.")
+    Component(ebook_parser, "E-Book Content Parser", "Worker / Service", "Fetches full texts from Project Gutenberg, strips headers/licensing, and chunks chapters.")
+    Component(summary_engine, "E-Book Summary Engine", "Controller", "Extracts parsed resource chunks and prompts LLM to generate concise qualitative summaries.")
+    Component(citation_generator, "Citation Generator", "Controller", "Extracts Gutenberg/Koha bibliographic metadata and formats into APA, IEEE, MLA styles.")
+    Component(recommendation_engine, "Recommendation Engine", "Controller", "Analyzes user search intent and reading history to generate personalized recommendations.")
+    Component(faq_synthesizer, "FAQ & Report Synthesizer", "Controller", "Parses uploaded operational policies or usage logs to draft FAQs and usage reports.")
+    Component(chatbot_manager, "Chatbot Synchronizer & Manager", "Controller", "Processes user chat queries, manages conversational session context, and retrieves grounding knowledge.")
+}
+
+ContainerDb(vector_db, "Vector Database", "ChromaDB / Weaviate", "Stores indexed representations of catalog records, e-book embeddings, and FAQ content.")
+System_Ext(openrouter, "OpenRouter API", "AI LLM Service")
+System_Ext(koha, "Koha ILS", "External Library System")
+System_Ext(gutenberg, "Project Gutenberg", "External E-Book Repository")
+
+Rel(api_gateway, main_controller, "Forwards processing and generation requests", "REST/JSON")
+
+Rel(main_controller, summary_engine, "Delegates summarization requests", "Internal Method Call")
+Rel(main_controller, citation_generator, "Delegates citation requests", "Internal Method Call")
+Rel(main_controller, recommendation_engine, "Delegates recommendation requests", "Internal Method Call")
+Rel(main_controller, faq_synthesizer, "Delegates document synthesis tasks", "Internal Method Call")
+Rel(main_controller, chatbot_manager, "Delegates conversational queries", "Internal Method Call")
+
+Rel(catalog_ingestion, koha, "Fetches library records in read-only capacity", "REST API")
+Rel(catalog_ingestion, vector_db, "Indexes catalog records", "Vector Search API")
+
+Rel(ebook_parser, gutenberg, "Fetches full-text files and book metadata", "HTTPS/REST")
+Rel(ebook_parser, vector_db, "Stores parsed book chunks & vector embeddings", "Vector Search API")
+
+Rel(summary_engine, vector_db, "Fetches book content chunks for context", "Vector Search API")
+Rel(summary_engine, openrouter, "Sends text chunks with summarization prompt", "HTTPS")
+
+Rel(citation_generator, vector_db, "Retrieves author, title, and publisher metadata", "Vector Search API")
+Rel(citation_generator, openrouter, "Sends metadata for citation style formatting", "HTTPS")
+
+Rel(recommendation_engine, vector_db, "Queries indexed e-books for similarity matching", "Vector Search API")
+Rel(recommendation_engine, openrouter, "Sends context for semantic suggestions", "HTTPS")
+
+Rel(faq_synthesizer, vector_db, "Stores and retrieves FAQ policy embeddings", "Vector Search API")
+Rel(faq_synthesizer, openrouter, "Sends policy text for Q&A generation", "HTTPS")
+
+Rel(chatbot_manager, vector_db, "Retrieves relevant document fragments for RAG", "Vector Search API")
+Rel(chatbot_manager, openrouter, "Streams conversation prompt and context", "HTTPS")
+@enduml

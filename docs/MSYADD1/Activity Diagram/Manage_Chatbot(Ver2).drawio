@@ -1,0 +1,120 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="1. Manage AI Chatbot" id="1. Manage AI Chatbot">
+    <mxGraphModel dx="1431" dy="835" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="sl1" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="Student/Faculty" vertex="1">
+          <mxGeometry height="800" width="280" as="geometry" />
+        </mxCell>
+        <mxCell id="n1" parent="sl1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;" value="" vertex="1">
+          <mxGeometry height="40" width="40" x="120" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n2" parent="sl1" style="rounded=1;whiteSpace=wrap;html=1;" value="Login to LIRA &amp; Open Chat" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="n3" parent="sl1" style="rounded=1;whiteSpace=wrap;html=1;" value="Submit Query" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="n11" parent="sl1" style="ellipse;whiteSpace=wrap;html=1;shape=doubleEllipse;fillColor=#000000;strokeColor=#ffffff;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="40" width="40" x="90" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="n10" parent="sl1" style="rounded=1;whiteSpace=wrap;html=1;" value="View AI Response" vertex="1">
+          <mxGeometry height="60" width="140" x="120" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="sl1" source="n10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="n11" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sl2" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="LIRA System" vertex="1">
+          <mxGeometry height="800" width="280" x="280" as="geometry" />
+        </mxCell>
+        <mxCell id="n4" parent="sl2" style="rounded=1;whiteSpace=wrap;html=1;" value="Parse &amp; Route Query" vertex="1">
+          <mxGeometry height="60" width="140" x="60" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="n6" parent="sl2" style="rhombus;whiteSpace=wrap;html=1;" value="AI Timeout?" vertex="1">
+          <mxGeometry height="60" width="140" x="100" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="n7" parent="sl2" style="rounded=1;whiteSpace=wrap;html=1;" value="Apologize &amp; Provide Human Contact" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="n9" parent="sl2" style="rounded=1;whiteSpace=wrap;html=1;" value="Format, Display &amp; Log Interaction" vertex="1">
+          <mxGeometry height="60" width="140" x="110" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="n16" parent="sl2" style="rounded=1;whiteSpace=wrap;html=1;" value="Validate &amp; Apply Configs" vertex="1">
+          <mxGeometry height="60" width="140" x="100" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="sl3" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="OpenRouter (AI Engine)" vertex="1">
+          <mxGeometry height="800" width="280" x="560" as="geometry" />
+        </mxCell>
+        <mxCell id="n5" parent="sl3" style="rounded=1;whiteSpace=wrap;html=1;" value="Process Query" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="n8" parent="sl3" style="rounded=1;whiteSpace=wrap;html=1;" value="Generate Synthesized Response" vertex="1">
+          <mxGeometry height="60" width="140" x="100" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="sl4" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="Librarian" vertex="1">
+          <mxGeometry height="800" width="280" x="840" as="geometry" />
+        </mxCell>
+        <mxCell id="n12" parent="sl4" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;" value="" vertex="1">
+          <mxGeometry height="40" width="40" x="120" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n13" parent="sl4" style="rounded=1;whiteSpace=wrap;html=1;" value="Login to LIRA Admin" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="n14" parent="sl4" style="rounded=1;whiteSpace=wrap;html=1;" value="Access Config Panel" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="n15" parent="sl4" style="rounded=1;whiteSpace=wrap;html=1;" value="Upload/Edit Knowledge Docs" vertex="1">
+          <mxGeometry height="60" width="140" x="70" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="n1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="n2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="n2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="n3" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="n3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="n4" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="n4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="n5" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="n5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="n6" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="n6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="n7" value="[Yes]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="n7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="n11" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="n6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="n8" value="[No]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="n8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="n9" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="n12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="n13" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="n13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="n14" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="n14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="n15" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="n15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="n16" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="n16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="n11" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="n9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="n10" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="250" y="630" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

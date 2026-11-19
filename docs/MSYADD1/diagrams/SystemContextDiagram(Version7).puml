@@ -1,0 +1,42 @@
+@startuml
+skinparam defaultTextAlignment center
+skinparam wrapWidth 200
+skinparam maxMessageSize 150
+
+skinparam rectangle {
+    BackgroundColor<<person>> #08427B
+    FontColor<<person>> #FFFFFF
+    BorderColor<<person>> #08427B
+
+    BackgroundColor<<system>> #1168BD
+    FontColor<<system>> #FFFFFF
+    BorderColor<<system>> #1168BD
+
+    BackgroundColor<<external_system>> #999999
+    FontColor<<external_system>> #FFFFFF
+    BorderColor<<external_system>> #999999
+}
+
+title System Context Diagram for LIRA (Level 1)
+
+rectangle "==Student/Faculty\n<size:12><<person>></size>\n\nAPC users who search the catalog, borrow books,\nasks AI questions, generates citations" as student <<person>>
+rectangle "==Librarian\n<size:12><<person>></size>\n\nAPC library staff with administrative privileges\nto manage the catalog, oversee circulation,\nconfigure AI parameters, and generate reports" as librarian <<person>>
+
+rectangle "==LIRA System\n<size:12><<system>></size>\n\nAn AI-assisted web platform that enhances library\nresource discovery, citation formatting, and\nconversational research support" as lira <<system>>
+
+rectangle "==Koha ILS\n<size:12><<external_system>></size>\n\nThe authoritative integrated library system managing\ncore cataloging, physical inventory, and circulation" as koha <<external_system>>
+rectangle "==Microsoft Entra ID\n<size:12><<external_system>></size>\n\nAPC's institutional single sign-on (SSO)\nidentity provider" as entra <<external_system>>
+rectangle "==DocuPulse\n<size:12><<external_system>></size>\n\nExternal metadata system synchronized to\nenrich catalog records" as docupulse <<external_system>>
+rectangle "==External AI Engine (OpenRouter)\n<size:12><<external_system>></size>\n\nModel-agnostic API platform providing access\nto foundational language models (LLMs)" as ai_engine <<external_system>>
+rectangle "==Project Gutenberg (Gutendex API)\n<size:12><<external_system>></size>\n\nExternal content provider for public-domain\ne-book metadata and digital text" as gutenberg <<external_system>>
+
+student --> lira : Searches catalog, borrows\nbooks, asks AI questions,\ngenerates citations\n[HTTPS]
+librarian --> lira : Manages catalog, resolves\nlost books, configures chatbot,\ngenerates reports\n[HTTPS]
+
+lira --> entra : Authenticates users via\n[OAuth2/OIDC]
+lira --> koha : Retrieves catalog metadata,\ncommits checkout/return logs via\n[REST API]
+lira --> docupulse : Synchronizes external\nmetadata via\n[HTTPS/API]
+lira --> ai_engine : Sends contextual prompts,\nreceives synthesized answers via\n[REST API]
+lira --> gutenberg : Retrieves public domain e-book\nmetadata & digital text\n[API]
+
+@enduml

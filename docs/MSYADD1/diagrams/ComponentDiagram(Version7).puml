@@ -1,0 +1,81 @@
+@startuml
+skinparam defaultTextAlignment center
+skinparam wrapWidth 200
+skinparam maxMessageSize 150
+
+skinparam rectangle {
+    BackgroundColor<<person>> #08427B
+    FontColor<<person>> #FFFFFF
+    BorderColor<<person>> #08427B
+
+    BackgroundColor<<container>> #1168BD
+    FontColor<<container>> #FFFFFF
+    BorderColor<<container>> #1168BD
+    
+    BackgroundColor<<component>> #63B2F5
+    FontColor<<component>> #000000
+    BorderColor<<component>> #1168BD
+
+    BackgroundColor<<external_system>> #999999
+    FontColor<<external_system>> #FFFFFF
+    BorderColor<<external_system>> #999999
+}
+skinparam database {
+    BackgroundColor<<container>> #1168BD
+    FontColor<<container>> #FFFFFF
+    BorderColor<<container>> #1168BD
+}
+
+title Component Diagram for LIRA Backend API Gateway (NestJS) (Level 3)
+
+rectangle "==Single-Page Application\n<size:12><<container: React>></size>\n\nFrontend Interface" as spa <<container>>
+
+package "Backend API Gateway <<container>>" {
+  rectangle "==Auth & Role Middleware\n<size:12><<component: NestJS Guard>></size>\n\nValidates Entra ID JWT tokens and enforces Librarian vs. Student permissions." as auth <<component>>
+  
+  rectangle "==Catalog Controller\n<size:12><<component: NestJS REST Controller>></size>\n\nEndpoints for catalog searching and previewing." as catalog <<component>>
+  
+  rectangle "==Citation Formatting Service\n<size:12><<component: TypeScript Class>></size>\n\nApplies deterministic APA, MLA, and IEEE rules to Koha metadata." as citation <<component>>
+  
+  rectangle "==Borrowing Service\n<size:12><<component: TypeScript Class>></size>\n\nExecutes business logic for checkout, returns, and validates account status (blocks/fines)." as borrowing <<component>>
+  
+  rectangle "==User List Service\n<size:12><<component: TypeScript Class>></size>\n\nManages 'My List' saves and application-side book reservation requests." as user_list <<component>>
+  
+  rectangle "==Report Aggregator\n<size:12><<component: TypeScript Class>></size>\n\nMerges local LIRA interaction metrics with Koha circulation data." as reports <<component>>
+  
+  rectangle "==Prompt & Chatbot Manager\n<size:12><<component: TypeScript Class>></size>\n\nAllows Librarians to upload/delete knowledge sources and configure LLM parameters." as chatbot <<component>>
+  
+  rectangle "==Koha Integration Client\n<size:12><<component: Axios/HTTP Client>></size>\n\nWrapper for standardizing REST calls to Koha ILS. Handles timeout exceptions." as koha_client <<component>>
+  
+  rectangle "==RAG/AI Pipeline Client\n<size:12><<component: HTTP Client>></size>\n\nPasses unstructured queries and configuration updates to the Python AI service." as rag_client <<component>>
+}
+
+rectangle "==Koha ILS\n<size:12><<external_system>></size>\n\nExternal Library System" as koha <<external_system>>
+rectangle "==AI/RAG Pipeline Service\n<size:12><<container: Python>></size>\n\nSemantic retrieval and AI orchestration" as rag_service <<container>>
+database "==Application Database\n<size:12><<container: Supabase>></size>\n\nLIRA App Data" as db <<container>>
+
+spa --> auth : API Requests with Token\n[HTTPS]
+
+auth --> catalog : Routes valid requests
+auth --> borrowing : Routes valid requests
+auth --> user_list : Routes valid requests
+auth --> reports : Routes valid admin requests
+auth --> chatbot : Routes valid admin requests
+
+catalog --> koha_client : Fetches raw metadata
+catalog --> rag_client : Routes semantic search queries
+catalog --> citation : Passes metadata for formatting
+
+borrowing --> koha_client : Validates account status,\ncommits transactions
+
+user_list --> db : Logs application-side reservations\nand saves My List entries
+
+reports --> koha_client : Fetches circulation logs
+reports --> db : Fetches chat & search logs
+
+chatbot --> rag_client : Pushes new knowledge docs\nand prompt configs
+
+koha_client --> koha : HTTP GET/POST
+rag_client --> rag_service : Internal API calls
+
+@enduml
