@@ -362,7 +362,7 @@ export default function OpacPage({ user, bookId }) {
         )}
       </main>
       
-      <ChatbotPlaceholder language={language} />
+      <ChatbotPlaceholder language={language} currentBook={selectedBook} books={catalogBooks} user={user} />
     </div>
   );
 }

@@ -35,6 +35,17 @@ describe('Knowledge storage, validation and authorization (in process; mocked Su
     expect(url.searchParams.get('limit')).toBe('10');
   });
 
+  it('loads all librarian entries for chatbot retrieval across storage pages', async () => {
+    const firstPage = Array.from({ length: 100 }, (_, index) => ({ ...row, id: `entry-${index}` }));
+    fetchSpy.mockResolvedValueOnce(response(200, firstPage)).mockResolvedValueOnce(response(200, [row]));
+
+    const entries = await service.listAllForAssistant();
+
+    expect(entries).toHaveLength(101);
+    expect(new URL(fetchSpy.mock.calls[0][0]).searchParams.get('offset')).toBe('0');
+    expect(new URL(fetchSpy.mock.calls[1][0]).searchParams.get('offset')).toBe('100');
+  });
+
   it('stores content and librarian attribution with the server credential', async () => {
     fetchSpy.mockResolvedValueOnce(response(201, [row]));
     await service.create(input, userId);

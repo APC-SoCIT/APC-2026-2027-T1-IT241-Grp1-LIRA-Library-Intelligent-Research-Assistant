@@ -7,7 +7,9 @@ import {
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
+import ChatbotPlaceholder from '../components/chatbot/ChatbotPlaceholder'
 import ReadingListPicker from '../components/ReadingListPicker'
+import { useAuth } from '../hooks/useAuth'
 import { getCatalogBook, getCatalogBookContent, resolveCatalogAssetUrl } from '../services/catalogService'
 import { listBookmarks, recordCatalogBookView, recordReading, removeBookmark } from '../services/studentLibraryService'
 import { adaptCatalogBook } from '../utils/catalogCategories'
@@ -180,6 +182,7 @@ function useTTS() {
 export default function ReaderPage() {
   const { bookId } = useParams()
   const navigate = useNavigate()
+  const { session } = useAuth()
   const [book, setBook] = useState(null)
   const [parsedElements, setParsedElements] = useState(null)
   const [pages, setPages] = useState([])
@@ -245,6 +248,9 @@ export default function ReaderPage() {
 
   const readingUrl = getReadingUrl(book)
   const readingFormat = getReadingFormat(book)
+  const summaryResource = book?.resources?.find((resource) =>
+    resource.contentUrl && resolveCatalogAssetUrl(resource.contentUrl) === readingUrl
+    && ['pdf', 'epub', 'html', 'text'].includes(resource.format))
   const totalPages = readingFormat === 'pdf' ? pdfPageCount : pages.length
 
   useEffect(() => {
@@ -764,6 +770,13 @@ export default function ReaderPage() {
           setBookmarkMessage(`Saved to ${listName || 'your list'}.`)
           setShowListPicker(false)
         }}
+      />}
+      {book && <ChatbotPlaceholder
+        language={localStorage.getItem('lira_catalog_language') || 'en'}
+        currentBook={book}
+        currentResourceId={summaryResource?.id}
+        books={[book]}
+        user={session?.user}
       />}
     </main>
   )

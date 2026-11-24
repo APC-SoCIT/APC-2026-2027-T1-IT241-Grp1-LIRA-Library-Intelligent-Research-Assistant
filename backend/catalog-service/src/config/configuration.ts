@@ -31,6 +31,9 @@ export interface AppConfiguration {
     openRouterApiKey: string;
     model: string;
   };
+  chatHistory: {
+    encryptionKey: string;
+  };
   resources: {
     opacBaseUrl: string;
     allowedOrigins: string[];
@@ -73,6 +76,9 @@ export const configuration = registerAs('app', (): AppConfiguration => ({
     openRouterApiKey: process.env.OPENROUTER_API_KEY ?? '',
     model: process.env.OPENROUTER_CHAT_MODEL ?? 'openai/gpt-4o-mini',
   },
+  chatHistory: {
+    encryptionKey: process.env.CHAT_HISTORY_ENCRYPTION_KEY ?? '',
+  },
   resources: {
     opacBaseUrl: process.env.KOHA_OPAC_BASE_URL || defaultOpacUrl(process.env.KOHA_BASE_URL ?? ''),
     allowedOrigins: process.env.EBOOK_ALLOWED_ORIGINS === undefined ? DEFAULT_RESOURCE_ORIGINS
@@ -89,6 +95,14 @@ export function validateEnvironment(environment: Record<string, unknown>): Recor
 
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+
+  const chatHistoryKey = String(environment.CHAT_HISTORY_ENCRYPTION_KEY ?? '');
+  if (chatHistoryKey) {
+    const key = Buffer.from(chatHistoryKey, 'base64');
+    if (key.length !== 32 || key.toString('base64') !== chatHistoryKey) {
+      throw new Error('CHAT_HISTORY_ENCRYPTION_KEY must be a base64-encoded 32-byte key');
+    }
   }
 
   const origin = (key: string, value: string) => {

@@ -7,6 +7,7 @@ import {
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BookCover from './BookCover'
+import BookSummaryPanel from './BookSummaryPanel'
 import { translate } from '../i18n/catalogTranslations'
 
 function getOnlineResources(book) {
@@ -76,15 +77,17 @@ export default function BookDetail({ book, language, onBack, onSaveBookmark, isB
 
       <div className="grid gap-7 p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="min-w-0">
-          <div className="relative overflow-hidden rounded-2xl border border-[#c8d9ed] bg-gradient-to-br from-[#f4f8fd] via-white to-[#e8f0fa] p-5 sm:p-7">
+          <div className="relative overflow-hidden rounded-2xl border border-[#c8d9ed] bg-gradient-to-br from-[#fffdf7] via-white to-[#e8f0fa] p-5 sm:p-7">
             <div className="absolute -right-7 -top-10 h-36 w-36 rounded-full bg-[#F2B51A]/20" aria-hidden="true" />
+            <FiBookOpen className="pointer-events-none absolute right-8 top-8 h-20 w-20 rotate-6 text-[#D99A00]/15" aria-hidden="true" />
             <div className="relative flex items-start gap-4 sm:gap-5">
               <div className="h-32 w-[5.25rem] shrink-0 overflow-hidden rounded-lg shadow-lg ring-1 ring-[var(--apc-border)] sm:h-40 sm:w-28">
                 <BookCover book={book} className="h-full w-full" />
               </div>
               <div className="min-w-0">
-                <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[var(--apc-navy)]">{t('fromLibraryShelves')}</p>
+                <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#A36F00]">{t('fromLibraryShelves')}</p>
                 <h1 className="mt-2 text-2xl font-bold leading-tight text-[#003A70] sm:text-3xl">{book.title}</h1>
+                <div className="mt-3 h-1 w-12 rounded-full bg-[#F2B51A]" aria-hidden="true" />
                 {book.subtitle && <p className="mt-2 text-base leading-relaxed text-[#526783]">{book.subtitle}</p>}
                 {book.author && <p className="mt-4 text-sm font-semibold text-[#334d6e]">{t('by')} {book.author}</p>}
                 {book.description && <div className="mt-4 border-t border-[var(--apc-border)] pt-3">
@@ -97,9 +100,13 @@ export default function BookDetail({ book, language, onBack, onSaveBookmark, isB
               </div>
             </div>
           </div>
+          {readableResources[0] && <section className="mt-5 rounded-2xl border border-[#c8d9ed] bg-white p-5">
+            <h2 className="mb-3 text-sm font-semibold text-[#172B4D]">AI book summary</h2>
+            <BookSummaryPanel book={book} resource={readableResources[0]} />
+          </section>}
 
           <section className="mt-7 overflow-hidden rounded-2xl border border-[#d4e0ef] bg-white">
-            <div className="border-b border-white/10 bg-[#004B87] px-4 py-4 text-white sm:px-5">
+            <div className="border-b-2 border-[#F2B51A] bg-[#004B87] px-4 py-4 text-white sm:px-5">
               <h2 className="text-lg font-semibold">{t('bibliographicInformation')}</h2>
             </div>
             <dl className="grid sm:grid-cols-2">

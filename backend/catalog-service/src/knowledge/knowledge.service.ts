@@ -13,11 +13,31 @@ interface KnowledgeRow {
   updated_at: string;
 }
 
+export interface KnowledgeEntry {
+  id: string;
+  kind: KnowledgeWriteDto['kind'];
+  category: KnowledgeWriteDto['category'];
+  title: string;
+  content: string;
+  sourceUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const columns = 'id,kind,category,title,content,source_url,created_at,updated_at';
 
 @Injectable()
 export class KnowledgeService {
   constructor(private readonly config: ConfigService) {}
+
+  async listAllForAssistant(): Promise<KnowledgeEntry[]> {
+    const entries: KnowledgeEntry[] = [];
+    for (let page = 1; ; page += 1) {
+      const result = await this.list(page, 100);
+      entries.push(...result.items);
+      if (result.items.length < 100) return entries;
+    }
+  }
 
   async list(page: number, limit: number) {
     const params = new URLSearchParams({ select: columns, order: 'updated_at.desc,id.asc',
@@ -52,7 +72,7 @@ export class KnowledgeService {
       content: input.content, source_url: input.sourceUrl ?? null };
   }
 
-  private toEntry(row: KnowledgeRow) {
+  private toEntry(row: KnowledgeRow): KnowledgeEntry {
     return { id: row.id, kind: row.kind, category: row.category, title: row.title,
       content: row.content, sourceUrl: row.source_url, createdAt: row.created_at, updatedAt: row.updated_at };
   }

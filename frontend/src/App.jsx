@@ -1,11 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import HomePage from './pages/HomePage'
-import OpacPage from './pages/OpacPage'
 import CatalogAccessPage from './pages/CatalogAccessPage'
 import BookmarksPage from './pages/BookmarksPage'
 import ReaderPage from './pages/ReaderPage'
 import LibrarianCatalogPage from './pages/LibrarianCatalogPage'
 import LibrarianKnowledgePage from './pages/LibrarianKnowledgePage'
+import LibrarianBookSummariesPage from './pages/LibrarianBookSummariesPage'
 
 
 function App() {
@@ -19,6 +19,7 @@ function App() {
         <Route path="/catalog/read/:bookId" element={<ReaderPage />} />
         <Route path="/catalog/librarian" element={<LibrarianCatalogPage />} />
         <Route path="/catalog/librarian/knowledge" element={<LibrarianKnowledgePage />} />
+        <Route path="/catalog/librarian/summaries" element={<LibrarianBookSummariesPage />} />
       </Routes>
     </Router>
   )

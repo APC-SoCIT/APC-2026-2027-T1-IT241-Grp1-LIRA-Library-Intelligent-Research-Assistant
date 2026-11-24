@@ -89,12 +89,102 @@ export async function askLibraryFaq(question, history, language) {
   }, liraApiUrl)
 }
 
+export function getChatHistoryPreference() {
+  return authenticatedLiraRequest('/chatbot/preferences')
+}
+
+export function setChatHistoryPreference(saveHistory) {
+  return authenticatedLiraRequest('/chatbot/preferences', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ saveHistory }),
+  })
+}
+
+export function listChatConversations() {
+  return authenticatedLiraRequest('/chatbot/conversations')
+}
+
+export function createChatConversation(title) {
+  return authenticatedLiraRequest('/chatbot/conversations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+  })
+}
+
+export function renameChatConversation(id, title) {
+  return authenticatedLiraRequest(`/chatbot/conversations/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+  })
+}
+
+export function getChatConversation(id) {
+  return authenticatedLiraRequest(`/chatbot/conversations/${encodeURIComponent(id)}`)
+}
+
+export function saveChatConversationMessage(id, message) {
+  return authenticatedLiraRequest(`/chatbot/conversations/${encodeURIComponent(id)}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(message),
+  })
+}
+
+export function deleteChatConversation(id) {
+  return authenticatedLiraRequest(`/chatbot/conversations/${encodeURIComponent(id)}`, { method: 'DELETE' })
+}
+
+export function deleteAllChatConversations() {
+  return authenticatedLiraRequest('/chatbot/conversations', { method: 'DELETE' })
+}
+
 export async function getCatalogBook(id) {
   return request(`/books/${encodeURIComponent(id)}`)
 }
 
 export async function getCatalogBookContent(id) {
   return request(`/books/${encodeURIComponent(id)}/content`)
+}
+
+export function getBookSummary(bookId, resourceId) {
+  const params = new URLSearchParams({ resourceId })
+  return request(`/books/${encodeURIComponent(bookId)}/summaries?${params}`, { cache: 'no-store' })
+}
+
+export function generateBookSummary(bookId, resourceId) {
+  return authenticatedRequest(`/books/${encodeURIComponent(bookId)}/summaries`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ resourceId }),
+  })
+}
+
+export async function requestBookSummary(bookId, resourceId) {
+  let summary = await generateBookSummary(bookId, resourceId)
+  for (let attempt = 0; summary?.status === 'generating' && attempt < 60; attempt += 1) {
+    await new Promise((resolve) => window.setTimeout(resolve, 2000))
+    summary = await getBookSummary(bookId, resourceId)
+  }
+  if (!summary || summary.status === 'generating' || !summary.summary) {
+    throw new Error('The shared summary is not ready yet. Please ask again shortly.')
+  }
+  return summary
+}
+
+export function listBookSummaries(status = '') {
+  const query = status ? `?${new URLSearchParams({ status })}` : ''
+  return authenticatedLiraRequest(`/librarian/book-summaries${query}`, { cache: 'no-store' })
+}
+
+export function reviewBookSummary(id, input) {
+  return authenticatedLiraRequest(`/librarian/book-summaries/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
 }
 
 export async function getCatalogProfileRole() {

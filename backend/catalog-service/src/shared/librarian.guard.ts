@@ -1,9 +1,9 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
+import { AuthenticatedSupabaseUser, getAuthenticatedSupabaseUser } from './supabase-user';
 
-interface SupabaseUser { id: string }
-export type LibrarianRequest = Request & { librarianUser: SupabaseUser };
+export type LibrarianRequest = Request & { librarianUser: AuthenticatedSupabaseUser };
 
 @Injectable()
 export class LibrarianGuard implements CanActivate {
@@ -11,26 +11,11 @@ export class LibrarianGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<LibrarianRequest>();
-    const authorization = request.headers.authorization;
-    const token = authorization?.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
-    if (!token) throw new UnauthorizedException('A signed-in librarian account is required');
-
-    const user = await this.getSupabaseUser(token);
+    const user = await getAuthenticatedSupabaseUser(this.config, request.headers.authorization);
     const role = await this.getProfileRole(user.id);
     if (role !== 'librarian') throw new ForbiddenException('Librarian access is required');
     request.librarianUser = user;
     return true;
-  }
-
-  private async getSupabaseUser(token: string): Promise<SupabaseUser> {
-    const url = this.config.get<string>('app.semantic.supabaseUrl', '');
-    const serviceRoleKey = this.config.get<string>('app.semantic.supabaseServiceRoleKey', '');
-    if (!url || !serviceRoleKey) throw new UnauthorizedException('Supabase authentication is not configured');
-    const response = await fetch(`${url}/auth/v1/user`, { headers: { apikey: serviceRoleKey, Authorization: `Bearer ${token}` } });
-    if (!response.ok) throw new UnauthorizedException('Your session is invalid or expired');
-    const user = await response.json() as Partial<SupabaseUser>;
-    if (!user.id) throw new UnauthorizedException('Your session did not identify a user');
-    return { id: user.id };
   }
 
   private async getProfileRole(userId: string): Promise<string | null> {

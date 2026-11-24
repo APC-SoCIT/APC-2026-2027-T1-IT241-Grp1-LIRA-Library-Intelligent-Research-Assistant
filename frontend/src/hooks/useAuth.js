@@ -9,12 +9,12 @@ function provisionSession(session) {
   })
 }
 
-export function useAuth() {
+export function useAuth({ enabled = true } = {}) {
   const [session, setSession] = useState(null)
-  const [loading, setLoading] = useState(Boolean(supabase))
+  const [loading, setLoading] = useState(Boolean(supabase && enabled))
 
   useEffect(() => {
-    if (!supabase) return undefined
+    if (!enabled || !supabase) return undefined
 
     let active = true
     supabase.auth.getSession().then(({ data }) => {
@@ -38,7 +38,7 @@ export function useAuth() {
       active = false
       listener.subscription.unsubscribe()
     }
-  }, [])
+  }, [enabled])
 
-  return { session, loading, configured: Boolean(supabase) }
+  return { session, loading: enabled ? loading : false, configured: Boolean(supabase) }
 }

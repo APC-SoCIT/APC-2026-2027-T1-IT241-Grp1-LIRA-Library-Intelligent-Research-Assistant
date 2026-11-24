@@ -17,6 +17,8 @@ The source tree separates route-level pages, reusable components, API-facing ser
 3. Copy `frontend/.env.example` to `frontend/.env` and fill in the project URL and anon key from **Project Settings > API**.
 4. Start the frontend with `npm run dev` from `frontend/` and open `/catalog`.
 
+Signed-in users can ask Ramsey to summarize the book currently open in the reader or name a catalog title. Ramsey reuses shared summaries; generated summaries appear on book previews and receive a librarian-verified label after approval.
+
 Supabase Auth handles passwords and sessions. The database trigger creates a profile using the student's name and school collected during sign-up. Row Level Security limits profiles, reading history, and bookmarks to their owning student. Never expose the service-role key in Vite or browser code.
 
 To disable email verification, open the Supabase dashboard and go to **Authentication > Providers > Email**, turn off **Confirm email**, and save. This setting cannot be changed securely from frontend code.

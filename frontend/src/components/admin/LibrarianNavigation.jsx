@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { FiBookOpen, FiMessageCircle } from 'react-icons/fi'
+import { FiBookOpen, FiCheckCircle, FiMessageCircle } from 'react-icons/fi'
 import './librarianNavigation.css'
 
 export default function LibrarianNavigation({ onNavigate }) {
@@ -7,6 +7,7 @@ export default function LibrarianNavigation({ onNavigate }) {
     <nav className="librarian-workspace-nav" aria-label="Librarian workspace">
       <NavLink end to="/catalog/librarian" onClick={onNavigate}><FiBookOpen aria-hidden="true" /> Catalog management</NavLink>
       <NavLink to="/catalog/librarian/knowledge" onClick={onNavigate}><FiMessageCircle aria-hidden="true" /> FAQs & policies</NavLink>
+      <NavLink to="/catalog/librarian/summaries" onClick={onNavigate}><FiCheckCircle aria-hidden="true" /> AI book summaries</NavLink>
     </nav>
   )
 }

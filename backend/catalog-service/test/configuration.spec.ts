@@ -11,6 +11,14 @@ describe('validateEnvironment', () => {
     expect(validateEnvironment(baseEnvironment)).toEqual(baseEnvironment);
   });
 
+  it('accepts only a base64-encoded 32-byte chat history key', () => {
+    const key = Buffer.alloc(32, 1).toString('base64');
+    expect(validateEnvironment({ ...baseEnvironment, CHAT_HISTORY_ENCRYPTION_KEY: key }))
+      .toMatchObject({ CHAT_HISTORY_ENCRYPTION_KEY: key });
+    expect(() => validateEnvironment({ ...baseEnvironment, CHAT_HISTORY_ENCRYPTION_KEY: 'not-a-32-byte-key' }))
+      .toThrow('CHAT_HISTORY_ENCRYPTION_KEY must be a base64-encoded 32-byte key');
+  });
+
   it('allows the OpenRouter key to enable the FAQ chatbot without semantic search settings', () => {
     const environment = { ...baseEnvironment, OPENROUTER_API_KEY: 'test-openrouter-api-key' };
     expect(validateEnvironment(environment)).toEqual(environment);
